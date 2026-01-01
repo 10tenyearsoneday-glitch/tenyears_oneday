@@ -1,0 +1,29 @@
+[
+  {
+    "id": "silver-ring-01",
+    "name": "純銀細戒｜微光",
+    "price_twd": 880,
+    "badge": "純銀 925",
+    "desc": "極簡線條，日常百搭。",
+    "image": "",
+    "payment_link": ""
+  },
+  {
+    "id": "silver-necklace-01",
+    "name": "純銀項鍊｜月影",
+    "price_twd": 1280,
+    "badge": "手工製作",
+    "desc": "柔和弧度，貼近鎖骨。",
+    "image": "",
+    "payment_link": ""
+  },
+  {
+    "id": "silver-earring-01",
+    "name": "純銀耳環｜星光",
+    "price_twd": 680,
+    "badge": "低敏耳針",
+    "desc": "小巧閃耀，點亮氣色。",
+    "image": "",
+    "payment_link": ""
+  }
+]
