@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-TW" data-base="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>相關問題｜十年一日</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css" />
+  
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <h1>十年一日</h1>
+        <div class="dashed"></div>
+        <p class="sub">tenyears_oneday</p>
+        <div class="small-muted">關於我們(首頁)　<span style="opacity:.65">（小一點半透明）</span></div>
+      </div>
+
+      <div class="top-actions">
+        <div class="iconbtn" id="igBtn" title="Instagram"></div>
+        <div class="iconbtn" id="lineBtn" title="LINE"></div>
+        <div class="iconbtn" id="searchBtn" title="搜尋"></div>
+
+        <div style="position:relative">
+          <div class="iconbtn" id="cartBtn" title="購物車"></div>
+          <div class="badge" id="cartBadge" style="display:none">0</div>
+        </div>
+
+        <div class="iconbtn" id="memberBtn" title="會員"></div>
+      </div>
+    </header>
+
+    <div class="navwrap">
+      <nav class="nav" aria-label="導覽列">
+        <a class="pill" data-key="about" href="index.html">關於我們</a>
+        <a class="pill" data-key="all" href="all.html">全系列🌸</a>
+        <a class="pill" data-key="silver" href="silver.html">純銀飾品✨</a>
+        <a class="pill" data-key="promo" href="promo.html">優惠活動🎁</a>
+        <a class="pill" data-key="knowledge" href="knowledge.html">飾品小知識💡</a>
+        <a class="pill" data-key="faq" href="faq.html">相關問題❗️</a>
+      </nav>
+      <div id="memberHint" class="help" style="text-align:right"></div>
+    </div>
+
+    <section class="hero">
+      <div>
+        <div class="hero-title">十年一日</div>
+        <p class="hero-sub">時光淬鍊 · 破碎中尋覓永恆<br>每一件飾品 都是時間的詩篇</p>
+      </div>
+
+      <div class="announce">
+        <span class="tag">公告</span>
+        <div class="text" id="announceTopText"></div>
+      </div>
+
+      
+<div class="card">
+  <h2>❗️相關問題</h2>
+
+  <div class="note-yellow" style="margin-top:10px">
+    <b>⚠️ 提醒</b>
+    <div class="help" style="margin-top:6px">（可自行增加提醒文字，字會小一點。）</div>
+  </div>
+
+  <div class="note-red" style="margin-top:10px">
+    <b>❗️注意事項</b>
+    <div class="help" style="margin-top:6px">（可自行增加注意事項文字，字會小一點。）</div>
+  </div>
+
+  <div class="card" style="padding:16px;border-radius:18px;margin-top:12px">
+    <div style="font-weight:700">常見問題 1：多久出貨？</div>
+    <div class="help">示範：現貨 1-3 工作天出貨；預購依商品頁說明。</div>
+  </div>
+  <div class="card" style="padding:16px;border-radius:18px;margin-top:10px">
+    <div style="font-weight:700">常見問題 2：如何保養？</div>
+    <div class="help">示範：避免潮濕與化學品；使用拭銀布擦拭。</div>
+  </div>
+</div>
+
+<div class="announce">
+  <span class="tag">公告</span>
+  <div class="text" id="announceBottomText"></div>
+</div>
+
+    </section>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-cols">
+        <span>💎 精選材質 不含鉛，安心佩戴</span>
+        <span>✨ 獨特設計 韓日歐美風格齊聚</span>
+        <span>🚚 便利配送 超商取貨、宅配到府</span>
+      </div>
+      <div class="copy">© 十年一日 tenyears_oneday</div>
+    </div>
+  </footer>
+
+  <a class="hidden-admin-link" href="admin/login.html" aria-label="admin"></a>
+
+  <script src="assets/js/app.js"></script>
+  <script>
+    // inject icons
+    (function(){
+      const i = icons();
+      document.getElementById("igBtn").innerHTML = i.ig;
+      document.getElementById("lineBtn").innerHTML = i.line;
+      document.getElementById("searchBtn").innerHTML = i.search;
+      document.getElementById("cartBtn").innerHTML = i.cart;
+      document.getElementById("memberBtn").innerHTML = i.user;
+    })();
+    TYOD.initFaqPage();
+  </script>
+</body>
+</html>

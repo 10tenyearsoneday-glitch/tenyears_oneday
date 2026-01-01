@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-TW" data-base="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>十年一日 TEN YEARS ONE DAY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css" />
+  
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <h1>十年一日</h1>
+        <div class="dashed"></div>
+        <p class="sub">tenyears_oneday</p>
+        <div class="small-muted">關於我們(首頁)　<span style="opacity:.65">（小一點半透明）</span></div>
+      </div>
+
+      <div class="top-actions">
+        <div class="iconbtn" id="igBtn" title="Instagram"></div>
+        <div class="iconbtn" id="lineBtn" title="LINE"></div>
+        <div class="iconbtn" id="searchBtn" title="搜尋"></div>
+
+        <div style="position:relative">
+          <div class="iconbtn" id="cartBtn" title="購物車"></div>
+          <div class="badge" id="cartBadge" style="display:none">0</div>
+        </div>
+
+        <div class="iconbtn" id="memberBtn" title="會員"></div>
+      </div>
+    </header>
+
+    <div class="navwrap">
+      <nav class="nav" aria-label="導覽列">
+        <a class="pill" data-key="about" href="index.html">關於我們</a>
+        <a class="pill" data-key="all" href="all.html">全系列🌸</a>
+        <a class="pill" data-key="silver" href="silver.html">純銀飾品✨</a>
+        <a class="pill" data-key="promo" href="promo.html">優惠活動🎁</a>
+        <a class="pill" data-key="knowledge" href="knowledge.html">飾品小知識💡</a>
+        <a class="pill" data-key="faq" href="faq.html">相關問題❗️</a>
+      </nav>
+      <div id="memberHint" class="help" style="text-align:right"></div>
+    </div>
+
+    <section class="hero">
+      <div>
+        <div class="hero-title">十年一日</div>
+        <p class="hero-sub">時光淬鍊 · 破碎中尋覓永恆<br>每一件飾品 都是時間的詩篇</p>
+      </div>
+
+      <div class="announce">
+        <span class="tag">公告</span>
+        <div class="text" id="announceTopText"></div>
+      </div>
+
+      
+<div class="card big">
+  <h2>🤍 歡迎來到 十年一日</h2>
+  <div class="en">TEN YEARS ONE DAY<br><span class="canva-italic">Every piece tells a story.</span></div>
+  <div style="margin-top:14px;line-height:1.9;font-size:14px;opacity:.9">
+    承載著十年以上的友情，<br>
+    繼續延續下去的動力。<br><br>
+    每一件飾品，<br>
+    都是時間累積的溫柔。<br><br>
+    <b>謝謝你，把重要的一天交給十年一日 ✨</b>
+  </div>
+</div>
+
+<div class="announce">
+  <span class="tag">公告</span>
+  <div class="text" id="announceBottomText"></div>
+</div>
+
+    </section>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-cols">
+        <span>💎 精選材質 不含鉛，安心佩戴</span>
+        <span>✨ 獨特設計 韓日歐美風格齊聚</span>
+        <span>🚚 便利配送 超商取貨、宅配到府</span>
+      </div>
+      <div class="copy">© 十年一日 tenyears_oneday</div>
+    </div>
+  </footer>
+
+  <a class="hidden-admin-link" href="admin/login.html" aria-label="admin"></a>
+
+  <script src="assets/js/app.js"></script>
+  <script>
+    // inject icons
+    (function(){
+      const i = icons();
+      document.getElementById("igBtn").innerHTML = i.ig;
+      document.getElementById("lineBtn").innerHTML = i.line;
+      document.getElementById("searchBtn").innerHTML = i.search;
+      document.getElementById("cartBtn").innerHTML = i.cart;
+      document.getElementById("memberBtn").innerHTML = i.user;
+    })();
+    TYOD.initHomePage();
+  </script>
+</body>
+</html>
