@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="zh-TW" data-base="">
+<html lang="zh-TW" data-base="../">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>十年一日 TEN YEARS ONE DAY</title>
+  <title>後台登入｜十年一日</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
   
 </head>
 <body>
@@ -36,12 +36,12 @@
 
     <div class="navwrap">
       <nav class="nav" aria-label="導覽列">
-        <a class="pill" data-key="about" href="index.html">關於我們</a>
-        <a class="pill" data-key="all" href="all.html">全系列🌸</a>
-        <a class="pill" data-key="silver" href="silver.html">純銀飾品✨</a>
-        <a class="pill" data-key="promo" href="promo.html">優惠活動🎁</a>
-        <a class="pill" data-key="knowledge" href="knowledge.html">飾品小知識💡</a>
-        <a class="pill" data-key="faq" href="faq.html">相關問題❗️</a>
+        <a class="pill" data-key="about" href="../index.html">關於我們</a>
+        <a class="pill" data-key="all" href="../all.html">全系列🌸</a>
+        <a class="pill" data-key="silver" href="../silver.html">純銀飾品✨</a>
+        <a class="pill" data-key="promo" href="../promo.html">優惠活動🎁</a>
+        <a class="pill" data-key="knowledge" href="../knowledge.html">飾品小知識💡</a>
+        <a class="pill" data-key="faq" href="../faq.html">相關問題❗️</a>
       </nav>
       <div id="memberHint" class="help" style="text-align:right"></div>
     </div>
@@ -57,24 +57,7 @@
         <div class="text" id="announceTopText"></div>
       </div>
 
-      
-<div class="card big">
-  <h2>🤍 歡迎來到 十年一日</h2>
-  <div class="en">TEN YEARS ONE DAY<br><span class="canva-italic">Every piece tells a story.</span></div>
-  <div style="margin-top:14px;line-height:1.9;font-size:14px;opacity:.9">
-    承載著十年以上的友情，<br>
-    繼續延續下去的動力。<br><br>
-    每一件飾品，<br>
-    都是時間累積的溫柔。<br><br>
-    <b>謝謝你，把重要的一天交給十年一日 ✨</b>
-  </div>
-</div>
-
-<div class="announce">
-  <span class="tag">公告</span>
-  <div class="text" id="announceBottomText"></div>
-</div>
-
+      <div id="adminLoginMount"></div>
     </section>
   </div>
 
@@ -89,9 +72,9 @@
     </div>
   </footer>
 
-  <a class="hidden-admin-link" href="admin/login.html" aria-label="admin"></a>
+  <a class="hidden-admin-link" href="../admin/login.html" aria-label="admin"></a>
 
-  <script src="assets/js/app.js"></script>
+  <script src="../assets/js/app.js"></script>
   <script>
     // inject icons
     (function(){
@@ -102,7 +85,7 @@
       document.getElementById("cartBtn").innerHTML = i.cart;
       document.getElementById("memberBtn").innerHTML = i.user;
     })();
-    TYOD.initHomePage();
+    TYOD.initAdminLogin();
   </script>
 </body>
 </html>
