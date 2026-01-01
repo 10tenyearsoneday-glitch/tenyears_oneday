@@ -337,3 +337,49 @@ footer{
   font-size:12px;padding:6px 10px;border-radius:999px;
   background:rgba(47,58,51,.10);
 }
+/* ===== 公告：整塊有淡黃色底 ===== */
+.notice-box{
+  background: rgba(255, 236, 179, 0.45);   /* 淡黃半透明 */
+  border: 1px solid rgba(245, 200, 90, 0.55);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.06);
+}
+
+/* ===== 優惠活動：整塊有顏色（依不同方案） ===== */
+.promo-item{
+  border-radius: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.06);
+}
+
+.promo-yellow{
+  background: rgba(255, 236, 179, 0.45);
+  border-color: rgba(245, 200, 90, 0.55);
+}
+.promo-blue{
+  background: rgba(194, 232, 255, 0.38);
+  border-color: rgba(120, 190, 240, 0.55);
+}
+.promo-pink{
+  background: rgba(255, 214, 226, 0.40);
+  border-color: rgba(235, 140, 170, 0.50);
+}
+.promo-purple{
+  background: rgba(226, 214, 255, 0.38);
+  border-color: rgba(165, 140, 235, 0.50);
+}
+
+/* 讓原本數字/標籤不要太搶（保留即可） */
+.promo-badge{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.55);
+}
