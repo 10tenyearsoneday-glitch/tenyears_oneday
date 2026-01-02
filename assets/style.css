@@ -175,19 +175,3 @@ footer{
   gap: 8px;
   font-size: .95rem;
 }
-
-.footer-links a{
-  color: rgba(219,230,215,.92);
-  text-decoration: none;
-  border-bottom: 1px dashed rgba(219,230,215,.35);
-  padding-bottom: 2px;
-}
-
-.footer-links a:hover{
-  color: #ffffff;
-  border-bottom-color: rgba(255,255,255,.8);
-}
-
-.footer-links .sep{
-  color: rgba(219,230,215,.55);
-}
