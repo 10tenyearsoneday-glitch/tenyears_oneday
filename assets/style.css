@@ -153,3 +153,18 @@ footer{
 #backToTop:hover {
   background: rgba(44,58,44,1);
 }
+.footer-social {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+.footer-social img {
+  width: 22px;
+  height: 22px;
+  filter: invert(90%);
+  opacity: .85;
+}
+.footer-social a:hover img {
+  opacity: 1;
+}
