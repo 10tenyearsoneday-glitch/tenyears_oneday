@@ -34,7 +34,7 @@ header{
 .icon .txt{font-size:.75rem;font-weight:600;letter-spacing:.02em}
 
 nav{
-  position:sticky; top:76px; z-index:29;
+  position:sticky; top:0px; z-index:29;
   background:rgba(255,255,255,.78);
   padding:10px 0 12px;
   border-bottom:1px solid rgba(0,0,0,.06);
