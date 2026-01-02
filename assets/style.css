@@ -193,9 +193,6 @@ footer{
   opacity: .9;
   filter: none; /* Header 是白底，用原色就清楚 */
 }
-
-/* 如果你希望更深一點（更清楚），開這行即可 */
-.icon.icon-img img{ opacity: 1; }
 /* 手機：右上 icon 不擠爆、不消失 */
 @media (max-width: 430px){
   .header-inner{
