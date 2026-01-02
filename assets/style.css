@@ -233,8 +233,4 @@ footer{
   }
 }
 header .header-inner{ padding: 10px 18px 8px !important; }
-header{ outline:3px solid red !important; }
-nav{ outline:3px solid blue !important; }
-main{ outline:3px solid lime !important; }
-.hero{ outline:3px solid orange !important; }
 
