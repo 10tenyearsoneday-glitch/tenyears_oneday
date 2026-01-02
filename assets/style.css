@@ -175,3 +175,24 @@ footer{
   gap: 8px;
   font-size: .95rem;
 }
+/* 右上角 icon：更像你想要的乾淨圓框圖示 */
+.icon-row .icon{
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(44,58,44,.18);
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 2px 10px rgba(0,0,0,.05);
+}
+
+/* 讓 img 圖示跟線條 svg 一樣置中、大小一致 */
+.icon.icon-img img{
+  width: 18px;
+  height: 18px;
+  display: block;
+  opacity: .85;
+  filter: none; /* Header 是白底，用原色就清楚 */
+}
+
+/* 如果你希望更深一點（更清楚），開這行即可 */
+.icon.icon-img img{ opacity: 1; }
