@@ -135,3 +135,21 @@ footer{
 }
 .box.yellow{border-color:rgba(255,193,7,.8); background:rgba(255,235,59,.15)}
 .box.red{border-color:rgba(239,68,68,.8); background:rgba(239,68,68,.10)}
+#backToTop {
+  position: fixed;
+  right: 16px;
+  bottom: 24px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(44,58,44,.85);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: none;
+  z-index: 999;
+}
+#backToTop:hover {
+  background: rgba(44,58,44,1);
+}
