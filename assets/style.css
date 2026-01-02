@@ -196,3 +196,31 @@ footer{
 
 /* 如果你希望更深一點（更清楚），開這行即可 */
 .icon.icon-img img{ opacity: 1; }
+/* 手機：右上 icon 不擠爆、不消失 */
+@media (max-width: 430px){
+  .header-inner{
+    padding: 12px 12px 8px;
+    gap: 8px;
+    flex-wrap: nowrap;        /* 不讓 header 亂換行撐高 */
+  }
+
+  .brand h1{ font-size: 1.15rem; }
+  .brand .sub{ font-size: .82rem; }
+
+  .icon-row{
+    gap: 8px;
+    flex: 0 0 auto;           /* 不被壓扁成怪形 */
+  }
+
+  .icon-row .icon{
+    width: 34px;
+    height: 34px;
+  }
+
+  .icon-row .icon svg,
+  .icon-row .icon img{
+    width: 16px;
+    height: 16px;
+  }
+}
+
