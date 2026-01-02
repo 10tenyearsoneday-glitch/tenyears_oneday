@@ -230,4 +230,19 @@ footer{
   }
 }
 header .header-inner{ padding: 10px 18px 8px !important; }
+/* 通殺：把常見的預留空白 spacer 清掉 */
+.spacer, .offset, .header-spacer, .nav-spacer, .sticky-spacer{
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 保險：header/nav 下方不要額外撐高 */
+header{ margin:0 !important; padding-bottom:0 !important; }
+nav{ margin:0 !important; }
+
+/* 再保險：內容貼上來一點 */
+main{ padding-top: 6px !important; }
+.hero{ margin-top: 6px !important; }
+
 
