@@ -233,4 +233,19 @@ footer{
   }
 }
 header .header-inner{ padding: 10px 18px 8px !important; }
+/* 右上 icon 按下狀態（點擊瞬間變深色） */
+.icon-row .icon{
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.icon-row .icon:active{
+  background: #2c3a2c;
+  border-color: #2c3a2c;
+}
+
+.icon-row .icon:active svg,
+.icon-row .icon:active img{
+  filter: invert(1);
+  opacity: 1;
+}
 
