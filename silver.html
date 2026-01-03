@@ -17,7 +17,7 @@
       <h1>十年一日</h1>
       <div class="sub">tenyears_oneday</div>
     </div>
-  <div class="icon-row">
+    <div class="icon-row">
   <a class="icon" href="search.html" aria-label="搜尋" title="搜尋">
     <svg viewBox="0 0 24 24">
       <circle cx="11" cy="11" r="7"></circle>
@@ -54,8 +54,8 @@
 <nav>
   <div class="nav-row">
     <a href="index.html" class="">關於我們</a>
-<a href="all.html" class="">全系列🌸</a>
-<a href="silver.html" class="active">純銀飾品✨</a>
+<a href="all.html" class="active">全系列🌸</a>
+<a href="silver.html" class="">純銀飾品✨</a>
 <a href="promo.html" class="">優惠活動🎁</a>
 <a href="knowledge.html" class="">飾品小知識💡</a>
 <a href="faq.html" class="">相關問題❗️</a>
@@ -63,146 +63,73 @@
 </nav>
 
 <main>
-
-<div class="section-title">純銀飾品 ✨</div>
-<div class="subcats">
-  <a href="#all">全部</a>
-  <a href="#necklace">項鍊</a>
-  <a href="#bracelet">手鏈</a>
-  <a href="#earring">耳環</a>
-  <a href="#ring">戒指</a>
-  <a href="#other">其他</a>
+<div class="subcats" id="subcats">
+  <button class="chip active" data-filter="全部" type="button">全部</button>
+  <button class="chip" data-filter="項鍊" type="button">項鍊</button>
+  <button class="chip" data-filter="手鏈" type="button">手鏈</button>
+  <button class="chip" data-filter="耳環" type="button">耳環</button>
+  <button class="chip" data-filter="戒指" type="button">戒指</button>
+  <button class="chip" data-filter="其他" type="button">其他</button>
 </div>
-
-<h3 id="all" class="section-title" style="font-size:1.1rem;margin-top:8px">全部</h3>
 <div class="grid">
-  
-<div class="product">
-  <div class="thumb">圖片</div>
-  <div class="body">
-    <div>
-      <div class="name">純銀項鍊 S</div>
-      <div class="meta">純銀｜項鍊</div>
+
+  <div class="product" data-cat="項鍊">
+    <div class="thumb">圖片</div>
+    <div class="body">
+      <div>
+        <div class="name">項鍊 A</div>
+        <div class="meta">純銀飾品｜項鍊</div>
+      </div>
+      <div class="price">NT$ 1280</div>
     </div>
-    <div class="price">NT$ 1680</div>
   </div>
+
+  <div class="product" data-cat="耳環">
+    <div class="thumb">圖片</div>
+    <div class="body">
+      <div>
+        <div class="name">耳環 B</div>
+        <div class="meta">純銀飾品｜耳環</div>
+      </div>
+      <div class="price">NT$ 880</div>
+    </div>
+  </div>
+
+  <div class="product" data-cat="戒指">
+    <div class="thumb">圖片</div>
+    <div class="body">
+      <div>
+        <div class="name">戒指 C</div>
+        <div class="meta">純銀飾品｜戒指</div>
+      </div>
+      <div class="price">NT$ 1580</div>
+    </div>
+  </div>
+
+  <div class="product" data-cat="其他">
+    <div class="thumb">圖片</div>
+    <div class="body">
+      <div>
+        <div class="name">吊飾 D</div>
+        <div class="meta">純銀飾品｜其他（自動歸類）</div>
+      </div>
+      <div class="price">NT$ 420</div>
+    </div>
+  </div>
+
+  <div class="product" data-cat="手鏈">
+    <div class="thumb">圖片</div>
+    <div class="body">
+      <div>
+        <div class="name">（待新增）</div>
+        <div class="meta">純銀飾品｜手鏈</div>
+      </div>
+      <div class="price">NT$ 0</div>
+    </div>
+  </div>
+
 </div>
 
-<div class="product">
-  <div class="thumb">圖片</div>
-  <div class="body">
-    <div>
-      <div class="name">純銀手鏈 T</div>
-      <div class="meta">純銀｜手鏈</div>
-    </div>
-    <div class="price">NT$ 1480</div>
-  </div>
-</div>
-
-<div class="product">
-  <div class="thumb">圖片</div>
-  <div class="body">
-    <div>
-      <div class="name">純銀耳環 V</div>
-      <div class="meta">純銀｜耳環</div>
-    </div>
-    <div class="price">NT$ 1180</div>
-  </div>
-</div>
-
-<div class="product">
-  <div class="thumb">圖片</div>
-  <div class="body">
-    <div>
-      <div class="name">純銀戒指 W</div>
-      <div class="meta">純銀｜戒指</div>
-    </div>
-    <div class="price">NT$ 1580</div>
-  </div>
-</div>
-
-<div class="product">
-  <div class="thumb">圖片</div>
-  <div class="body">
-    <div>
-      <div class="name">純銀吊飾 U</div>
-      <div class="meta">純銀｜其他（自動歸類）</div>
-    </div>
-    <div class="price">NT$ 680</div>
-  </div>
-</div>
-
-</div>
-
-<h3 id="necklace" class="section-title" style="font-size:1.1rem">項鍊</h3>
-<div class="grid">
-<div class="product">
-  <div class="thumb">圖片</div>
-  <div class="body">
-    <div>
-      <div class="name">純銀項鍊 S</div>
-      <div class="meta">純銀｜項鍊</div>
-    </div>
-    <div class="price">NT$ 1680</div>
-  </div>
-</div>
-</div>
-
-<h3 id="bracelet" class="section-title" style="font-size:1.1rem">手鏈</h3>
-<div class="grid">
-<div class="product">
-  <div class="thumb">圖片</div>
-  <div class="body">
-    <div>
-      <div class="name">純銀手鏈 T</div>
-      <div class="meta">純銀｜手鏈</div>
-    </div>
-    <div class="price">NT$ 1480</div>
-  </div>
-</div>
-</div>
-
-<h3 id="earring" class="section-title" style="font-size:1.1rem">耳環</h3>
-<div class="grid">
-<div class="product">
-  <div class="thumb">圖片</div>
-  <div class="body">
-    <div>
-      <div class="name">純銀耳環 V</div>
-      <div class="meta">純銀｜耳環</div>
-    </div>
-    <div class="price">NT$ 1180</div>
-  </div>
-</div>
-</div>
-
-<h3 id="ring" class="section-title" style="font-size:1.1rem">戒指</h3>
-<div class="grid">
-<div class="product">
-  <div class="thumb">圖片</div>
-  <div class="body">
-    <div>
-      <div class="name">純銀戒指 W</div>
-      <div class="meta">純銀｜戒指</div>
-    </div>
-    <div class="price">NT$ 1580</div>
-  </div>
-</div>
-</div>
-
-<h3 id="other" class="section-title" style="font-size:1.1rem">其他（自動歸類）</h3>
-<div class="grid">
-<div class="product">
-  <div class="thumb">圖片</div>
-  <div class="body">
-    <div>
-      <div class="name">純銀吊飾 U</div>
-      <div class="meta">純銀｜其他（自動歸類）</div>
-    </div>
-    <div class="price">NT$ 680</div>
-  </div>
-</div>
-</div>
 
 </main>
 
@@ -230,13 +157,40 @@
 <button id="backToTop" aria-label="回到頂端">↑</button>
 
 <script>
+  // 回到頂端
   const btn = document.getElementById("backToTop");
-  window.addEventListener("scroll", () => {
-    btn.style.display = window.scrollY > 300 ? "block" : "none";
+  if (btn) {
+    window.addEventListener("scroll", () => {
+      btn.style.display = window.scrollY > 300 ? "block" : "none";
+    });
+    btn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  // 子分類篩選
+  const chips = document.querySelectorAll("#subcats .chip");
+  const products = document.querySelectorAll(".product");
+
+  function applyFilter(filter) {
+    products.forEach(p => {
+      const cat = p.dataset.cat || "其他";
+      const show = (filter === "全部" || cat === filter);
+      p.style.display = show ? "" : "none";
+    });
+  }
+
+  chips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      chips.forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+
+      const f = chip.dataset.filter;
+      applyFilter(f);
+    });
   });
-  btn.addEventListener("click", () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+
+  applyFilter("全部");
 </script>
 
 </body>
