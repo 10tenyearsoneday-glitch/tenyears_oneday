@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>商品詳情｜十年一日</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+  <main>
+    <div class="detail">
+      <a class="back" href="javascript:history.back()">← 返回</a>
+
+      <div class="detail-grid">
+        <div class="detail-media">
+          <img id="pImg" alt="商品圖片" />
+        </div>
+
+        <div class="detail-info">
+          <h2 id="pName">商品名稱</h2>
+          <div class="detail-meta" id="pMeta">分類</div>
+          <div class="detail-price" id="pPrice">NT$ 0</div>
+
+          <div class="detail-desc" id="pDesc">
+            這裡是商品介紹。
+          </div>
+
+          <div class="detail-actions">
+            <button class="btn" type="button" disabled>加入購物車（稍後開放）</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="include.js"></script>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+
+    const name = params.get("name") || "商品";
+    const price = params.get("price") || "0";
+    const cat = params.get("cat") || "";
+    const series = params.get("series") || "";
+    const img = params.get("img") || "";
+    const desc = params.get("desc") || "";
+
+    document.title = `${name}｜十年一日`;
+
+    document.getElementById("pName").textContent = name;
+    document.getElementById("pPrice").textContent = `NT$ ${price}`;
+    document.getElementById("pMeta").textContent = [series, cat].filter(Boolean).join("｜") || "商品";
+
+    const pImg = document.getElementById("pImg");
+    pImg.src = img || "https://via.placeholder.com/900x900?text=TEN+YEARS+ONE+DAY";
+    pImg.loading = "lazy";
+
+    document.getElementById("pDesc").textContent =
+      desc || "（商品介紹待補）";
+  </script>
+</body>
+</html>
