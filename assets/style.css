@@ -309,4 +309,19 @@ html, body { overflow-x: hidden; }
 .nav-row{
   white-space: nowrap;
 }
+.detail{ max-width:980px; margin:0 auto; padding: 8px 18px 24px; }
+.detail .back{ display:inline-block; margin: 6px 0 14px; color:#5d6b59; text-decoration:none; }
+.detail-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+.detail-media img{ width:100%; border-radius:18px; box-shadow: 0 2px 14px rgba(0,0,0,.08); background: rgba(255,255,255,.7); }
+.detail-info h2{ margin:0 0 8px; font-size:1.6rem; font-weight:500; }
+.detail-meta{ color: rgba(47,58,44,.62); margin-bottom:10px; }
+.detail-price{ font-size:1.25rem; margin: 10px 0 14px; }
+.detail-desc{ line-height:1.7; color: rgba(47,58,44,.82); background: rgba(255,255,255,.6); border-radius:14px; padding:14px; }
+.detail-actions{ margin-top:14px; }
+.btn{ width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(0,0,0,.08); background:#2c3a2c; color:#fff; font-size:1rem; }
+.btn:disabled{ opacity:.55; }
+
+@media (max-width: 820px){
+  .detail-grid{ grid-template-columns: 1fr; }
+}
 
