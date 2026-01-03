@@ -247,23 +247,20 @@
   const chips = document.querySelectorAll("#subcats .chip");
   const products = document.querySelectorAll(".product");
 
-  function applyFilter(filter){
-    products.forEach(p => {
-      const cat = p.dataset.cat || "其他";
-      const show = (filter === "全部" || cat === filter);
-      p.style.display = show ? "" : "none";
-    });
-  }
-
-  chips.forEach(chip => {
-    chip.addEventListener("click", () => {
-      chips.forEach(c => c.classList.remove("active"));
-      chip.classList.add("active");
-
-      const f = chip.dataset.filter;
-      applyFilter(f);
-    });
+ function applyFilter(filter){
+  // 1) 商品篩選
+  products.forEach(p => {
+    const cat = p.dataset.cat || "其他";
+    const show = (filter === "全部" || cat === filter);
+    p.style.display = show ? "" : "none";
   });
+
+  // 2) 隱藏/顯示「全部」按鈕
+  const allChip = document.querySelector('#subcats .chip[data-filter="全部"]');
+  if (allChip) {
+    allChip.style.display = (filter === "全部") ? "" : "none";
+  }
+}
 
   // 預設顯示全部
   applyFilter("全部");
