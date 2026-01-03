@@ -242,11 +242,10 @@
   btn.addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
-</script>
 <script>
- <script>
   const chips = document.querySelectorAll("#subcats .chip");
   const products = document.querySelectorAll(".product");
+
   function applyFilter(filter){
     products.forEach(p => {
       const cat = p.dataset.cat || "其他";
