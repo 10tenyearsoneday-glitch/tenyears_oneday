@@ -235,18 +235,22 @@
 <button id="backToTop" aria-label="回到頂端">↑</button>
 
 <script>
+  // 回到頂端
   const btn = document.getElementById("backToTop");
-  window.addEventListener("scroll", () => {
-    btn.style.display = window.scrollY > 300 ? "block" : "none";
-  });
-  btn.addEventListener("click", () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-<script>
+  if (btn) {
+    window.addEventListener("scroll", () => {
+      btn.style.display = window.scrollY > 300 ? "block" : "none";
+    });
+    btn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  // 子分類篩選
   const chips = document.querySelectorAll("#subcats .chip");
   const products = document.querySelectorAll(".product");
 
-  function applyFilter(filter){
+  function applyFilter(filter) {
     products.forEach(p => {
       const cat = p.dataset.cat || "其他";
       const show = (filter === "全部" || cat === filter);
@@ -264,7 +268,6 @@
     });
   });
 
-  // 預設顯示全部
   applyFilter("全部");
 </script>
 
