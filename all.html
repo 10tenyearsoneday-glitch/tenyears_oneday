@@ -236,6 +236,16 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 </script>
+<script>
+  const chips = document.querySelectorAll("#subcats .chip");
+  chips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      chips.forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      // 先不做篩選，下一步才做
+    });
+  });
+</script>
 
 </body>
 </html>
