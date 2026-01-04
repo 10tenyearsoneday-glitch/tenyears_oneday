@@ -35,17 +35,7 @@
   z-index:9999;
 }
     .modal.open{display:flex}
-    .panel{width:min(720px,100%);background:rgba(255.panel{
-  width:min(720px,100%);
-  background:rgba(255,255,255,.92);
-  backdrop-filter:blur(10px);
-  border-radius:18px;
-  padding:16px 16px 14px;
-  border:1px solid rgba(0,0,0,.08);
-
-  max-height: calc(100vh - 36px);  /* ✅ 不超出視窗 */
-  overflow: auto;                  /* ✅ 超出就捲動 */
-}
+    .panel{width:min(720px,100%);background:rgba(255.panel{width:min(720px,100%);background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-radius:18px;padding:16px 16px 14px;border:1px solid rgba(0,0,0,.08);max-height: calc(100vh - 36px);overflow: auto;}
     .panel h3{margin:6px 0 12px;font-weight:600;letter-spacing:.06em}
     .form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .form .full{grid-column:1/-1}
@@ -394,17 +384,23 @@
         await loadProducts();
         showToast("新增成功");
       }else{
-        // ✅ 修改（PUT）
-       const res = await fetch(`${GAS_URL}?path=products&id=${encodeURIComponent(editingId)}&key=${encodeURIComponent(ADMIN_KEY)}&method=DELETE`, {
-  method: "POST"
-});
-        const out = await res.json();
-        if(!res.ok || out?.error) throw new Error(out?.error || "PUT_FAILED");
+  // ✅ 修改（PUT）— 用 POST + method=PUT
+  const res = await fetch(
+    `${GAS_URL}?path=products&id=${encodeURIComponent(editingId)}&key=${encodeURIComponent(ADMIN_KEY)}&method=PUT`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }
+  );
 
-        closeModal();
-        await loadProducts();
-        showToast("儲存成功");
-      }
+  const out = await res.json();
+  if(!res.ok || out?.error) throw new Error(out?.error || "PUT_FAILED");
+
+  closeModal();
+  await loadProducts();
+  showToast("儲存成功");
+}
     }catch(e){
       console.error(e);
       showToast("儲存失敗（請檢查 ADMIN_KEY / id 是否重複 / GAS 是否已部署）", false);
