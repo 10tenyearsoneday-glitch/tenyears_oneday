@@ -507,3 +507,25 @@ main{
 .field .row input{flex:1}
 .img-row{display:flex;gap:8px;align-items:center;margin-top:8px;}
 .btn-mini{border:none;border-radius:999px;padding:8px 10px;background:rgba(0,0,0,.08);cursor:pointer}
+<div class="full">
+  <div class="field">
+    <div class="label">商品圖（上傳到 assets/products/）</div>
+
+    <label for="imgFile" class="btn2 secondary" style="display:inline-block;margin:6px 0;">選擇圖片</label>
+    <input id="imgFile" type="file" accept="image/*" style="display:none;">
+
+    <div class="hint">選檔後會自動產生建議檔名與圖片網址（你只要把檔案丟到 GitHub 對應資料夾即可）</div>
+
+    <div class="row">
+      <input id="imgSlug" type="text" placeholder="建議檔名（例如 O-D.jpg）">
+      <button id="copySlug" type="button" class="btn-mini">複製檔名</button>
+    </div>
+
+    <div class="row">
+      <input id="imgUrl" type="text" placeholder="圖片網址（會自動填）">
+      <button id="copyUrl" type="button" class="btn-mini">複製網址</button>
+    </div>
+
+    <img id="imgPreview" alt="預覽" style="max-width:220px;border-radius:12px;display:none;margin-top:10px;">
+  </div>
+</div>
