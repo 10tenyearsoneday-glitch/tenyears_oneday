@@ -505,3 +505,5 @@ main{
 }
 .field .row{display:flex;gap:8px;align-items:center}
 .field .row input{flex:1}
+.img-row{display:flex;gap:8px;align-items:center;margin-top:8px;}
+.btn-mini{border:none;border-radius:999px;padding:8px 10px;background:rgba(0,0,0,.08);cursor:pointer}
