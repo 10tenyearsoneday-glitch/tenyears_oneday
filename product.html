@@ -26,7 +26,7 @@
           <div class="detail-desc" id="pDesc">這裡是商品介紹。</div>
 
           <div class="detail-actions">
-            <button class="btn" id="btnAddCart" type="button">加入購物車</button>
+            <button class="btn" id="btnAddCart" type="button" disabled>載入中...</button>
             <div id="cartToast" style="margin-top:10px;font-size:.9rem;opacity:.85;"></div>
           </div>
         </div>
@@ -50,7 +50,6 @@
     const btnAddCart = document.getElementById("btnAddCart");
     const cartToast  = document.getElementById("cartToast");
 
-    const CART_KEY = "tenyears_cart_v1";
     let CURRENT_PRODUCT = null;
 
     function toast(msg, ok=true){
@@ -60,46 +59,40 @@
       setTimeout(()=>{ cartToast.textContent = ""; }, 1800);
     }
 
+    // ====== Cart (for cart.html) ======
+    const CART_KEY = "ten_cart"; // ✅ 要跟 cart.html 一樣
+
     function readCart(){
       try{
         const raw = localStorage.getItem(CART_KEY);
-        const obj = raw ? JSON.parse(raw) : null;
-        if(obj && Array.isArray(obj.items)) return obj;
-      }catch(e){}
-      return { items: [], updatedAt: Date.now() };
-    }
-
-    function writeCart(cart){
-      cart.updatedAt = Date.now();
-      localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    }
-
-    function addToCart(p, chosenImage){
-      const cart = readCart();
-
-      const pid = String(p.id || "").trim();
-      if(!pid) return { ok:false, error:"NO_ID" };
-
-      const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
-
-      const idx = cart.items.findIndex(x => String(x.id) === pid);
-      if(idx >= 0){
-        cart.items[idx].qty = Number(cart.items[idx].qty || 0) + 1;
-        if(chosenImage) cart.items[idx].image = chosenImage;
-      }else{
-        cart.items.unshift({
-          id: pid,
-          title: String(p.title || "（未命名）"),
-          price,
-          image: String(chosenImage || p.image || ""),
-          qty: 1
-        });
+        const arr = JSON.parse(raw || "[]");
+        return Array.isArray(arr) ? arr : [];
+      }catch(e){
+        return [];
       }
-
-      writeCart(cart);
-      return { ok:true, cart };
     }
 
+    function writeCart(arr){
+      localStorage.setItem(CART_KEY, JSON.stringify(arr));
+      window.dispatchEvent(new Event("cart:changed"));
+    }
+
+    function addToCart(productId, qty=1){
+      const cart = readCart();
+      const pid = String(productId || "").trim();
+      if(!pid) return false;
+
+      const i = cart.findIndex(x => String(x.id) === pid);
+      if(i === -1){
+        cart.push({ id: pid, qty: Math.max(1, Number(qty||1)) });
+      }else{
+        cart[i].qty = Math.max(1, Number(cart[i].qty||1) + Math.max(1, Number(qty||1)));
+      }
+      writeCart(cart);
+      return true;
+    }
+
+    // ====== Thumbs ======
     function buildThumbs(mainImage, imagesField){
       let list = [];
 
@@ -141,7 +134,6 @@
         btn.addEventListener("click", () => {
           const src = btn.getAttribute("data-src") || "";
           if(!src) return;
-
           pImg.src = src;
 
           thumbs.querySelectorAll(".thumb-btn").forEach(b => b.classList.remove("active"));
@@ -150,9 +142,12 @@
       });
     }
 
+    // ====== Load product ======
     async function loadOne(){
       if(!id){
         pName.textContent = "找不到商品";
+        btnAddCart.disabled = true;
+        btnAddCart.textContent = "無法加入";
         return;
       }
 
@@ -179,68 +174,34 @@
 
         buildThumbs(main, p.images);
 
-        if(btnAddCart){
-          btnAddCart.disabled = false;
-          btnAddCart.textContent = "加入購物車";
-        }
-
+        btnAddCart.disabled = false;
+        btnAddCart.textContent = "加入購物車";
       }catch(err){
         console.error(err);
         pName.textContent = "載入失敗，請稍後再試";
-        if(btnAddCart) btnAddCart.disabled = true;
+        btnAddCart.disabled = true;
+        btnAddCart.textContent = "無法加入";
       }
     }
 
-    if(btnAddCart){
-      btnAddCart.addEventListener("click", () => {
-        if(!CURRENT_PRODUCT){
-          toast("商品尚未載入完成", false);
-          return;
-        }
+    // ====== Click add cart ======
+    btnAddCart?.addEventListener("click", () => {
+      if(!CURRENT_PRODUCT){
+        toast("商品尚未載入完成", false);
+        return;
+      }
+      const ok = addToCart(CURRENT_PRODUCT.id, 1);
+      if(!ok){
+        toast("加入失敗", false);
+        return;
+      }
 
-        const chosen = pImg?.src || CURRENT_PRODUCT.image || "";
-        const r = addToCart(CURRENT_PRODUCT, chosen);
+      toast("已加入購物車 ✅");
 
-        if(!r.ok){
-          toast("加入失敗", false);
-          return;
-        }
-
-        toast("已加入購物車 ✅");
-      });
-    }
-const CART_KEY = "ten_cart";
-function readCart(){
-  try{
-    const raw = localStorage.getItem(CART_KEY);
-    const arr = JSON.parse(raw || "[]");
-    return Array.isArray(arr) ? arr : [];
-  }catch(e){ return []; }
-}
-function writeCart(arr){
-  localStorage.setItem(CART_KEY, JSON.stringify(arr));
-  window.dispatchEvent(new Event("cart:changed"));
-}
-
-const btnAddCart = document.getElementById("btnAddCart");
-
-function addToCart(id, qty=1){
-  const cart = readCart();
-  const i = cart.findIndex(x => String(x.id) === String(id));
-  if(i === -1){
-    cart.push({ id: String(id), qty: Number(qty||1) });
-  }else{
-    cart[i].qty = Math.max(1, Number(cart[i].qty||1) + Number(qty||1));
-  }
-  writeCart(cart);
-}
-
-// 在 loadOne() 成功拿到 p 之後，加入：
-btnAddCart?.addEventListener("click", () => {
-  addToCart(id, 1);
-  // 你想留在原頁也行：把下面改成提示即可
-  location.href = "cart.html";
-});
+      // ✅ 要不要加入後直接跳購物車？
+      // 想要就打開這行；不想跳就註解掉
+      location.href = "cart.html";
+    });
 
     loadOne();
   </script>
