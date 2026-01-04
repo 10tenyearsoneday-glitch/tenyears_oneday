@@ -356,4 +356,112 @@ main{
 #productGrid{
   display:grid;
 }
+/* 商品列表網格 */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap:14px;
+}
 
+/* 桌機加寬 */
+@media (min-width: 860px){
+  .grid{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap:16px;
+  }
+}
+
+/* 卡片本體：a.product-card */
+.product-card{
+  display:block;
+  text-decoration:none;
+  color:inherit;
+  border-radius:18px;
+  overflow:hidden;
+  background:rgba(255,255,255,.70);
+  border:1px solid rgba(0,0,0,.06);
+  box-shadow:0 10px 30px rgba(0,0,0,.06);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.product-card:active{ transform: scale(.995); }
+
+@media (hover:hover){
+  .product-card:hover{
+    transform: translateY(-2px);
+    box-shadow:0 14px 40px rgba(0,0,0,.10);
+    border-color: rgba(0,0,0,.10);
+  }
+}
+
+/* 圖片區 */
+.product-card .thumb{
+  position:relative;
+  aspect-ratio: 4 / 3;
+  background: rgba(255,255,255,.55);
+}
+
+/* 真的圖片（之後有圖就會用到） */
+.product-card .thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+/* 沒圖時的示意 */
+.product-card .thumb .placeholder{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.9rem;
+  opacity:.5;
+  letter-spacing:.12em;
+}
+
+/* 右上角狀態徽章 */
+.product-card .badge{
+  position:absolute;
+  top:10px;
+  right:10px;
+  padding:6px 10px;
+  font-size:.75rem;
+  border-radius:999px;
+  background: rgba(0,0,0,.55);
+  color:#fff;
+  backdrop-filter: blur(6px);
+}
+
+/* 下方資訊區 */
+.product-card .body{
+  padding:12px 12px 14px;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.product-card .name{
+  font-size: .98rem;
+  line-height:1.35;
+  letter-spacing:.02em;
+}
+
+.product-card .meta{
+  margin-top:6px;
+  font-size:.78rem;
+  opacity:.7;
+}
+
+.product-card .price{
+  white-space:nowrap;
+  font-weight:700;
+  color:#6c7f67;
+  font-size: .98rem;
+}
+
+/* 小螢幕更舒服 */
+@media (max-width: 380px){
+  .grid{ grid-template-columns: 1fr; }
+}
