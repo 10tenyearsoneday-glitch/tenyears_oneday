@@ -27,3 +27,23 @@ async function loadHeader() {
 }
 
 window.addEventListener("DOMContentLoaded", loadHeader);
+// include.js 最後面加
+(function(){
+  const CART_KEY = "ten_cart";
+  function countCart(){
+    try{
+      const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+      if(!Array.isArray(arr)) return 0;
+      return arr.reduce((s,x)=>s+Math.max(1,Number(x.qty||1)),0);
+    }catch(e){ return 0; }
+  }
+  function render(){
+    const el = document.getElementById("cartCount");
+    if(!el) return;
+    const n = countCart();
+    el.textContent = n > 0 ? String(n) : "";
+    el.style.display = n > 0 ? "inline-flex" : "none";
+  }
+  window.addEventListener("cart:changed", render);
+  render();
+})();
