@@ -42,11 +42,66 @@
   const API_BASE = "https://tenyears-oneday-api.onrender.com";
   const id = new URLSearchParams(location.search).get("id");
 
-  const pImg = document.getElementById("pImg");
-  const pName = document.getElementById("pName");
-  const pMeta = document.getElementById("pMeta");
+  const pImg   = document.getElementById("pImg");
+  const pName  = document.getElementById("pName");
+  const pMeta  = document.getElementById("pMeta");
   const pPrice = document.getElementById("pPrice");
-  const pDesc = document.getElementById("pDesc");
+  const pDesc  = document.getElementById("pDesc");
+  const thumbs = document.getElementById("thumbs");
+
+  function buildThumbs(mainImage, imagesField){
+    let list = [];
+
+    // imagesField 可能是：多行字串 / 單一字串 / 陣列
+    if (Array.isArray(imagesField)) {
+      list = imagesField;
+    } else {
+      list = String(imagesField || "")
+        .split("\n")
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    // 主圖放第一張（去重）
+    const all = [mainImage, ...list].filter(Boolean);
+    const uniq = [];
+    const seen = new Set();
+    for (const u of all){
+      if(!seen.has(u)){
+        seen.add(u);
+        uniq.push(u);
+      }
+    }
+
+    if(!thumbs) return;
+
+    // 只有一張 → 不顯示縮圖列
+    if(uniq.length <= 1){
+      thumbs.innerHTML = "";
+      thumbs.style.display = "none";
+      return;
+    }
+
+    thumbs.style.display = "flex";
+    thumbs.innerHTML = uniq.map((u, i) => `
+      <button class="thumb-btn ${i===0 ? "active":""}" type="button" data-src="${u}">
+        <img src="${u}" alt="縮圖 ${i+1}" loading="lazy">
+      </button>
+    `).join("");
+
+    thumbs.querySelectorAll(".thumb-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const src = btn.getAttribute("data-src") || "";
+        if(!src) return;
+
+        // ✅ 點哪張就換哪張（不要再重設回 main）
+        pImg.src = src;
+
+        thumbs.querySelectorAll(".thumb-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  }
 
   async function loadOne(){
     if(!id){
@@ -55,95 +110,37 @@
     }
 
     try{
-      const res = await fetch(`${API_BASE}/products`, { cache: "no-store" });
+      // ✅ 直接用單一商品 API
+      const res = await fetch(`${API_BASE}/products/${encodeURIComponent(id)}`, { cache: "no-store" });
       if(!res.ok) throw new Error("API error " + res.status);
-      const list = await res.json();
-
-      const p = Array.isArray(list) ? list.find(x => String(x.id) === String(id)) : null;
-      if(!p){
-        pName.textContent = "商品不存在或已下架";
-        return;
-      }
+      const p = await res.json();
 
       document.title = `${p.title || "商品"}｜十年一日`;
 
       const cat = p.category || "其他";
       const series = p.series || "全系列";
-      const price = (typeof p.price === "number") ? p.price : 0;
+      const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
 
       pName.textContent = p.title || "（未命名）";
       pMeta.textContent = `${series}｜${cat}`;
       pPrice.textContent = `NT$ ${price}`;
       pDesc.textContent = p.desc || "（商品介紹待補）";
 
-const img = p.image || "";
-pImg.src = img || "assets/placeholder.png";
+      const main = p.image || "assets/placeholder.png";
+      pImg.src = main;
+
+      // ✅ 只在載入時建縮圖一次
+      buildThumbs(main, p.images);
 
     }catch(err){
       console.error(err);
       pName.textContent = "載入失敗，請稍後再試";
     }
-    const thumbs = document.getElementById("thumbs");
-
-function buildThumbs(mainImage, imagesField){
-  // imagesField 可能是：多行字串 / 單一字串 / 陣列
-  let list = [];
-
-  if(Array.isArray(imagesField)){
-    list = imagesField;
-  }else{
-    list = String(imagesField || "")
-      .split("\n")
-      .map(s => s.trim())
-      .filter(Boolean);
-  }
-
-  // 把主圖放到第一張（避免重複）
-  const all = [mainImage, ...list].filter(Boolean);
-  const uniq = [];
-  const seen = new Set();
-  for(const u of all){
-    if(!seen.has(u)){
-      seen.add(u);
-      uniq.push(u);
-    }
-  }
-
-  if(!thumbs) return;
-
-  // 只有一張就不顯示縮圖列
-  if(uniq.length <= 1){
-    thumbs.innerHTML = "";
-    thumbs.style.display = "none";
-    return;
-  }
-
-  thumbs.style.display = "flex";
-  thumbs.innerHTML = uniq.map((u, i) => `
-    <button class="thumb-btn ${i===0 ? "active":""}" type="button" data-src="${u}">
-      <img src="${u}" alt="縮圖 ${i+1}" loading="lazy">
-    </button>
-  `).join("");
-
-  thumbs.querySelectorAll(".thumb-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const src = btn.getAttribute("data-src") || "";
-      if(!src) return;
-      pImg.src = src;
-const main = p.image || "assets/placeholder.png";
-pImg.src = main;
-buildThumbs(main, p.images);
-
-      thumbs.querySelectorAll(".thumb-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-    });
-  });
-}
-
   }
 
   loadOne();
 </script>
+
 
 </body>
 </html>
