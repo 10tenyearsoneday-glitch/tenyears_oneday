@@ -63,11 +63,15 @@ function productCard(p){
   const price = (typeof p.price === "number") ? p.price : 0;
   const title = p.title || "（未命名）";
 
-  // 先示意圖：之後你有 p.image 再換成 <img>
+  const img = p.image || "assets/placeholder.png"; // ✅ 沒圖就用本機 placeholder
+
   return `
-    <a class="product-link" href="product.html?id=${encodeURIComponent(id)}" aria-label="${title}">
+    <a class="product-link" href="product.html?id=${encodeURIComponent(id)}" title="${title}">
       <div class="product" data-cat="${cat}" data-series="${series}">
-        <div class="thumb">圖片</div>
+        <div class="thumb">
+          <img src="${img}" alt="${title}" loading="lazy">
+        </div>
+
         <div class="body">
           <div>
             <div class="name">${title}</div>
@@ -79,6 +83,7 @@ function productCard(p){
     </a>
   `;
 }
+
 
   function render(products){
     grid.innerHTML = products.map(productCard).join("");
