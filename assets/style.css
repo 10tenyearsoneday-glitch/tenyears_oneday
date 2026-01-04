@@ -465,3 +465,11 @@ main{
 @media (max-width: 380px){
   .grid{ grid-template-columns: 1fr; }
 }
+.product-link{
+  display:block;
+  text-decoration:none;
+  color:inherit;
+}
+.product-link:active .product{
+  transform: translateY(1px);
+}
