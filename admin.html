@@ -28,24 +28,38 @@
   inset:0;
   background:rgba(0,0,0,.35);
   display:none;
-  align-items:flex-start;      /* ✅ 不要硬置中，避免上面被切掉 */
+  align-items:flex-start;        /* 不硬置中，避免上面被切 */
   justify-content:center;
   padding:18px;
-  overflow:auto;               /* ✅ 內容超出就可以捲 */
+  overflow:auto;                 /* 超出就可以捲 */
   z-index:9999;
 }
-    .modal.open{display:flex}
-    .panel{width:min(720px,100%);background:rgba(255.panel{width:min(720px,100%);background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-radius:18px;padding:16px 16px 14px;border:1px solid rgba(0,0,0,.08);max-height: calc(100vh - 36px); /* ✅ 不超出視窗 */ overflow: auto;}
-    .panel h3{margin:6px 0 12px;font-weight:600;letter-spacing:.06em}
-    .form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .form .full{grid-column:1/-1}
-    label{display:block;font-size:.82rem;opacity:.75;margin:2px 0 6px}
-    input, select, textarea{
-      width:100%;padding:10px 10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);
-      background:rgba(255,255,255,.85);outline:none;
-    }
-    textarea{min-height:110px;resize:vertical}
-    .panel-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+.modal.open{display:flex}
+
+.panel{
+  width:min(720px,100%);
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(10px);
+  border-radius:18px;
+  padding:16px 16px 14px;
+  border:1px solid rgba(0,0,0,.08);
+
+  max-height: calc(100vh - 36px); /* 不超出視窗 */
+  overflow:auto;                  /* 內容超過就捲 */
+}
+
+.panel-actions{
+  position: sticky;               /* ✅ 按鈕永遠黏在底部 */
+  bottom: 0;
+  background: rgba(255,255,255,.92);
+  padding: 12px 0 4px;
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  border-top: 1px solid rgba(0,0,0,.06);
+}
+
     .toast{margin-top:10px;font-size:.9rem}
     .rowline{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
     .btn-mini{border:none;border-radius:999px;padding:8px 12px;background:rgba(0,0,0,.08);cursor:pointer}
