@@ -74,8 +74,9 @@
       pPrice.textContent = `NT$ ${price}`;
       pDesc.textContent = p.desc || "（商品介紹待補）";
 
-      const img = p.image || "";
-      pImg.src = img || "https://via.placeholder.com/900x900?text=TEN+YEARS+ONE+DAY";
+const img = p.image || "";
+pImg.src = img || "assets/placeholder.png";
+
     }catch(err){
       console.error(err);
       pName.textContent = "載入失敗，請稍後再試";
