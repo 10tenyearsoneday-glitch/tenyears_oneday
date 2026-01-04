@@ -381,9 +381,11 @@ const copySlug = document.getElementById("copySlug");
 const copyUrl  = document.getElementById("copyUrl");
 
 function safeFileName(name){
-  return String(name).trim().replace(/[^\w.\-]+/g, "-");
+  return String(name)
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-");
 }
-
 function updateImageUrlFromSlug(){
   const fileName = safeFileName(imgSlug.value || "");
   const full = fileName ? (IMG_BASE + encodeURIComponent(fileName)) : "";
