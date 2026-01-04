@@ -617,3 +617,38 @@ main{
   opacity:1;
   box-shadow:0 0 0 2px rgba(93,107,89,.6);
 }
+/* ✅ 優惠提示列 */
+.promo-bar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:10px 0 14px;
+}
+.promo-chip{
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(0,0,0,.06);
+  font-size:.86rem;
+  color:rgba(47,58,44,.85);
+}
+
+/* ✅ 卡片角落標籤 */
+.product .thumb{ position:relative; }
+.badges{
+  position:absolute;
+  left:10px;
+  bottom:10px;
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.badge{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:.78rem;
+  background:rgba(255,255,255,.85);
+  border:1px solid rgba(0,0,0,.08);
+  backdrop-filter: blur(6px);
+}
