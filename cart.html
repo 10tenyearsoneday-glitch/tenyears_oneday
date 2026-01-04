@@ -5,165 +5,128 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>購物車｜十年一日</title>
   <link rel="stylesheet" href="assets/style.css">
-
   <style>
-    .cart-wrap{max-width:980px;margin:auto;padding:18px;}
-    .cart-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 14px;}
-    .cart-title{font-size:1.15rem;letter-spacing:.08em;color:rgba(47,58,44,.85)}
-    .cart-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .cart-wrap{max-width:980px;margin:auto;padding:18px}
+    .cart-title{font-size:1.15rem;letter-spacing:.08em;color:rgba(47,58,44,.85);margin:8px 0 14px}
+    .cart-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+    @media (max-width: 900px){ .cart-grid{grid-template-columns:1fr} }
+
+    .card{
+      background:rgba(255,255,255,.72);
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      border-radius:16px;
+      overflow:hidden;
+    }
+    .card-hd{padding:12px 14px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .card-bd{padding:14px}
+
     .btn2{border:none;border-radius:999px;padding:10px 14px;background:#5d6b59;color:#fff;cursor:pointer}
     .btn2.secondary{background:rgba(0,0,0,.08);color:rgba(47,58,44,.9)}
     .btn2.danger{background:#8a3b3b}
+    .btn2:disabled{opacity:.5;cursor:not-allowed}
 
-    .hint{font-size:.85rem;opacity:.7}
-    .toast{margin-top:10px;font-size:.9rem}
-
-    .list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+    .items{display:flex;flex-direction:column;gap:10px}
     .item{
       display:grid;
-      grid-template-columns:76px 1fr auto;
+      grid-template-columns:80px 1fr auto;
       gap:12px;
-      padding:12px;
-      background:rgba(255,255,255,.70);
-      border:1px solid rgba(0,0,0,.06);
-      box-shadow:0 10px 30px rgba(0,0,0,.06);
-      border-radius:14px;
-      overflow:hidden;
       align-items:center;
+      padding:10px;
+      border-radius:14px;
+      background:rgba(255,255,255,.62);
+      border:1px solid rgba(0,0,0,.05);
     }
-    .thumb{width:76px;height:58px;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.06)}
+    .thumb{width:80px;height:60px;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.05)}
     .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-
-    .name{font-weight:600;letter-spacing:.03em}
-    .meta{font-size:.85rem;opacity:.72;margin-top:2px}
-    .price{font-size:.95rem;font-weight:700;color:#6c7f67;margin-top:6px}
-
-    .right{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      align-items:flex-end;
-      justify-content:center;
-      min-width:160px;
-    }
+    .name{font-weight:600;letter-spacing:.02em}
+    .meta{font-size:.85rem;opacity:.75;margin-top:2px}
+    .price{font-weight:700;color:#6c7f67;margin-top:6px}
 
     .qty{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      background:rgba(0,0,0,.04);
-      border:1px solid rgba(0,0,0,.06);
-      border-radius:999px;
-      padding:6px 10px;
-    }
-    .qty button{
-      border:none;border-radius:999px;
-      padding:6px 10px;
-      background:rgba(0,0,0,.08);
-      cursor:pointer;
-      font-weight:700;
-    }
-    .qty .n{min-width:28px;text-align:center;font-weight:700}
-
-    .line-total{font-weight:800;letter-spacing:.02em}
-    .mini-btn{border:none;border-radius:999px;padding:8px 12px;background:rgba(0,0,0,.08);cursor:pointer}
-    .mini-btn.danger{background:rgba(138,59,59,.12);color:#8a3b3b}
-
-    .summary{
-      margin-top:14px;
-      background:rgba(255,255,255,.70);
-      border:1px solid rgba(0,0,0,.06);
-      box-shadow:0 10px 30px rgba(0,0,0,.06);
-      border-radius:14px;
-      padding:14px;
-    }
-    .sum-row{display:flex;justify-content:space-between;gap:12px;margin:6px 0}
-    .sum-row strong{font-weight:800}
-    .divider{height:1px;background:rgba(0,0,0,.06);margin:10px 0}
-    .promo{
-      display:flex;gap:8px;flex-wrap:wrap;margin-top:10px
-    }
-    .promo-chip{
-      display:inline-block;
-      padding:8px 12px;
-      border-radius:999px;
-      background:rgba(0,0,0,.06);
-      font-size:.85rem;
-      white-space:nowrap;
-    }
-
-    .checkout{
-      display:flex;
-      gap:10px;
-      justify-content:flex-end;
+      display:flex;align-items:center;gap:8px;justify-content:flex-end;
       flex-wrap:wrap;
-      margin-top:12px;
     }
-    .empty{
-      padding:18px;
-      background:rgba(255,255,255,.55);
-      border:1px dashed rgba(0,0,0,.12);
-      border-radius:14px;
-      opacity:.85;
+    .qty .qbtn{
+      width:34px;height:34px;border-radius:999px;border:none;background:rgba(0,0,0,.08);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-size:16px;
     }
+    .qty input{
+      width:58px;padding:8px 10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);
+      background:rgba(255,255,255,.9);outline:none;text-align:center;
+    }
+    .remove{border:none;background:transparent;color:#8a3b3b;cursor:pointer;font-size:.9rem}
+
+    .sumrow{display:flex;justify-content:space-between;gap:10px;margin:8px 0}
+    .sumrow .k{opacity:.75}
+    .sumrow .v{font-weight:700}
+    .sum-big{font-size:1.2rem}
+    .hint{font-size:.9rem;opacity:.75;margin-top:10px}
+    .hr{height:1px;background:rgba(0,0,0,.06);margin:10px 0}
   </style>
 </head>
-
 <body>
-  <script src="include.js"></script>
 
-  <main class="cart-wrap">
-    <div class="cart-top">
-      <div>
-        <div class="cart-title">購物車</div>
-        <div class="hint">目前為示範版：購物車資料存於你的瀏覽器（localStorage）。</div>
+<script src="include.js"></script>
+
+<main class="cart-wrap">
+  <div class="cart-title">購物車</div>
+
+  <div class="cart-grid">
+    <!-- left: items -->
+    <div class="card">
+      <div class="card-hd">
+        <div style="font-weight:700;">商品清單</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn2 secondary" id="btnReload" type="button">重新整理</button>
+          <button class="btn2 danger" id="btnClear" type="button">清空</button>
+        </div>
       </div>
-      <div class="cart-actions">
-        <button class="btn2 secondary" id="btnBack" type="button">← 繼續逛</button>
-        <button class="btn2 secondary" id="btnReload" type="button">重新整理</button>
-        <button class="btn2 danger" id="btnClear" type="button">清空</button>
+      <div class="card-bd">
+        <div id="items" class="items"></div>
+        <div id="empty" class="hint" style="display:none;">購物車目前是空的，去逛逛商品吧～</div>
       </div>
     </div>
 
-    <div id="cartList" class="list"></div>
-
-    <div class="summary" id="summary" style="display:none">
-      <div class="sum-row">
-        <div>小計</div>
-        <div><strong id="sumSub">NT$ 0</strong></div>
+    <!-- right: summary -->
+    <div class="card">
+      <div class="card-hd">
+        <div style="font-weight:700;">結帳金額</div>
       </div>
-      <div class="sum-row">
-        <div>運費</div>
-        <div><strong id="sumShip">NT$ 0</strong></div>
+      <div class="card-bd">
+        <div class="sumrow"><div class="k">小計</div><div class="v" id="subtotal">NT$ 0</div></div>
+        <div class="sumrow"><div class="k" id="discountLabel">折扣</div><div class="v" id="discount">- NT$ 0</div></div>
+        <div class="sumrow"><div class="k">折後小計</div><div class="v" id="after">NT$ 0</div></div>
+        <div class="hr"></div>
+        <div class="sumrow"><div class="k">運費</div><div class="v" id="shipping">NT$ 0</div></div>
+        <div class="sumrow sum-big"><div class="k">應付總額</div><div class="v" id="total">NT$ 0</div></div>
+
+        <div class="hint" id="shipHint"></div>
+
+        <div class="hr"></div>
+
+        <!-- 先保留未開放 -->
+        <button class="btn2" id="btnCheckout" type="button" disabled style="width:100%;">前往結帳（稍後開放）</button>
+
+        <div class="hint" style="margin-top:10px;">
+          折扣規則（目前示範）：首購 / 生日月擇一取最大折扣；滿額免運依 settings。
+        </div>
       </div>
-      <div class="sum-row" id="freeRow" style="display:none">
-        <div class="hint" id="freeHint">再買 NT$0 免運</div>
-        <div></div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="sum-row">
-        <div>合計</div>
-        <div><strong id="sumTotal">NT$ 0</strong></div>
-      </div>
-
-      <div class="promo" id="promo"></div>
-
-      <div class="checkout">
-        <button class="btn2 secondary" id="btnCopy" type="button">複製購物車內容</button>
-        <button class="btn2" id="btnCheckout" type="button">前往結帳（稍後開放）</button>
-      </div>
-
-      <div class="toast" id="toast"></div>
     </div>
-  </main>
+  </div>
+</main>
 
 <script>
   const API_BASE = "https://tenyears-oneday-api.onrender.com";
-  const CART_KEY = "tenyears_cart_v1";
+  const CART_KEY = "ten_cart";
+  const PLACEHOLDER = "assets/placeholder.png";
 
-  // settings 預設（讀不到也不會壞）
+  // 你之後可以把這兩個換成會員狀態
+  const CTX = {
+    isFirstOrder: true,
+    isBirthdayMonth: false
+  };
+
   let SETTINGS = {
     shipping_enabled: true,
     shipping_fee: 60,
@@ -172,240 +135,110 @@
     birthday_discount: 0.85
   };
 
-  const els = {
-    list: document.getElementById("cartList"),
-    summary: document.getElementById("summary"),
-    sub: document.getElementById("sumSub"),
-    ship: document.getElementById("sumShip"),
-    total: document.getElementById("sumTotal"),
-    promo: document.getElementById("promo"),
-    toast: document.getElementById("toast"),
-    freeRow: document.getElementById("freeRow"),
-    freeHint: document.getElementById("freeHint"),
+  const $items = document.getElementById("items");
+  const $empty = document.getElementById("empty");
 
-    btnBack: document.getElementById("btnBack"),
-    btnReload: document.getElementById("btnReload"),
-    btnClear: document.getElementById("btnClear"),
-    btnCheckout: document.getElementById("btnCheckout"),
-    btnCopy: document.getElementById("btnCopy"),
-  };
+  const $subtotal = document.getElementById("subtotal");
+  const $discount = document.getElementById("discount");
+  const $discountLabel = document.getElementById("discountLabel");
+  const $after = document.getElementById("after");
+  const $shipping = document.getElementById("shipping");
+  const $total = document.getElementById("total");
+  const $shipHint = document.getElementById("shipHint");
 
-  function showToast(msg, ok=true){
-    if(!els.toast) return;
-    els.toast.textContent = msg;
-    els.toast.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
-    setTimeout(()=>{ els.toast.textContent = ""; }, 1800);
-  }
+  const btnReload = document.getElementById("btnReload");
+  const btnClear = document.getElementById("btnClear");
 
-  function money(n){
-    const v = Math.round(Number(n || 0));
-    return "NT$ " + v.toLocaleString("zh-TW");
-  }
+  const fmt = n => `NT$ ${Number(n||0).toLocaleString("zh-TW")}`;
 
   function readCart(){
     try{
       const raw = localStorage.getItem(CART_KEY);
-      const obj = raw ? JSON.parse(raw) : null;
-      if(obj && Array.isArray(obj.items)) return obj;
-    }catch(e){}
-    return { items: [], updatedAt: Date.now() };
+      const arr = JSON.parse(raw || "[]");
+      if(!Array.isArray(arr)) return [];
+      // normalize
+      return arr
+        .map(x => ({ id: String(x.id||"").trim(), qty: Math.max(1, Number(x.qty||1)) }))
+        .filter(x => x.id);
+    }catch(e){
+      return [];
+    }
   }
 
-  function writeCart(cart){
-    cart.updatedAt = Date.now();
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  function writeCart(arr){
+    localStorage.setItem(CART_KEY, JSON.stringify(arr));
+    // （可選）如果你有做 header 購物車數量顯示，會用到：
+    window.dispatchEvent(new Event("cart:changed"));
   }
 
-  function clampQty(q){
-    const n = Number(q || 0);
-    if(!Number.isFinite(n)) return 1;
-    return Math.max(1, Math.min(99, Math.round(n)));
+  function setQty(id, qty){
+    const cart = readCart();
+    const i = cart.findIndex(x => x.id === id);
+    if(i === -1) return;
+    cart[i].qty = Math.max(1, Number(qty || 1));
+    writeCart(cart);
   }
 
-  function normalizeItem(it){
-    return {
-      id: String(it.id || "").trim(),
-      title: String(it.title || "（未命名）"),
-      price: Number(it.price || 0),
-      image: String(it.image || ""),
-      qty: clampQty(it.qty || 1),
-    };
+  function removeItem(id){
+    const cart = readCart().filter(x => x.id !== id);
+    writeCart(cart);
   }
 
-  function getActiveBadges(){
-    const chips = [];
-    const shipOn = !!SETTINGS.shipping_enabled;
-    const fee = Number(SETTINGS.shipping_fee || 0);
-    const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
+  function clearCart(){
+    writeCart([]);
+  }
+
+  // 折扣/運費計算（擇一最大折扣 + 免運門檻）
+  function calcCheckout(items){
+    const subtotal = items.reduce((sum, it) => sum + Number(it.price||0) * Math.max(1, Number(it.qty||1)), 0);
+
+    let rate = 1;
+    let label = "折扣";
 
     const firstRate = Number(SETTINGS.first_purchase_discount || 1);
     const bdayRate  = Number(SETTINGS.birthday_discount || 1);
 
-    if(shipOn){
-      chips.push(`運費 ${money(fee)}`);
-      if(freeOver > 0) chips.push(`滿 ${money(freeOver)} 免運`);
-    }else{
-      chips.push(`免運活動中`);
+    const firstEligible = !!CTX.isFirstOrder && firstRate > 0 && firstRate < 1;
+    const bdayEligible  = !!CTX.isBirthdayMonth && bdayRate > 0 && bdayRate < 1;
+
+    if(firstEligible && bdayEligible){
+      if(bdayRate < firstRate){ rate = bdayRate; label = "生日月折扣"; }
+      else { rate = firstRate; label = "首購折扣"; }
+    }else if(bdayEligible){
+      rate = bdayRate; label = "生日月折扣";
+    }else if(firstEligible){
+      rate = firstRate; label = "首購折扣";
     }
 
-    if(firstRate > 0 && firstRate < 1) chips.push(`首購 ${Math.round(firstRate*100)} 折（提示）`);
-    if(bdayRate > 0 && bdayRate < 1) chips.push(`生日月 ${Math.round(bdayRate*100)} 折（提示）`);
+    const discountedSubtotal = Math.round(subtotal * rate);
+    const discount = subtotal - discountedSubtotal;
 
-    return chips;
-  }
-
-  function calc(cart){
-    const items = cart.items.map(normalizeItem).filter(x => x.id && x.qty > 0);
-
-    const sub = items.reduce((s, x) => s + (Number(x.price||0) * Number(x.qty||0)), 0);
-
-    const shipOn = !!SETTINGS.shipping_enabled;
-    const fee = Number(SETTINGS.shipping_fee || 0);
     const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
+    const fee = Number(SETTINGS.shipping_fee || 0);
 
-    let ship = 0;
-    let remainToFree = 0;
-
-    if(shipOn){
-      if(freeOver > 0 && sub >= freeOver){
-        ship = 0;
-        remainToFree = 0;
-      }else{
-        ship = fee;
-        remainToFree = freeOver > 0 ? Math.max(0, freeOver - sub) : 0;
-      }
+    let shipping = 0;
+    if(SETTINGS.shipping_enabled){
+      if(freeOver > 0 && discountedSubtotal >= freeOver) shipping = 0;
+      else shipping = fee;
     }else{
-      ship = 0;
-      remainToFree = 0;
+      shipping = 0;
     }
 
-    const total = sub + ship;
+    const total = discountedSubtotal + shipping;
 
-    return { items, sub, ship, total, remainToFree, shipOn, freeOver };
-  }
-
-  function itemHtml(it){
-    const img = it.image || "assets/placeholder.png";
-    const line = Number(it.price||0) * Number(it.qty||0);
-
-    return `
-      <div class="item" data-id="${it.id}">
-        <a class="thumb" href="product.html?id=${encodeURIComponent(it.id)}" title="查看商品">
-          <img src="${img}" alt="">
-        </a>
-
-        <div>
-          <div class="name">${it.title}</div>
-          <div class="meta">ID：${it.id}</div>
-          <div class="price">${money(it.price)} / 件</div>
-        </div>
-
-        <div class="right">
-          <div class="qty">
-            <button type="button" data-act="minus" aria-label="減少">−</button>
-            <div class="n" data-n>${it.qty}</div>
-            <button type="button" data-act="plus" aria-label="增加">＋</button>
-          </div>
-
-          <div class="line-total">${money(line)}</div>
-
-          <button type="button" class="mini-btn danger" data-act="remove">移除</button>
-        </div>
-      </div>
-    `;
-  }
-
-  function render(){
-    const cart = readCart();
-    const r = calc(cart);
-
-    // list
-    if(!els.list) return;
-
-    if(!r.items.length){
-      els.list.innerHTML = `
-        <div class="empty">
-          你的購物車目前是空的。<br>
-          <span class="hint">去全系列挑一點喜歡的飾品吧～</span>
-        </div>
-      `;
-      if(els.summary) els.summary.style.display = "none";
-      return;
+    let shippingHint = "";
+    if(SETTINGS.shipping_enabled && freeOver > 0 && discountedSubtotal < freeOver){
+      shippingHint = `再買 ${fmt(freeOver - discountedSubtotal)} 即可免運`;
     }
 
-    els.list.innerHTML = r.items.map(itemHtml).join("");
-
-    // events: qty / remove
-    els.list.querySelectorAll(".item").forEach(row => {
-      const id = row.getAttribute("data-id");
-      const btnMinus = row.querySelector('[data-act="minus"]');
-      const btnPlus  = row.querySelector('[data-act="plus"]');
-      const btnRemove= row.querySelector('[data-act="remove"]');
-
-      btnMinus?.addEventListener("click", () => changeQty(id, -1));
-      btnPlus?.addEventListener("click",  () => changeQty(id, +1));
-      btnRemove?.addEventListener("click",() => removeItem(id));
-    });
-
-    // summary
-    if(els.summary) els.summary.style.display = "block";
-    if(els.sub) els.sub.textContent = money(r.sub);
-    if(els.ship) els.ship.textContent = money(r.ship);
-    if(els.total) els.total.textContent = money(r.total);
-
-    // free shipping hint
-    if(els.freeRow){
-      if(r.shipOn && r.freeOver > 0 && r.remainToFree > 0){
-        els.freeRow.style.display = "flex";
-        els.freeHint.textContent = `再買 ${money(r.remainToFree)} 免運`;
-      }else{
-        els.freeRow.style.display = "none";
-      }
-    }
-
-    // promo chips
-    if(els.promo){
-      const chips = getActiveBadges();
-      els.promo.innerHTML = chips.map(t => `<span class="promo-chip">${t}</span>`).join("");
-    }
-  }
-
-  function changeQty(id, delta){
-    const cart = readCart();
-    const idx = cart.items.findIndex(x => String(x.id) === String(id));
-    if(idx < 0) return;
-
-    const cur = clampQty(cart.items[idx].qty || 1);
-    const next = clampQty(cur + delta);
-
-    cart.items[idx].qty = next;
-    writeCart(cart);
-    render();
-  }
-
-  function removeItem(id){
-    const cart = readCart();
-    const before = cart.items.length;
-    cart.items = cart.items.filter(x => String(x.id) !== String(id));
-    writeCart(cart);
-    render();
-    if(cart.items.length !== before) showToast("已移除");
-  }
-
-  function clearCart(){
-    const ok = confirm("確定要清空購物車嗎？");
-    if(!ok) return;
-    writeCart({ items: [], updatedAt: Date.now() });
-    render();
-    showToast("已清空");
+    return { subtotal, rate, label, discount, discountedSubtotal, shipping, shippingHint, total };
   }
 
   async function loadSettings(){
     try{
-      const res = await fetch(`${API_BASE}/settings`, { cache: "no-store" });
-      if(!res.ok) throw new Error("settings error " + res.status);
-
-      const s = await res.json();
+      const r = await fetch(`${API_BASE}/settings`, { cache: "no-store" });
+      if(!r.ok) throw new Error("settings " + r.status);
+      const s = await r.json();
       if(s && typeof s === "object"){
         SETTINGS = {
           ...SETTINGS,
@@ -418,54 +251,145 @@
         };
       }
     }catch(e){
-      console.warn("loadSettings failed, fallback defaults", e);
+      console.warn("settings fallback", e);
     }
   }
 
-  async function copyCartText(){
+  async function loadAllProducts(){
+    const r = await fetch(`${API_BASE}/products`, { cache: "no-store" });
+    if(!r.ok) throw new Error("products " + r.status);
+    const list = await r.json();
+    return Array.isArray(list) ? list : [];
+  }
+
+  function render(items){
+    if(!items.length){
+      $items.innerHTML = "";
+      $empty.style.display = "block";
+      return;
+    }
+    $empty.style.display = "none";
+
+    $items.innerHTML = items.map(p => `
+      <div class="item" data-id="${p.id}">
+        <div class="thumb">
+          <img src="${p.image || PLACEHOLDER}" alt="" loading="lazy">
+        </div>
+
+        <div>
+          <div class="name">${p.title || "（未命名）"}</div>
+          <div class="meta">${p.series || "全系列"}｜${p.category || "其他"}</div>
+          <div class="price">${fmt(p.price)}</div>
+          <button class="remove" type="button" data-remove="${p.id}">移除</button>
+        </div>
+
+        <div class="qty">
+          <button class="qbtn" type="button" data-dec="${p.id}">−</button>
+          <input type="number" min="1" step="1" value="${p.qty}" data-qty="${p.id}">
+          <button class="qbtn" type="button" data-inc="${p.id}">＋</button>
+        </div>
+      </div>
+    `).join("");
+
+    // events
+    $items.querySelectorAll("[data-inc]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-inc");
+        const cart = readCart();
+        const it = cart.find(x => x.id === id);
+        if(!it) return;
+        setQty(id, it.qty + 1);
+        hydrate(); // refresh
+      });
+    });
+    $items.querySelectorAll("[data-dec]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-dec");
+        const cart = readCart();
+        const it = cart.find(x => x.id === id);
+        if(!it) return;
+        setQty(id, Math.max(1, it.qty - 1));
+        hydrate();
+      });
+    });
+    $items.querySelectorAll("[data-qty]").forEach(inp => {
+      inp.addEventListener("change", () => {
+        const id = inp.getAttribute("data-qty");
+        setQty(id, Math.max(1, Number(inp.value||1)));
+        hydrate();
+      });
+    });
+    $items.querySelectorAll("[data-remove]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-remove");
+        removeItem(id);
+        hydrate();
+      });
+    });
+  }
+
+  async function hydrate(){
     const cart = readCart();
-    const r = calc(cart);
-    if(!r.items.length){
-      showToast("購物車是空的", false);
+    if(!cart.length){
+      render([]);
+      const out = calcCheckout([]);
+      $subtotal.textContent = fmt(out.subtotal);
+      $discount.textContent = `- ${fmt(out.discount)}`;
+      $discountLabel.textContent = out.label || "折扣";
+      $after.textContent = fmt(out.discountedSubtotal);
+      $shipping.textContent = fmt(out.shipping);
+      $total.textContent = fmt(out.total);
+      $shipHint.textContent = "";
       return;
     }
 
-    const lines = [];
-    lines.push("十年一日｜購物車");
-    lines.push("—");
-    r.items.forEach(it => {
-      lines.push(`${it.title}（${it.id}） x${it.qty} ＝ ${money(Number(it.price)*Number(it.qty))}`);
-    });
-    lines.push("—");
-    lines.push(`小計：${money(r.sub)}`);
-    lines.push(`運費：${money(r.ship)}`);
-    lines.push(`合計：${money(r.total)}`);
-
-    const text = lines.join("\n");
+    // 取產品資料
+    let products = [];
     try{
-      await navigator.clipboard.writeText(text);
-      showToast("已複製 ✅");
+      products = await loadAllProducts();
     }catch(e){
       console.error(e);
-      showToast("複製失敗（瀏覽器可能阻擋）", false);
+      // 即使 API 掛了也要至少顯示 id/qty
+      products = [];
     }
+
+    const map = new Map(products.map(p => [String(p.id), p]));
+    const merged = cart.map(it => {
+      const p = map.get(it.id) || {};
+      return {
+        id: it.id,
+        qty: it.qty,
+        title: p.title || it.id,
+        series: p.series || "",
+        category: p.category || "",
+        price: typeof p.price === "number" ? p.price : Number(p.price || 0),
+        image: p.image || PLACEHOLDER
+      };
+    });
+
+    render(merged);
+
+    const out = calcCheckout(merged);
+    $subtotal.textContent = fmt(out.subtotal);
+    $discount.textContent = `- ${fmt(out.discount)}`;
+    $discountLabel.textContent = out.label || "折扣";
+    $after.textContent = fmt(out.discountedSubtotal);
+    $shipping.textContent = fmt(out.shipping);
+    $total.textContent = fmt(out.total);
+    $shipHint.textContent = out.shippingHint || "";
   }
 
-  // events
-  els.btnBack?.addEventListener("click", () => location.href = "all.html");
-  els.btnReload?.addEventListener("click", () => render());
-  els.btnClear?.addEventListener("click", clearCart);
-
-  els.btnCheckout?.addEventListener("click", () => {
-    showToast("結帳功能稍後開放（下一步可以接 LINE / 表單）");
+  btnReload.addEventListener("click", () => hydrate());
+  btnClear.addEventListener("click", () => {
+    const ok = confirm("確定要清空購物車嗎？");
+    if(!ok) return;
+    clearCart();
+    hydrate();
   });
 
-  els.btnCopy?.addEventListener("click", copyCartText);
-
-  // init
   (async () => {
     await loadSettings();
-    render();
+    await hydrate();
   })();
 </script>
 
