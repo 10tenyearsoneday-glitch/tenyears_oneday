@@ -105,7 +105,27 @@
           <label>金額（NT$）</label>
           <input id="fPrice" type="number" min="0" step="1" placeholder="例如：420">
         </div>
-        <div>
+  <div class="full">
+  <label class="field">
+    <div class="label">商品圖（上傳到 assets/products/）</div>
+
+    <input id="imgFile" type="file" accept="image/*">
+    <div class="hint">選檔後會自動產生建議檔名與圖片網址（你只要把檔案丟到 GitHub 對應資料夾即可）</div>
+
+    <div class="row">
+      <input id="imgSlug" type="text" placeholder="建議檔名（例如 O-D.jpg）">
+      <button id="copySlug" type="button" class="btn-mini">複製檔名</button>
+    </div>
+
+    <div class="row">
+      <input id="imgUrl" type="text" placeholder="圖片網址（會自動填）">
+      <button id="copyUrl" type="button" class="btn-mini">複製網址</button>
+    </div>
+
+    <img id="imgPreview" alt="預覽" style="max-width:220px;border-radius:12px;display:none;margin-top:10px;">
+  </label>
+</div>
+
           <label>圖片網址（image）</label>
           <input id="fImage" placeholder="https://...jpg">
         </div>
@@ -177,6 +197,10 @@
       fPrice.value = 0;
       fImage.value = "";
       fDesc.value = "";
+      imgSlug.value = "";
+imgUrl.value = "";
+imgPreview.style.display = "none";
+
     }else{
       editingId = item.id;
       modalTitle.textContent = `編輯商品：${item.id}`;
@@ -192,6 +216,16 @@
       fPrice.value = (typeof item.price === "number") ? item.price : 0;
       fImage.value = item.image || "";
       fDesc.value = item.desc || "";
+      // 如果已經有圖片網址，反推 slug（只是顯示用）
+imgUrl.value = item.image || "";
+imgSlug.value = (item.image || "").split("/").pop() || "";
+if(item.image){
+  imgPreview.src = item.image;
+  imgPreview.style.display = "block";
+}else{
+  imgPreview.style.display = "none";
+}
+
     }
   }
 
@@ -336,6 +370,61 @@
   });
 
   loadProducts();
+  // ====== 圖片：選檔 → 自動產生檔名 & URL（用 fId）======
+const IMG_BASE = "https://10tenyearsoneday-glitch.github.io/tenyears_oneday/assets/products/";
+
+const imgFile = document.getElementById("imgFile");
+const imgSlug = document.getElementById("imgSlug");
+const imgUrl  = document.getElementById("imgUrl");
+const imgPreview = document.getElementById("imgPreview");
+const copySlug = document.getElementById("copySlug");
+const copyUrl  = document.getElementById("copyUrl");
+
+function safeFileName(name){
+  return String(name).trim().replace(/[^\w.\-]+/g, "-");
+}
+
+function updateImageUrlFromSlug(){
+  const fileName = safeFileName(imgSlug.value || "");
+  const full = fileName ? (IMG_BASE + encodeURIComponent(fileName)) : "";
+  imgUrl.value = full;
+  // ✅ 同步到真正要存進 API 的欄位
+  fImage.value = full;
+}
+
+imgFile?.addEventListener("change", () => {
+  const f = imgFile.files?.[0];
+  if(!f) return;
+
+  const id = (fId.value || "").trim();            // ✅ 你這頁的 id input 是 fId
+  const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
+  const fileName = safeFileName((id ? id : f.name.replace(/\.[^.]+$/, "")) + "." + ext);
+
+  imgSlug.value = fileName;
+  updateImageUrlFromSlug();
+
+  const url = URL.createObjectURL(f);
+  imgPreview.src = url;
+  imgPreview.style.display = "block";
+});
+
+imgSlug?.addEventListener("input", updateImageUrlFromSlug);
+
+// 讓你手動貼 imgUrl 也會同步到 fImage
+imgUrl?.addEventListener("input", () => {
+  fImage.value = imgUrl.value.trim();
+});
+
+copySlug?.addEventListener("click", async () => {
+  if(!imgSlug.value) return;
+  await navigator.clipboard.writeText(imgSlug.value);
+});
+
+copyUrl?.addEventListener("click", async () => {
+  if(!imgUrl.value) return;
+  await navigator.clipboard.writeText(imgUrl.value);
+});
+
 </script>
 
 </body>
