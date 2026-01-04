@@ -697,3 +697,14 @@ main{
   display: none;              /* JS 有數量才顯示 */
   pointer-events: none;       /* 不影響點擊購物車 */
 }
+/* 修復 header 右上角 SVG 圖示不顯示（購物車/搜尋/會員） */
+.icon svg{
+  width: 20px;
+  height: 20px;
+  display: block;
+  fill: none;
+  stroke: rgba(47,58,44,.9);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
