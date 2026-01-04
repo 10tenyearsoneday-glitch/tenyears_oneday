@@ -26,7 +26,7 @@
           <div class="detail-desc" id="pDesc">這裡是商品介紹。</div>
 
           <div class="detail-actions">
-            <button class="btn" id="btnAddCart" type="button" disabled>加入購物車</button>
+            <button class="btn" id="btnAddCart" type="button">加入購物車</button>
             <div id="cartToast" style="margin-top:10px;font-size:.9rem;opacity:.85;"></div>
           </div>
         </div>
@@ -209,6 +209,38 @@
         toast("已加入購物車 ✅");
       });
     }
+const CART_KEY = "ten_cart";
+function readCart(){
+  try{
+    const raw = localStorage.getItem(CART_KEY);
+    const arr = JSON.parse(raw || "[]");
+    return Array.isArray(arr) ? arr : [];
+  }catch(e){ return []; }
+}
+function writeCart(arr){
+  localStorage.setItem(CART_KEY, JSON.stringify(arr));
+  window.dispatchEvent(new Event("cart:changed"));
+}
+
+const btnAddCart = document.getElementById("btnAddCart");
+
+function addToCart(id, qty=1){
+  const cart = readCart();
+  const i = cart.findIndex(x => String(x.id) === String(id));
+  if(i === -1){
+    cart.push({ id: String(id), qty: Number(qty||1) });
+  }else{
+    cart[i].qty = Math.max(1, Number(cart[i].qty||1) + Number(qty||1));
+  }
+  writeCart(cart);
+}
+
+// 在 loadOne() 成功拿到 p 之後，加入：
+btnAddCart?.addEventListener("click", () => {
+  addToCart(id, 1);
+  // 你想留在原頁也行：把下面改成提示即可
+  location.href = "cart.html";
+});
 
     loadOne();
   </script>
