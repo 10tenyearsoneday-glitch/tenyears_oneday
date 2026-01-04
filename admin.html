@@ -383,78 +383,73 @@ textarea{min-height:110px;resize:vertical}
       desc: fDesc.value.trim()
     };
   }
+async function gasWrite(method, payload, id = "") {
+  const url =
+    `${GAS_URL}?path=products` +
+    (id ? `&id=${encodeURIComponent(id)}` : "") +
+    `&key=${encodeURIComponent(ADMIN_KEY)}` +
+    `&method=${encodeURIComponent(method)}`;
 
-  async function saveProduct(){
-    const payload = buildPayload();
+  // ✅ 用 text/plain 避免觸發 CORS preflight (OPTIONS)
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload || {})
+  });
 
-    if(!payload.title){
-      showToast("請填商品名稱", false);
-      return;
-    }
-    if(editingId === null && !payload.id){
-      showToast("新增商品必須填 id", false);
-      return;
-    }
-
-    try{
-      if(editingId === null){
-        // ✅ 新增（POST）
-        const res = await fetch(`${GAS_URL}?path=products&key=${encodeURIComponent(ADMIN_KEY)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const out = await res.json();
-        if(!res.ok || out?.error) throw new Error(out?.error || "POST_FAILED");
-
-        closeModal();
-        await loadProducts();
-        showToast("新增成功");
-      }else{
-  // ✅ 修改（PUT）— 用 POST + method=PUT
-  const res = await fetch(
-    `${GAS_URL}?path=products&id=${encodeURIComponent(editingId)}&key=${encodeURIComponent(ADMIN_KEY)}&method=PUT`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    }
-  );
-
-  const out = await res.json();
-  if(!res.ok || out?.error) throw new Error(out?.error || "PUT_FAILED");
-
-  closeModal();
-  await loadProducts();
-  showToast("儲存成功");
+  // GAS 有時候就算失敗也可能是 200，把 error 放 body，所以要一起判斷
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok || out?.error) throw new Error(out?.error || "GAS_WRITE_FAILED");
+  return out;
 }
-    }catch(e){
-      console.error(e);
-      showToast("儲存失敗（請檢查 ADMIN_KEY / id 是否重複 / GAS 是否已部署）", false);
-    }
+async function saveProduct(){
+  const payload = buildPayload();
+
+  if(!payload.title){
+    showToast("請填商品名稱", false);
+    return;
+  }
+  if(editingId === null && !payload.id){
+    showToast("新增商品必須填 id", false);
+    return;
   }
 
-  async function deleteProduct(){
-    if(!editingId) return;
-    const ok = confirm(`確定刪除商品 ${editingId} 嗎？`);
-    if(!ok) return;
-
-    try{
-    const res = await fetch(`${GAS_URL}?path=products&id=${encodeURIComponent(editingId)}&key=${encodeURIComponent(ADMIN_KEY)}&method=DELETE`, {
-  method: "POST"
-});
-
-      const out = await res.json();
-      if(!res.ok || out?.error) throw new Error(out?.error || "DELETE_FAILED");
-
+  try{
+    if(editingId === null){
+      // ✅ 新增
+      await gasWrite("POST", payload, "");
       closeModal();
       await loadProducts();
-      showToast("刪除成功");
-    }catch(e){
-      console.error(e);
-      showToast("刪除失敗（請檢查 ADMIN_KEY / GAS 是否已部署）", false);
+      showToast("新增成功");
+    }else{
+      // ✅ 修改
+      await gasWrite("PUT", payload, editingId);
+      closeModal();
+      await loadProducts();
+      showToast("儲存成功");
     }
+  }catch(e){
+    console.error(e);
+    showToast("儲存失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
   }
+}
+
+async function deleteProduct(){
+  if(!editingId) return;
+  const ok = confirm(`確定刪除商品 ${editingId} 嗎？`);
+  if(!ok) return;
+
+  try{
+    await gasWrite("DELETE", {}, editingId);
+    closeModal();
+    await loadProducts();
+    showToast("刪除成功");
+  }catch(e){
+    console.error(e);
+    showToast("刪除失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
+  }
+}
+
 
   // events
   btnReload.addEventListener("click", loadProducts);
