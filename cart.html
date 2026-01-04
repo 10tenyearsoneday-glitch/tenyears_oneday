@@ -1,53 +1,473 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<title>十年一日｜購物車</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>購物車｜十年一日</title>
+  <link rel="stylesheet" href="assets/style.css">
 
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
+  <style>
+    .cart-wrap{max-width:980px;margin:auto;padding:18px;}
+    .cart-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 14px;}
+    .cart-title{font-size:1.15rem;letter-spacing:.08em;color:rgba(47,58,44,.85)}
+    .cart-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn2{border:none;border-radius:999px;padding:10px 14px;background:#5d6b59;color:#fff;cursor:pointer}
+    .btn2.secondary{background:rgba(0,0,0,.08);color:rgba(47,58,44,.9)}
+    .btn2.danger{background:#8a3b3b}
 
+    .hint{font-size:.85rem;opacity:.7}
+    .toast{margin-top:10px;font-size:.9rem}
+
+    .list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+    .item{
+      display:grid;
+      grid-template-columns:76px 1fr auto;
+      gap:12px;
+      padding:12px;
+      background:rgba(255,255,255,.70);
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      border-radius:14px;
+      overflow:hidden;
+      align-items:center;
+    }
+    .thumb{width:76px;height:58px;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.06)}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+
+    .name{font-weight:600;letter-spacing:.03em}
+    .meta{font-size:.85rem;opacity:.72;margin-top:2px}
+    .price{font-size:.95rem;font-weight:700;color:#6c7f67;margin-top:6px}
+
+    .right{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:flex-end;
+      justify-content:center;
+      min-width:160px;
+    }
+
+    .qty{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      background:rgba(0,0,0,.04);
+      border:1px solid rgba(0,0,0,.06);
+      border-radius:999px;
+      padding:6px 10px;
+    }
+    .qty button{
+      border:none;border-radius:999px;
+      padding:6px 10px;
+      background:rgba(0,0,0,.08);
+      cursor:pointer;
+      font-weight:700;
+    }
+    .qty .n{min-width:28px;text-align:center;font-weight:700}
+
+    .line-total{font-weight:800;letter-spacing:.02em}
+    .mini-btn{border:none;border-radius:999px;padding:8px 12px;background:rgba(0,0,0,.08);cursor:pointer}
+    .mini-btn.danger{background:rgba(138,59,59,.12);color:#8a3b3b}
+
+    .summary{
+      margin-top:14px;
+      background:rgba(255,255,255,.70);
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      border-radius:14px;
+      padding:14px;
+    }
+    .sum-row{display:flex;justify-content:space-between;gap:12px;margin:6px 0}
+    .sum-row strong{font-weight:800}
+    .divider{height:1px;background:rgba(0,0,0,.06);margin:10px 0}
+    .promo{
+      display:flex;gap:8px;flex-wrap:wrap;margin-top:10px
+    }
+    .promo-chip{
+      display:inline-block;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(0,0,0,.06);
+      font-size:.85rem;
+      white-space:nowrap;
+    }
+
+    .checkout{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .empty{
+      padding:18px;
+      background:rgba(255,255,255,.55);
+      border:1px dashed rgba(0,0,0,.12);
+      border-radius:14px;
+      opacity:.85;
+    }
+  </style>
 </head>
+
 <body>
+  <script src="include.js"></script>
 
-<main>
-<div class='section-title'>購物車</div><div class='box'>正式版會提供加入購物車、修改數量、結帳流程。</div>
-</main>
+  <main class="cart-wrap">
+    <div class="cart-top">
+      <div>
+        <div class="cart-title">購物車</div>
+        <div class="hint">目前為示範版：購物車資料存於你的瀏覽器（localStorage）。</div>
+      </div>
+      <div class="cart-actions">
+        <button class="btn2 secondary" id="btnBack" type="button">← 繼續逛</button>
+        <button class="btn2 secondary" id="btnReload" type="button">重新整理</button>
+        <button class="btn2 danger" id="btnClear" type="button">清空</button>
+      </div>
+    </div>
 
-<footer>
-  <a class="admin-link" href="admin.html" aria-label="admin"></a>
-  <div class="footer-row">
-    <div class="col">💎 精選材質<small>不含鉛，安心佩戴</small></div>
-    <div class="col center">✨ 獨特設計<small>韓日歐美風格齊聚</small></div>
-    <div class="col right">🚚 便利配送<small>超商取貨、宅配到府</small></div>
-  </div>
-  <div class="footer-brand">
-    <div class="t">十年一日</div>
-    <div class="s">tenyears_oneday</div>
-  </div>
-  <div class="footer-social">
-  <a href="https://www.instagram.com/tenyears_oneday" target="_blank" aria-label="Instagram">
-    <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg" alt="IG">
-  </a>
-  <a href="https://line.me/R/ti/p/@396kwrga" target="_blank" aria-label="LINE">
-    <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/line.svg" alt="LINE">
-  </a>
-</div>
+    <div id="cartList" class="list"></div>
 
-</footer>
-<button id="backToTop" aria-label="回到頂端">↑</button>
+    <div class="summary" id="summary" style="display:none">
+      <div class="sum-row">
+        <div>小計</div>
+        <div><strong id="sumSub">NT$ 0</strong></div>
+      </div>
+      <div class="sum-row">
+        <div>運費</div>
+        <div><strong id="sumShip">NT$ 0</strong></div>
+      </div>
+      <div class="sum-row" id="freeRow" style="display:none">
+        <div class="hint" id="freeHint">再買 NT$0 免運</div>
+        <div></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="sum-row">
+        <div>合計</div>
+        <div><strong id="sumTotal">NT$ 0</strong></div>
+      </div>
+
+      <div class="promo" id="promo"></div>
+
+      <div class="checkout">
+        <button class="btn2 secondary" id="btnCopy" type="button">複製購物車內容</button>
+        <button class="btn2" id="btnCheckout" type="button">前往結帳（稍後開放）</button>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div>
+  </main>
 
 <script>
-  const btn = document.getElementById("backToTop");
-  window.addEventListener("scroll", () => {
-    btn.style.display = window.scrollY > 300 ? "block" : "none";
+  const API_BASE = "https://tenyears-oneday-api.onrender.com";
+  const CART_KEY = "tenyears_cart_v1";
+
+  // settings 預設（讀不到也不會壞）
+  let SETTINGS = {
+    shipping_enabled: true,
+    shipping_fee: 60,
+    free_shipping_threshold: 1000,
+    first_purchase_discount: 0.9,
+    birthday_discount: 0.85
+  };
+
+  const els = {
+    list: document.getElementById("cartList"),
+    summary: document.getElementById("summary"),
+    sub: document.getElementById("sumSub"),
+    ship: document.getElementById("sumShip"),
+    total: document.getElementById("sumTotal"),
+    promo: document.getElementById("promo"),
+    toast: document.getElementById("toast"),
+    freeRow: document.getElementById("freeRow"),
+    freeHint: document.getElementById("freeHint"),
+
+    btnBack: document.getElementById("btnBack"),
+    btnReload: document.getElementById("btnReload"),
+    btnClear: document.getElementById("btnClear"),
+    btnCheckout: document.getElementById("btnCheckout"),
+    btnCopy: document.getElementById("btnCopy"),
+  };
+
+  function showToast(msg, ok=true){
+    if(!els.toast) return;
+    els.toast.textContent = msg;
+    els.toast.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
+    setTimeout(()=>{ els.toast.textContent = ""; }, 1800);
+  }
+
+  function money(n){
+    const v = Math.round(Number(n || 0));
+    return "NT$ " + v.toLocaleString("zh-TW");
+  }
+
+  function readCart(){
+    try{
+      const raw = localStorage.getItem(CART_KEY);
+      const obj = raw ? JSON.parse(raw) : null;
+      if(obj && Array.isArray(obj.items)) return obj;
+    }catch(e){}
+    return { items: [], updatedAt: Date.now() };
+  }
+
+  function writeCart(cart){
+    cart.updatedAt = Date.now();
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  }
+
+  function clampQty(q){
+    const n = Number(q || 0);
+    if(!Number.isFinite(n)) return 1;
+    return Math.max(1, Math.min(99, Math.round(n)));
+  }
+
+  function normalizeItem(it){
+    return {
+      id: String(it.id || "").trim(),
+      title: String(it.title || "（未命名）"),
+      price: Number(it.price || 0),
+      image: String(it.image || ""),
+      qty: clampQty(it.qty || 1),
+    };
+  }
+
+  function getActiveBadges(){
+    const chips = [];
+    const shipOn = !!SETTINGS.shipping_enabled;
+    const fee = Number(SETTINGS.shipping_fee || 0);
+    const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
+
+    const firstRate = Number(SETTINGS.first_purchase_discount || 1);
+    const bdayRate  = Number(SETTINGS.birthday_discount || 1);
+
+    if(shipOn){
+      chips.push(`運費 ${money(fee)}`);
+      if(freeOver > 0) chips.push(`滿 ${money(freeOver)} 免運`);
+    }else{
+      chips.push(`免運活動中`);
+    }
+
+    if(firstRate > 0 && firstRate < 1) chips.push(`首購 ${Math.round(firstRate*100)} 折（提示）`);
+    if(bdayRate > 0 && bdayRate < 1) chips.push(`生日月 ${Math.round(bdayRate*100)} 折（提示）`);
+
+    return chips;
+  }
+
+  function calc(cart){
+    const items = cart.items.map(normalizeItem).filter(x => x.id && x.qty > 0);
+
+    const sub = items.reduce((s, x) => s + (Number(x.price||0) * Number(x.qty||0)), 0);
+
+    const shipOn = !!SETTINGS.shipping_enabled;
+    const fee = Number(SETTINGS.shipping_fee || 0);
+    const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
+
+    let ship = 0;
+    let remainToFree = 0;
+
+    if(shipOn){
+      if(freeOver > 0 && sub >= freeOver){
+        ship = 0;
+        remainToFree = 0;
+      }else{
+        ship = fee;
+        remainToFree = freeOver > 0 ? Math.max(0, freeOver - sub) : 0;
+      }
+    }else{
+      ship = 0;
+      remainToFree = 0;
+    }
+
+    const total = sub + ship;
+
+    return { items, sub, ship, total, remainToFree, shipOn, freeOver };
+  }
+
+  function itemHtml(it){
+    const img = it.image || "assets/placeholder.png";
+    const line = Number(it.price||0) * Number(it.qty||0);
+
+    return `
+      <div class="item" data-id="${it.id}">
+        <a class="thumb" href="product.html?id=${encodeURIComponent(it.id)}" title="查看商品">
+          <img src="${img}" alt="">
+        </a>
+
+        <div>
+          <div class="name">${it.title}</div>
+          <div class="meta">ID：${it.id}</div>
+          <div class="price">${money(it.price)} / 件</div>
+        </div>
+
+        <div class="right">
+          <div class="qty">
+            <button type="button" data-act="minus" aria-label="減少">−</button>
+            <div class="n" data-n>${it.qty}</div>
+            <button type="button" data-act="plus" aria-label="增加">＋</button>
+          </div>
+
+          <div class="line-total">${money(line)}</div>
+
+          <button type="button" class="mini-btn danger" data-act="remove">移除</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function render(){
+    const cart = readCart();
+    const r = calc(cart);
+
+    // list
+    if(!els.list) return;
+
+    if(!r.items.length){
+      els.list.innerHTML = `
+        <div class="empty">
+          你的購物車目前是空的。<br>
+          <span class="hint">去全系列挑一點喜歡的飾品吧～</span>
+        </div>
+      `;
+      if(els.summary) els.summary.style.display = "none";
+      return;
+    }
+
+    els.list.innerHTML = r.items.map(itemHtml).join("");
+
+    // events: qty / remove
+    els.list.querySelectorAll(".item").forEach(row => {
+      const id = row.getAttribute("data-id");
+      const btnMinus = row.querySelector('[data-act="minus"]');
+      const btnPlus  = row.querySelector('[data-act="plus"]');
+      const btnRemove= row.querySelector('[data-act="remove"]');
+
+      btnMinus?.addEventListener("click", () => changeQty(id, -1));
+      btnPlus?.addEventListener("click",  () => changeQty(id, +1));
+      btnRemove?.addEventListener("click",() => removeItem(id));
+    });
+
+    // summary
+    if(els.summary) els.summary.style.display = "block";
+    if(els.sub) els.sub.textContent = money(r.sub);
+    if(els.ship) els.ship.textContent = money(r.ship);
+    if(els.total) els.total.textContent = money(r.total);
+
+    // free shipping hint
+    if(els.freeRow){
+      if(r.shipOn && r.freeOver > 0 && r.remainToFree > 0){
+        els.freeRow.style.display = "flex";
+        els.freeHint.textContent = `再買 ${money(r.remainToFree)} 免運`;
+      }else{
+        els.freeRow.style.display = "none";
+      }
+    }
+
+    // promo chips
+    if(els.promo){
+      const chips = getActiveBadges();
+      els.promo.innerHTML = chips.map(t => `<span class="promo-chip">${t}</span>`).join("");
+    }
+  }
+
+  function changeQty(id, delta){
+    const cart = readCart();
+    const idx = cart.items.findIndex(x => String(x.id) === String(id));
+    if(idx < 0) return;
+
+    const cur = clampQty(cart.items[idx].qty || 1);
+    const next = clampQty(cur + delta);
+
+    cart.items[idx].qty = next;
+    writeCart(cart);
+    render();
+  }
+
+  function removeItem(id){
+    const cart = readCart();
+    const before = cart.items.length;
+    cart.items = cart.items.filter(x => String(x.id) !== String(id));
+    writeCart(cart);
+    render();
+    if(cart.items.length !== before) showToast("已移除");
+  }
+
+  function clearCart(){
+    const ok = confirm("確定要清空購物車嗎？");
+    if(!ok) return;
+    writeCart({ items: [], updatedAt: Date.now() });
+    render();
+    showToast("已清空");
+  }
+
+  async function loadSettings(){
+    try{
+      const res = await fetch(`${API_BASE}/settings`, { cache: "no-store" });
+      if(!res.ok) throw new Error("settings error " + res.status);
+
+      const s = await res.json();
+      if(s && typeof s === "object"){
+        SETTINGS = {
+          ...SETTINGS,
+          ...s,
+          shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
+          free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
+          first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
+          birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
+          shipping_enabled: !!s.shipping_enabled
+        };
+      }
+    }catch(e){
+      console.warn("loadSettings failed, fallback defaults", e);
+    }
+  }
+
+  async function copyCartText(){
+    const cart = readCart();
+    const r = calc(cart);
+    if(!r.items.length){
+      showToast("購物車是空的", false);
+      return;
+    }
+
+    const lines = [];
+    lines.push("十年一日｜購物車");
+    lines.push("—");
+    r.items.forEach(it => {
+      lines.push(`${it.title}（${it.id}） x${it.qty} ＝ ${money(Number(it.price)*Number(it.qty))}`);
+    });
+    lines.push("—");
+    lines.push(`小計：${money(r.sub)}`);
+    lines.push(`運費：${money(r.ship)}`);
+    lines.push(`合計：${money(r.total)}`);
+
+    const text = lines.join("\n");
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast("已複製 ✅");
+    }catch(e){
+      console.error(e);
+      showToast("複製失敗（瀏覽器可能阻擋）", false);
+    }
+  }
+
+  // events
+  els.btnBack?.addEventListener("click", () => location.href = "all.html");
+  els.btnReload?.addEventListener("click", () => render());
+  els.btnClear?.addEventListener("click", clearCart);
+
+  els.btnCheckout?.addEventListener("click", () => {
+    showToast("結帳功能稍後開放（下一步可以接 LINE / 表單）");
   });
-  btn.addEventListener("click", () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+
+  els.btnCopy?.addEventListener("click", copyCartText);
+
+  // init
+  (async () => {
+    await loadSettings();
+    render();
+  })();
 </script>
-<script src="include.js"></script>
 
 </body>
 </html>
