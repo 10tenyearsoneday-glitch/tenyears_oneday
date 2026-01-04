@@ -37,6 +37,9 @@
     textarea{min-height:110px;resize:vertical}
     .panel-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
     .toast{margin-top:10px;font-size:.9rem}
+    .rowline{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+    .btn-mini{border:none;border-radius:999px;padding:8px 12px;background:rgba(0,0,0,.08);cursor:pointer}
+    .label{font-size:.82rem;opacity:.75;margin:2px 0 6px}
   </style>
 </head>
 <body>
@@ -47,7 +50,7 @@
     <div class="admin-top">
       <div>
         <div class="admin-title">後台管理（商品）</div>
-        <div class="hint">提示：這版不用登入；但 Render 重啟後資料會回到 server.js 原始值（之後可接 Google Sheet/DB 變永久）。</div>
+        <div class="hint">這版直接寫入 Google Sheet（需要 ADMIN_KEY）。</div>
       </div>
       <div class="admin-actions">
         <button class="btn2 secondary" id="btnReload" type="button">重新載入</button>
@@ -56,7 +59,6 @@
     </div>
 
     <table class="table" id="tbl"></table>
-
     <div class="toast" id="toast"></div>
   </main>
 
@@ -105,39 +107,30 @@
           <label>金額（NT$）</label>
           <input id="fPrice" type="number" min="0" step="1" placeholder="例如：420">
         </div>
- <div class="full">
-  <div class="field">
-    <div class="label">商品圖（上傳到 assets/products/）</div>
 
-    <label for="imgFile" class="btn2 secondary" style="display:inline-block;margin:6px 0;">
-      選擇圖片
-    </label>
-    <input id="imgFile" type="file" accept="image/*" style="display:none;">
+        <div class="full">
+          <div class="label">商品圖（上傳到 assets/products/）</div>
+          <input id="imgFile" type="file" accept="image/*">
 
-    <div class="hint">
-      選檔後會自動產生建議檔名與圖片網址（你只要把檔案丟到 GitHub 對應資料夾即可）
-    </div>
+          <div class="hint">選檔後會產生「建議檔名」與「圖片網址」。你把檔案丟到 GitHub assets/products/ 即可。</div>
 
-    <div class="row">
-      <input id="imgSlug" type="text" placeholder="建議檔名（例如 O-D.jpg）">
-      <button id="copySlug" type="button" class="btn-mini">複製檔名</button>
-    </div>
+          <div class="rowline">
+            <input id="imgSlug" type="text" placeholder="建議檔名（例如 O-D.jpg）">
+            <button id="copySlug" type="button" class="btn-mini">複製檔名</button>
+          </div>
 
-    <div class="row">
-      <input id="imgUrl" type="text" placeholder="圖片網址（會自動填）">
-      <button id="copyUrl" type="button" class="btn-mini">複製網址</button>
-    </div>
+          <div class="rowline">
+            <input id="imgUrl" type="text" placeholder="圖片網址（會自動填）">
+            <button id="copyUrl" type="button" class="btn-mini">複製網址</button>
+          </div>
 
-    <img id="imgPreview" alt="預覽"
-      style="max-width:220px;border-radius:12px;display:none;margin-top:10px;">
-  </div>
-</div>
+          <img id="imgPreview" alt="預覽" style="max-width:220px;border-radius:12px;display:none;margin-top:10px;">
+        </div>
 
-
-<div class="full">
-  <label>圖片網址（image）</label>
-  <input id="fImage" placeholder="https://...jpg">
-</div>
+        <div class="full">
+          <label>圖片網址（image）</label>
+          <input id="fImage" placeholder="https://...jpg">
+        </div>
 
         <div class="full">
           <label>商品說明（desc）</label>
@@ -156,8 +149,12 @@
   </div>
 
 <script>
-  const API_BASE = "https://tenyears-oneday-api.onrender.com";
+  // ✅ 改這兩個
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+  const ADMIN_KEY = "10years1day911321";
+
   const PLACEHOLDER = "assets/placeholder.png";
+  const IMG_BASE = "https://10tenyearsoneday-glitch.github.io/tenyears_oneday/assets/products/";
 
   const tbl = document.getElementById("tbl");
   const toast = document.getElementById("toast");
@@ -175,6 +172,13 @@
   const fImage = document.getElementById("fImage");
   const fDesc = document.getElementById("fDesc");
 
+  const imgFile = document.getElementById("imgFile");
+  const imgSlug = document.getElementById("imgSlug");
+  const imgUrl  = document.getElementById("imgUrl");
+  const imgPreview = document.getElementById("imgPreview");
+  const copySlug = document.getElementById("copySlug");
+  const copyUrl  = document.getElementById("copyUrl");
+
   const btnReload = document.getElementById("btnReload");
   const btnAdd = document.getElementById("btnAdd");
   const btnCancel = document.getElementById("btnCancel");
@@ -182,15 +186,58 @@
   const btnSave = document.getElementById("btnSave");
 
   let PRODUCTS = [];
-  let editingId = null;   // 目前在編輯哪一筆（null 代表新增）
+  let editingId = null;
 
   function showToast(msg, ok=true){
     toast.textContent = msg;
     toast.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
   }
 
+  function safeFileName(name){
+    return String(name).trim().replace(/[^\w.\-]+/g, "-");
+  }
+
+  function updateImageUrlFromSlug(){
+    const fileName = safeFileName(imgSlug.value || "");
+    const full = fileName ? (IMG_BASE + encodeURIComponent(fileName)) : "";
+    imgUrl.value = full;
+    fImage.value = full;
+  }
+
+  imgFile?.addEventListener("change", () => {
+    const f = imgFile.files?.[0];
+    if(!f) return;
+
+    const id = (fId.value || "").trim();
+    const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
+    const fileName = safeFileName((id ? id : f.name.replace(/\.[^.]+$/, "")) + "." + ext);
+
+    imgSlug.value = fileName;
+    updateImageUrlFromSlug();
+
+    const url = URL.createObjectURL(f);
+    imgPreview.src = url;
+    imgPreview.style.display = "block";
+  });
+
+  imgSlug?.addEventListener("input", updateImageUrlFromSlug);
+  imgUrl?.addEventListener("input", () => { fImage.value = imgUrl.value.trim(); });
+
+  copySlug?.addEventListener("click", async () => {
+    if(!imgSlug.value) return;
+    await navigator.clipboard.writeText(imgSlug.value);
+    showToast("已複製檔名");
+  });
+
+  copyUrl?.addEventListener("click", async () => {
+    if(!imgUrl.value) return;
+    await navigator.clipboard.writeText(imgUrl.value);
+    showToast("已複製圖片網址");
+  });
+
   function openModal(mode, item){
     modal.classList.add("open");
+
     if(mode === "add"){
       editingId = null;
       modalTitle.textContent = "新增商品";
@@ -207,9 +254,8 @@
       fImage.value = "";
       fDesc.value = "";
       imgSlug.value = "";
-imgUrl.value = "";
-imgPreview.style.display = "none";
-
+      imgUrl.value = "";
+      imgPreview.style.display = "none";
     }else{
       editingId = item.id;
       modalTitle.textContent = `編輯商品：${item.id}`;
@@ -222,25 +268,22 @@ imgPreview.style.display = "none";
       fTitle.value = item.title || "";
       fCategory.value = item.category || "其他";
       fSeries.value = item.series || "全系列";
-      fPrice.value = (typeof item.price === "number") ? item.price : 0;
+      fPrice.value = (typeof item.price === "number") ? item.price : Number(item.price || 0);
       fImage.value = item.image || "";
       fDesc.value = item.desc || "";
-      // 如果已經有圖片網址，反推 slug（只是顯示用）
-imgUrl.value = item.image || "";
-imgSlug.value = (item.image || "").split("/").pop() || "";
-if(item.image){
-  imgPreview.src = item.image;
-  imgPreview.style.display = "block";
-}else{
-  imgPreview.style.display = "none";
-}
 
+      imgUrl.value = item.image || "";
+      imgSlug.value = (item.image || "").split("/").pop() || "";
+      if(item.image){
+        imgPreview.src = item.image;
+        imgPreview.style.display = "block";
+      }else{
+        imgPreview.style.display = "none";
+      }
     }
   }
 
-  function closeModal(){
-    modal.classList.remove("open");
-  }
+  function closeModal(){ modal.classList.remove("open"); }
 
   function rowHtml(p){
     const img = p.image || PLACEHOLDER;
@@ -257,7 +300,7 @@ if(item.image){
           <div class="mini">ID：${p.id}</div>
         </td>
         <td style="width:120px;text-align:right;font-weight:700;color:#6c7f67;">
-          NT$ ${(typeof p.price === "number") ? p.price : 0}
+          NT$ ${typeof p.price === "number" ? p.price : Number(p.price || 0)}
         </td>
         <td style="width:90px;text-align:right;">
           <button class="btn2 secondary" data-edit="${p.id}" type="button">編輯</button>
@@ -280,20 +323,19 @@ if(item.image){
   async function loadProducts(){
     showToast("載入商品中...");
     try{
-      const res = await fetch(`${API_BASE}/products`, { cache: "no-store" });
-      if(!res.ok) throw new Error("API error " + res.status);
+      const res = await fetch(`${GAS_URL}?path=products`, { cache: "no-store" });
       const data = await res.json();
       PRODUCTS = Array.isArray(data) ? data : [];
       render();
       showToast(`載入完成：${PRODUCTS.length} 件商品`);
     }catch(e){
       console.error(e);
-      showToast("載入失敗，請確認 API 是否正常", false);
+      showToast("載入失敗，請確認 GAS 是否正常", false);
     }
   }
 
-  async function saveProduct(){
-    const payload = {
+  function buildPayload(){
+    return {
       id: fId.value.trim(),
       status: fStatus.value,
       title: fTitle.value.trim(),
@@ -303,8 +345,11 @@ if(item.image){
       image: fImage.value.trim(),
       desc: fDesc.value.trim()
     };
+  }
 
-    // 基本檢查
+  async function saveProduct(){
+    const payload = buildPayload();
+
     if(!payload.title){
       showToast("請填商品名稱", false);
       return;
@@ -316,33 +361,35 @@ if(item.image){
 
     try{
       if(editingId === null){
-        // 新增
-        const res = await fetch(`${API_BASE}/products`, {
+        // ✅ 新增（POST）
+        const res = await fetch(`${GAS_URL}?path=products&key=${encodeURIComponent(ADMIN_KEY)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
         const out = await res.json();
-        if(!res.ok) throw new Error(out?.error || "POST_FAILED");
+        if(!res.ok || out?.error) throw new Error(out?.error || "POST_FAILED");
+
         closeModal();
         await loadProducts();
         showToast("新增成功");
       }else{
-        // 修改
-        const res = await fetch(`${API_BASE}/products/${encodeURIComponent(editingId)}`, {
+        // ✅ 修改（PUT）
+        const res = await fetch(`${GAS_URL}?path=products&id=${encodeURIComponent(editingId)}&key=${encodeURIComponent(ADMIN_KEY)}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
         const out = await res.json();
-        if(!res.ok) throw new Error(out?.error || "PUT_FAILED");
+        if(!res.ok || out?.error) throw new Error(out?.error || "PUT_FAILED");
+
         closeModal();
         await loadProducts();
         showToast("儲存成功");
       }
     }catch(e){
       console.error(e);
-      showToast("儲存失敗（可能是 id 重複或 API 錯誤）", false);
+      showToast("儲存失敗（請檢查 ADMIN_KEY / id 是否重複 / GAS 是否已部署）", false);
     }
   }
 
@@ -352,17 +399,18 @@ if(item.image){
     if(!ok) return;
 
     try{
-      const res = await fetch(`${API_BASE}/products/${encodeURIComponent(editingId)}`, {
+      const res = await fetch(`${GAS_URL}?path=products&id=${encodeURIComponent(editingId)}&key=${encodeURIComponent(ADMIN_KEY)}`, {
         method: "DELETE"
       });
       const out = await res.json();
-      if(!res.ok) throw new Error(out?.error || "DELETE_FAILED");
+      if(!res.ok || out?.error) throw new Error(out?.error || "DELETE_FAILED");
+
       closeModal();
       await loadProducts();
       showToast("刪除成功");
     }catch(e){
       console.error(e);
-      showToast("刪除失敗", false);
+      showToast("刪除失敗（請檢查 ADMIN_KEY / GAS 是否已部署）", false);
     }
   }
 
@@ -373,67 +421,8 @@ if(item.image){
   btnSave.addEventListener("click", saveProduct);
   btnDelete.addEventListener("click", deleteProduct);
 
-  // 點背景關閉
-  modal.addEventListener("click", (e) => {
-    if(e.target === modal) closeModal();
-  });
+  modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
 
-  // ====== 圖片：選檔 → 自動產生檔名 & URL（用 fId）======
-const IMG_BASE = "https://10tenyearsoneday-glitch.github.io/tenyears_oneday/assets/products/";
-
-const imgFile = document.getElementById("imgFile");
-const imgSlug = document.getElementById("imgSlug");
-const imgUrl  = document.getElementById("imgUrl");
-const imgPreview = document.getElementById("imgPreview");
-const copySlug = document.getElementById("copySlug");
-const copyUrl  = document.getElementById("copyUrl");
-
-function safeFileName(name){
-  return String(name)
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-zA-Z0-9._-]+/g, "-");
-}
-function updateImageUrlFromSlug(){
-  const fileName = safeFileName(imgSlug.value || "");
-  const full = fileName ? (IMG_BASE + encodeURIComponent(fileName)) : "";
-  imgUrl.value = full;
-  // ✅ 同步到真正要存進 API 的欄位
-  fImage.value = full;
-}
-
-imgFile?.addEventListener("change", () => {
-  const f = imgFile.files?.[0];
-  if(!f) return;
-
-  const id = (fId.value || "").trim();            // ✅ 你這頁的 id input 是 fId
-  const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
-  const fileName = safeFileName((id ? id : f.name.replace(/\.[^.]+$/, "")) + "." + ext);
-
-  imgSlug.value = fileName;
-  updateImageUrlFromSlug();
-
-  const url = URL.createObjectURL(f);
-  imgPreview.src = url;
-  imgPreview.style.display = "block";
-});
-
-imgSlug?.addEventListener("input", updateImageUrlFromSlug);
-
-// 讓你手動貼 imgUrl 也會同步到 fImage
-imgUrl?.addEventListener("input", () => {
-  fImage.value = imgUrl.value.trim();
-});
-
-copySlug?.addEventListener("click", async () => {
-  if(!imgSlug.value) return;
-  await navigator.clipboard.writeText(imgSlug.value);
-});
-
-copyUrl?.addEventListener("click", async () => {
-  if(!imgUrl.value) return;
-  await navigator.clipboard.writeText(imgUrl.value);
-});
   loadProducts();
 </script>
 
