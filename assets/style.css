@@ -473,3 +473,18 @@ main{
 .product-link:active .product{
   transform: translateY(1px);
 }
+/* 商品卡片縮圖 */
+.product .thumb{
+  width:100%;
+  aspect-ratio: 4 / 3;
+  background: rgba(255,255,255,.55);
+  border-radius:14px;
+  overflow:hidden;
+}
+
+.product .thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
