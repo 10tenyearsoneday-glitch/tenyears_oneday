@@ -57,30 +57,24 @@
   let ALL_PRODUCTS = [];
 
 function productCard(p){
-  const id = p.id || "";
+  const id = p.id ?? "";
   const cat = p.category || "其他";
   const series = p.series || "全系列";
   const price = (typeof p.price === "number") ? p.price : 0;
   const title = p.title || "（未命名）";
-  const status = p.status || "上架";
-  const img = p.image || ""; // 之後有圖片就會自動用
 
-  const thumb = img
-    ? `<img src="${img}" alt="${title}" loading="lazy">`
-    : `<div class="placeholder">圖片</div>`;
-
+  // 先示意圖：之後你有 p.image 再換成 <img>
   return `
-    <a class="product-card" href="product.html?id=${encodeURIComponent(id)}">
-      <div class="thumb">
-        ${thumb}
-        <div class="badge">${status}</div>
-      </div>
-      <div class="body">
-        <div>
-          <div class="name">${title}</div>
-          <div class="meta">${series}｜${cat}</div>
+    <a class="product-link" href="product.html?id=${encodeURIComponent(id)}" aria-label="${title}">
+      <div class="product" data-cat="${cat}" data-series="${series}">
+        <div class="thumb">圖片</div>
+        <div class="body">
+          <div>
+            <div class="name">${title}</div>
+            <div class="meta">${series}｜${cat}</div>
+          </div>
+          <div class="price">NT$ ${price}</div>
         </div>
-        <div class="price">NT$ ${price}</div>
       </div>
     </a>
   `;
