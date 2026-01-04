@@ -123,12 +123,13 @@
     </div>
 
     <img id="imgPreview" alt="預覽" style="max-width:220px;border-radius:12px;display:none;margin-top:10px;">
-  </label>
+    </label>
 </div>
 
-          <label>圖片網址（image）</label>
-          <input id="fImage" placeholder="https://...jpg">
-        </div>
+<div class="full">
+  <label>圖片網址（image）</label>
+  <input id="fImage" placeholder="https://...jpg">
+</div>
 
         <div class="full">
           <label>商品說明（desc）</label>
@@ -369,7 +370,6 @@ if(item.image){
     if(e.target === modal) closeModal();
   });
 
-  loadProducts();
   // ====== 圖片：選檔 → 自動產生檔名 & URL（用 fId）======
 const IMG_BASE = "https://10tenyearsoneday-glitch.github.io/tenyears_oneday/assets/products/";
 
@@ -424,7 +424,7 @@ copyUrl?.addEventListener("click", async () => {
   if(!imgUrl.value) return;
   await navigator.clipboard.writeText(imgUrl.value);
 });
-
+  loadProducts();
 </script>
 
 </body>
