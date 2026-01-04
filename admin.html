@@ -375,11 +375,9 @@
         showToast("新增成功");
       }else{
         // ✅ 修改（PUT）
-        const res = await fetch(`${GAS_URL}?path=products&id=${encodeURIComponent(editingId)}&key=${encodeURIComponent(ADMIN_KEY)}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+       const res = await fetch(`${GAS_URL}?path=products&id=${encodeURIComponent(editingId)}&key=${encodeURIComponent(ADMIN_KEY)}&method=DELETE`, {
+  method: "POST"
+});
         const out = await res.json();
         if(!res.ok || out?.error) throw new Error(out?.error || "PUT_FAILED");
 
@@ -399,9 +397,10 @@
     if(!ok) return;
 
     try{
-      const res = await fetch(`${GAS_URL}?path=products&id=${encodeURIComponent(editingId)}&key=${encodeURIComponent(ADMIN_KEY)}`, {
-        method: "DELETE"
-      });
+    const res = await fetch(`${GAS_URL}?path=products&id=${encodeURIComponent(editingId)}&key=${encodeURIComponent(ADMIN_KEY)}&method=DELETE`, {
+  method: "POST"
+});
+
       const out = await res.json();
       if(!res.ok || out?.error) throw new Error(out?.error || "DELETE_FAILED");
 
