@@ -50,6 +50,9 @@
     const btnAddCart = document.getElementById("btnAddCart");
     const cartToast  = document.getElementById("cartToast");
 
+    // ✅ 跟 include.js 同一把 key
+    const CART_KEY = "ten_cart";
+
     let CURRENT_PRODUCT = null;
 
     function toast(msg, ok=true){
@@ -59,9 +62,7 @@
       setTimeout(()=>{ cartToast.textContent = ""; }, 1800);
     }
 
-    // ====== Cart (for cart.html) ======
-    const CART_KEY = "ten_cart"; // ✅ 要跟 cart.html 一樣
-
+    // ====== Cart (ten_cart) ======
     function readCart(){
       try{
         const raw = localStorage.getItem(CART_KEY);
@@ -74,22 +75,25 @@
 
     function writeCart(arr){
       localStorage.setItem(CART_KEY, JSON.stringify(arr));
+      // ✅ 通知 header 更新數量
       window.dispatchEvent(new Event("cart:changed"));
     }
 
-    function addToCart(productId, qty=1){
-      const cart = readCart();
-      const pid = String(productId || "").trim();
-      if(!pid) return false;
+    function addToCart(product, qty=1){
+      const pid = String(product?.id || "").trim();
+      if(!pid) return { ok:false, error:"NO_ID" };
 
+      const cart = readCart();
       const i = cart.findIndex(x => String(x.id) === pid);
+
       if(i === -1){
-        cart.push({ id: pid, qty: Math.max(1, Number(qty||1)) });
+        cart.push({ id: pid, qty: Math.max(1, Number(qty || 1)) });
       }else{
-        cart[i].qty = Math.max(1, Number(cart[i].qty||1) + Math.max(1, Number(qty||1)));
+        cart[i].qty = Math.max(1, Number(cart[i].qty || 1) + Number(qty || 1));
       }
+
       writeCart(cart);
-      return true;
+      return { ok:true };
     }
 
     // ====== Thumbs ======
@@ -105,6 +109,7 @@
           .filter(Boolean);
       }
 
+      // 主圖放第一張（去重）
       const all = [mainImage, ...list].filter(Boolean);
       const uniq = [];
       const seen = new Set();
@@ -134,28 +139,29 @@
         btn.addEventListener("click", () => {
           const src = btn.getAttribute("data-src") || "";
           if(!src) return;
-          pImg.src = src;
 
+          pImg.src = src;
           thumbs.querySelectorAll(".thumb-btn").forEach(b => b.classList.remove("active"));
           btn.classList.add("active");
         });
       });
     }
 
-    // ====== Load product ======
     async function loadOne(){
       if(!id){
         pName.textContent = "找不到商品";
-        btnAddCart.disabled = true;
-        btnAddCart.textContent = "無法加入";
+        if(btnAddCart){
+          btnAddCart.disabled = true;
+          btnAddCart.textContent = "無法加入購物車";
+        }
         return;
       }
 
       try{
+        // ✅ 用單一商品 API
         const res = await fetch(`${API_BASE}/products/${encodeURIComponent(id)}`, { cache: "no-store" });
         if(!res.ok) throw new Error("API error " + res.status);
         const p = await res.json();
-
         CURRENT_PRODUCT = p;
 
         document.title = `${p.title || "商品"}｜十年一日`;
@@ -174,33 +180,32 @@
 
         buildThumbs(main, p.images);
 
-        btnAddCart.disabled = false;
-        btnAddCart.textContent = "加入購物車";
+        if(btnAddCart){
+          btnAddCart.disabled = false;
+          btnAddCart.textContent = "加入購物車";
+        }
       }catch(err){
         console.error(err);
         pName.textContent = "載入失敗，請稍後再試";
-        btnAddCart.disabled = true;
-        btnAddCart.textContent = "無法加入";
+        if(btnAddCart){
+          btnAddCart.disabled = true;
+          btnAddCart.textContent = "無法加入購物車";
+        }
       }
     }
 
-    // ====== Click add cart ======
+    // ✅ 不跳轉：只加入購物車 + toast + header 更新數量
     btnAddCart?.addEventListener("click", () => {
       if(!CURRENT_PRODUCT){
         toast("商品尚未載入完成", false);
         return;
       }
-      const ok = addToCart(CURRENT_PRODUCT.id, 1);
-      if(!ok){
+      const r = addToCart(CURRENT_PRODUCT, 1);
+      if(!r.ok){
         toast("加入失敗", false);
         return;
       }
-
       toast("已加入購物車 ✅");
-
-      // ✅ 要不要加入後直接跳購物車？
-      // 想要就打開這行；不想跳就註解掉
-      location.href = "cart.html";
     });
 
     loadOne();
