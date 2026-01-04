@@ -15,7 +15,9 @@
       <div class="detail-grid">
 <div class="detail-media">
   <img id="pImg" alt="商品圖" loading="lazy">
+  <div id="thumbs" class="thumbs"></div>
 </div>
+
 
 
         <div class="detail-info">
@@ -81,6 +83,63 @@ pImg.src = img || "assets/placeholder.png";
       console.error(err);
       pName.textContent = "載入失敗，請稍後再試";
     }
+    const thumbs = document.getElementById("thumbs");
+
+function buildThumbs(mainImage, imagesField){
+  // imagesField 可能是：多行字串 / 單一字串 / 陣列
+  let list = [];
+
+  if(Array.isArray(imagesField)){
+    list = imagesField;
+  }else{
+    list = String(imagesField || "")
+      .split("\n")
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  // 把主圖放到第一張（避免重複）
+  const all = [mainImage, ...list].filter(Boolean);
+  const uniq = [];
+  const seen = new Set();
+  for(const u of all){
+    if(!seen.has(u)){
+      seen.add(u);
+      uniq.push(u);
+    }
+  }
+
+  if(!thumbs) return;
+
+  // 只有一張就不顯示縮圖列
+  if(uniq.length <= 1){
+    thumbs.innerHTML = "";
+    thumbs.style.display = "none";
+    return;
+  }
+
+  thumbs.style.display = "flex";
+  thumbs.innerHTML = uniq.map((u, i) => `
+    <button class="thumb-btn ${i===0 ? "active":""}" type="button" data-src="${u}">
+      <img src="${u}" alt="縮圖 ${i+1}" loading="lazy">
+    </button>
+  `).join("");
+
+  thumbs.querySelectorAll(".thumb-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const src = btn.getAttribute("data-src") || "";
+      if(!src) return;
+      pImg.src = src;
+const main = p.image || "assets/placeholder.png";
+pImg.src = main;
+buildThumbs(main, p.images);
+
+      thumbs.querySelectorAll(".thumb-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+}
+
   }
 
   loadOne();
