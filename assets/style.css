@@ -587,3 +587,33 @@ main{
     transparent 100%
   );
 }
+.thumbs{
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+  overflow:auto;
+  padding-bottom:4px;
+}
+.thumb-btn{
+  border:none;
+  padding:0;
+  background:transparent;
+  cursor:pointer;
+  border-radius:12px;
+  overflow:hidden;
+  flex:0 0 auto;
+  width:72px;
+  height:72px;
+  outline:none;
+  opacity:.8;
+}
+.thumb-btn img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.thumb-btn.active{
+  opacity:1;
+  box-shadow:0 0 0 2px rgba(93,107,89,.6);
+}
