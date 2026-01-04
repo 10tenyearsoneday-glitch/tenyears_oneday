@@ -19,67 +19,8 @@
   <button class="chip" data-filter="耳環" type="button">耳環</button>
   <button class="chip" data-filter="戒指" type="button">戒指</button>
   <button class="chip" data-filter="其他" type="button">其他</button>
-</div>
-<div class="grid">
-
-  <div class="product" data-cat="項鍊">
-    <div class="thumb">圖片</div>
-    <div class="body">
-      <div>
-        <div class="name">項鍊 A</div>
-        <div class="meta">全系列｜項鍊</div>
-      </div>
-      <div class="price">NT$ 1280</div>
-    </div>
-  </div>
-
-  <div class="product" data-cat="耳環">
-    <div class="thumb">圖片</div>
-    <div class="body">
-      <div>
-        <div class="name">耳環 B</div>
-        <div class="meta">全系列｜耳環</div>
-      </div>
-      <div class="price">NT$ 880</div>
-    </div>
-  </div>
-
-  <div class="product" data-cat="戒指">
-    <div class="thumb">圖片</div>
-    <div class="body">
-      <div>
-        <div class="name">戒指 C</div>
-        <div class="meta">全系列｜戒指</div>
-      </div>
-      <div class="price">NT$ 1580</div>
-    </div>
-  </div>
-
-  <div class="product" data-cat="其他">
-    <div class="thumb">圖片</div>
-    <div class="body">
-      <div>
-        <div class="name">吊飾 D</div>
-        <div class="meta">全系列｜其他（自動歸類）</div>
-      </div>
-      <div class="price">NT$ 420</div>
-    </div>
-  </div>
-
-  <div class="product" data-cat="手鏈">
-    <div class="thumb">圖片</div>
-    <div class="body">
-      <div>
-        <div class="name">（待新增）</div>
-        <div class="meta">全系列｜手鏈</div>
-      </div>
-      <div class="price">NT$ 0</div>
-    </div>
-  </div>
-
-</div>
-
-
+  
+<div class="grid" id="productGrid"></div>
 </main>
 
 <footer>
@@ -105,28 +46,50 @@
 </footer>
 <button id="backToTop" aria-label="回到頂端">↑</button>
 
+<script src="include.js"></script>
+
 <script>
-  // 回到頂端
-  const btn = document.getElementById("backToTop");
-  if (btn) {
-    window.addEventListener("scroll", () => {
-      btn.style.display = window.scrollY > 300 ? "block" : "none";
-    });
-    btn.addEventListener("click", () => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
+  const API_BASE = "https://tenyears-oneday-api.onrender.com";
+
+  const grid = document.getElementById("productGrid");
+  const chips = document.querySelectorAll("#subcats .chip");
+
+  let ALL_PRODUCTS = [];
+
+  function productCard(p){
+    const cat = p.category || "其他";
+    const series = p.series || "全系列";
+    const price = (typeof p.price === "number") ? p.price : 0;
+    const title = p.title || "（未命名）";
+    const status = p.status || "上架";
+
+    return `
+      <div class="product" data-cat="${cat}" data-series="${series}" data-status="${status}">
+        <div class="thumb">圖片</div>
+        <div class="body">
+          <div>
+            <div class="name">${title}</div>
+            <div class="meta">${series}｜${cat}</div>
+          </div>
+          <div class="price">NT$ ${price}</div>
+        </div>
+      </div>
+    `;
   }
 
-  // 子分類篩選
-  const chips = document.querySelectorAll("#subcats .chip");
-  const products = document.querySelectorAll(".product");
+  function render(products){
+    grid.innerHTML = products.map(productCard).join("");
+  }
 
-  function applyFilter(filter) {
-    products.forEach(p => {
-      const cat = p.dataset.cat || "其他";
-      const show = (filter === "全部" || cat === filter);
-      p.style.display = show ? "" : "none";
-    });
+  function applyFilter(filter){
+    const visible = ALL_PRODUCTS
+      .filter(p => (p.status || "上架") === "上架")
+      .filter(p => {
+        const cat = p.category || "其他";
+        return (filter === "全部" || cat === filter);
+      });
+
+    render(visible);
   }
 
   chips.forEach(chip => {
@@ -134,13 +97,37 @@
       chips.forEach(c => c.classList.remove("active"));
       chip.classList.add("active");
 
-      const f = chip.dataset.filter;
+      const f = chip.dataset.filter || "全部";
       applyFilter(f);
+      grid.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
 
-  applyFilter("全部");
+  async function loadProducts(){
+    grid.innerHTML = `<div style="opacity:.7; padding:18px;">載入中...</div>`;
+    try{
+      const res = await fetch(`${API_BASE}/products`, { cache: "no-store" });
+      if(!res.ok) throw new Error("API error " + res.status);
+      const data = await res.json();
+
+      ALL_PRODUCTS = Array.isArray(data) ? data : [];
+      applyFilter("全部");
+    }catch(err){
+      console.error(err);
+      grid.innerHTML = `<div style="color:#8a3b3b; padding:18px;">商品載入失敗，請稍後再試。</div>`;
+    }
+  }
+
+  loadProducts();
+
+  const btn = document.getElementById("backToTop");
+  window.addEventListener("scroll", () => {
+    btn.style.display = window.scrollY > 300 ? "block" : "none";
+  });
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 </script>
-<script src="include.js"></script>
+
 </body>
 </html>
