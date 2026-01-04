@@ -496,3 +496,12 @@ main{
 .product .thumb img{
   transition: opacity .25s ease;
 }
+.field .label{font-size:.82rem;opacity:.75;margin:2px 0 6px}
+.btn-mini{
+  border:none;border-radius:10px;
+  padding:10px 12px;
+  background:rgba(0,0,0,.08);
+  cursor:pointer;
+}
+.field .row{display:flex;gap:8px;align-items:center}
+.field .row input{flex:1}
