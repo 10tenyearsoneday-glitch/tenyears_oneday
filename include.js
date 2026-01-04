@@ -27,23 +27,47 @@ async function loadHeader() {
 }
 
 window.addEventListener("DOMContentLoaded", loadHeader);
-// include.js 最後面加
+// include.js 最後面（取代你原本的 IIFE）
 (function(){
   const CART_KEY = "ten_cart";
-  function countCart(){
+
+  function readCartCount(){
     try{
-      const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+      const raw = localStorage.getItem(CART_KEY);
+      const arr = JSON.parse(raw || "[]");
       if(!Array.isArray(arr)) return 0;
-      return arr.reduce((s,x)=>s+Math.max(1,Number(x.qty||1)),0);
-    }catch(e){ return 0; }
+
+      return arr.reduce(
+        (sum, x) => sum + Math.max(0, Number(x.qty || 0)),
+        0
+      );
+    }catch(e){
+      return 0;
+    }
   }
-  function render(){
+
+  function renderCartBadge(){
     const el = document.getElementById("cartCount");
     if(!el) return;
-    const n = countCart();
-    el.textContent = n > 0 ? String(n) : "";
-    el.style.display = n > 0 ? "inline-flex" : "none";
+
+    const n = readCartCount();
+    if(n > 0){
+      el.textContent = String(n);
+      el.style.display = "inline-flex";
+    }else{
+      el.textContent = "";
+      el.style.display = "none";
+    }
   }
-  window.addEventListener("cart:changed", render);
-  render();
+
+  // 初始顯示（header 已插入後）
+  renderCartBadge();
+
+  // 同頁更新
+  window.addEventListener("cart:changed", renderCartBadge);
+
+  // 跨分頁 / 跨分頁同步
+  window.addEventListener("storage", (e) => {
+    if(e.key === CART_KEY) renderCartBadge();
+  });
 })();
