@@ -703,7 +703,7 @@ main{
   height: 20px;
   display: block;
   fill: none;
-  stroke: rgba(47,58,44,.9);
+  stroke: rgba(47,58,44,.9)!important;
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
