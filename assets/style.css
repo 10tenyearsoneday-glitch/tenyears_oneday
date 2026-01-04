@@ -671,3 +671,29 @@ main{
   color:#fff;
   line-height:1;
 }
+/* ===== 購物車數量 Badge（右上角） ===== */
+.icon[data-icon="cart"]{
+  position: relative;
+}
+
+.cart-badge{
+  position: absolute;
+  top: -6px;
+  right: -6px;
+
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+
+  border-radius: 999px;
+  background: #8a3b3b;        /* 深紅色，跟你品牌很搭 */
+  color: #fff;
+
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+
+  display: none;              /* JS 有數量才顯示 */
+  pointer-events: none;       /* 不影響點擊購物車 */
+}
