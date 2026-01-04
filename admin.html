@@ -168,6 +168,11 @@ textarea{min-height:110px;resize:vertical}
           <label>圖片網址（image）</label>
           <input id="fImage" placeholder="https://...jpg">
         </div>
+<div class="full">
+  <label>多圖網址（images）</label>
+  <textarea id="fImages" placeholder="一行一個網址&#10;https://.../O-D-1.jpg&#10;https://.../O-D-2.jpg"></textarea>
+  <div class="hint">一行一個網址；前台之後可做縮圖輪播</div>
+</div>
 
         <div class="full">
           <label>商品說明（desc）</label>
@@ -208,6 +213,7 @@ textarea{min-height:110px;resize:vertical}
   const fPrice = document.getElementById("fPrice");
   const fImage = document.getElementById("fImage");
   const fDesc = document.getElementById("fDesc");
+  const fImages = document.getElementById("fImages");
 
   const imgFile = document.getElementById("imgFile");
   const imgSlug = document.getElementById("imgSlug");
@@ -293,6 +299,8 @@ textarea{min-height:110px;resize:vertical}
       imgSlug.value = "";
       imgUrl.value = "";
       imgPreview.style.display = "none";
+      fImages.value = "";
+
     }else{
       editingId = item.id;
       modalTitle.textContent = `編輯商品：${item.id}`;
@@ -308,6 +316,13 @@ textarea{min-height:110px;resize:vertical}
       fPrice.value = (typeof item.price === "number") ? item.price : Number(item.price || 0);
       fImage.value = item.image || "";
       fDesc.value = item.desc || "";
+      // images 可能是字串（GAS/Sheet）或陣列（你未來可能改）→ 都轉成多行字串顯示
+if (Array.isArray(item.images)) {
+  fImages.value = item.images.join("\n");
+} else {
+  fImages.value = String(item.images || "").trim();
+}
+
 
       imgUrl.value = item.image || "";
       imgSlug.value = (item.image || "").split("/").pop() || "";
@@ -371,18 +386,20 @@ textarea{min-height:110px;resize:vertical}
     }
   }
 
-  function buildPayload(){
-    return {
-      id: fId.value.trim(),
-      status: fStatus.value,
-      title: fTitle.value.trim(),
-      category: fCategory.value,
-      series: fSeries.value,
-      price: Number(fPrice.value || 0),
-      image: fImage.value.trim(),
-      desc: fDesc.value.trim()
-    };
-  }
+ function buildPayload(){
+  return {
+    id: fId.value.trim(),
+    status: fStatus.value,
+    title: fTitle.value.trim(),
+    category: fCategory.value,
+    series: fSeries.value,
+    price: Number(fPrice.value || 0),
+    image: fImage.value.trim(),
+    images: (fImages.value || "").trim(), // ✅ 多圖：先以「多行字串」存到 Sheet
+    desc: fDesc.value.trim()
+  };
+}
+
 async function gasWrite(method, payload, id = "") {
   const url =
     `${GAS_URL}?path=products` +
