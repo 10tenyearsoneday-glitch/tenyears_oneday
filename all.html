@@ -66,6 +66,12 @@ let SETTINGS = {
   first_purchase_discount: 0.9,
   birthday_discount: 0.85
 };
+// 折扣顯示工具：0.9 → 9 折、0.85 → 8.5 折
+function rateToZhe(rate){
+  if(rate >= 1 || rate <= 0) return null;
+  const z = Math.round(rate * 100) / 10; // 0.9→9、0.85→8.5
+  return String(z).replace(/\.0$/, "");
+}
 
 
   let ALL_PRODUCTS = [];
@@ -84,9 +90,12 @@ function productCard(p){
   const bdayRate  = Number(SETTINGS.birthday_discount || 1);
   const freeOver  = Number(SETTINGS.free_shipping_threshold || 0);
   const shipOn    = !!SETTINGS.shipping_enabled;
+const firstZhe = rateToZhe(firstRate);
+const bdayZhe  = rateToZhe(bdayRate);
 
-  if(firstRate > 0 && firstRate < 1) badges.push(`首購 ${Math.round(firstRate*100)} 折`);
-  if(bdayRate > 0 && bdayRate < 1) badges.push(`生日月 ${Math.round(bdayRate*100)} 折`);
+if(firstZhe) badges.push(`首購 ${firstZhe} 折`);
+if(bdayZhe)  badges.push(`生日月 ${bdayZhe} 折`);
+
   if(shipOn && freeOver > 0) badges.push(`滿 NT$${freeOver} 免運`);
 
   return `
@@ -154,9 +163,12 @@ function renderPromoBar(){
   }else{
     chips.push(`免運活動中`);
   }
+const firstZhe = rateToZhe(firstRate);
+const bdayZhe  = rateToZhe(bdayRate);
 
-  if(firstRate > 0 && firstRate < 1) chips.push(`首購 ${Math.round(firstRate*100)} 折`);
-  if(bdayRate > 0 && bdayRate < 1) chips.push(`生日月 ${Math.round(bdayRate*100)} 折`);
+if(firstZhe) chips.push(`首購 ${firstZhe} 折`);
+if(bdayZhe)  chips.push(`生日月 ${bdayZhe} 折`);
+
 
   promoBar.innerHTML = chips.map(t => `<span class="promo-chip">${t}</span>`).join("");
   promoBar.style.display = chips.length ? "flex" : "none";
