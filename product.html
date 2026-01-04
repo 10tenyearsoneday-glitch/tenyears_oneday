@@ -13,134 +13,205 @@
       <a class="back" href="javascript:history.back()">← 返回</a>
 
       <div class="detail-grid">
-<div class="detail-media">
-  <img id="pImg" alt="商品圖" loading="lazy">
-  <div id="thumbs" class="thumbs"></div>
-</div>
-
-
+        <div class="detail-media">
+          <img id="pImg" alt="商品圖" loading="lazy">
+          <div id="thumbs" class="thumbs"></div>
+        </div>
 
         <div class="detail-info">
           <h2 id="pName">商品名稱</h2>
           <div class="detail-meta" id="pMeta">分類</div>
           <div class="detail-price" id="pPrice">NT$ 0</div>
 
-          <div class="detail-desc" id="pDesc">
-            這裡是商品介紹。
-          </div>
+          <div class="detail-desc" id="pDesc">這裡是商品介紹。</div>
 
           <div class="detail-actions">
-            <button class="btn" type="button" disabled>加入購物車（稍後開放）</button>
+            <button class="btn" id="btnAddCart" type="button" disabled>加入購物車</button>
+            <div id="cartToast" style="margin-top:10px;font-size:.9rem;opacity:.85;"></div>
           </div>
         </div>
       </div>
     </div>
   </main>
-<script src="include.js"></script>
 
-<script>
-  const API_BASE = "https://tenyears-oneday-api.onrender.com";
-  const id = new URLSearchParams(location.search).get("id");
+  <script src="include.js"></script>
 
-  const pImg   = document.getElementById("pImg");
-  const pName  = document.getElementById("pName");
-  const pMeta  = document.getElementById("pMeta");
-  const pPrice = document.getElementById("pPrice");
-  const pDesc  = document.getElementById("pDesc");
-  const thumbs = document.getElementById("thumbs");
+  <script>
+    const API_BASE = "https://tenyears-oneday-api.onrender.com";
+    const id = new URLSearchParams(location.search).get("id");
 
-  function buildThumbs(mainImage, imagesField){
-    let list = [];
+    const pImg   = document.getElementById("pImg");
+    const pName  = document.getElementById("pName");
+    const pMeta  = document.getElementById("pMeta");
+    const pPrice = document.getElementById("pPrice");
+    const pDesc  = document.getElementById("pDesc");
+    const thumbs = document.getElementById("thumbs");
 
-    // imagesField 可能是：多行字串 / 單一字串 / 陣列
-    if (Array.isArray(imagesField)) {
-      list = imagesField;
-    } else {
-      list = String(imagesField || "")
-        .split("\n")
-        .map(s => s.trim())
-        .filter(Boolean);
+    const btnAddCart = document.getElementById("btnAddCart");
+    const cartToast  = document.getElementById("cartToast");
+
+    const CART_KEY = "tenyears_cart_v1";
+    let CURRENT_PRODUCT = null;
+
+    function toast(msg, ok=true){
+      if(!cartToast) return;
+      cartToast.textContent = msg;
+      cartToast.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
+      setTimeout(()=>{ cartToast.textContent = ""; }, 1800);
     }
 
-    // 主圖放第一張（去重）
-    const all = [mainImage, ...list].filter(Boolean);
-    const uniq = [];
-    const seen = new Set();
-    for (const u of all){
-      if(!seen.has(u)){
-        seen.add(u);
-        uniq.push(u);
+    function readCart(){
+      try{
+        const raw = localStorage.getItem(CART_KEY);
+        const obj = raw ? JSON.parse(raw) : null;
+        if(obj && Array.isArray(obj.items)) return obj;
+      }catch(e){}
+      return { items: [], updatedAt: Date.now() };
+    }
+
+    function writeCart(cart){
+      cart.updatedAt = Date.now();
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    function addToCart(p, chosenImage){
+      const cart = readCart();
+
+      const pid = String(p.id || "").trim();
+      if(!pid) return { ok:false, error:"NO_ID" };
+
+      const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
+
+      const idx = cart.items.findIndex(x => String(x.id) === pid);
+      if(idx >= 0){
+        cart.items[idx].qty = Number(cart.items[idx].qty || 0) + 1;
+        if(chosenImage) cart.items[idx].image = chosenImage;
+      }else{
+        cart.items.unshift({
+          id: pid,
+          title: String(p.title || "（未命名）"),
+          price,
+          image: String(chosenImage || p.image || ""),
+          qty: 1
+        });
+      }
+
+      writeCart(cart);
+      return { ok:true, cart };
+    }
+
+    function buildThumbs(mainImage, imagesField){
+      let list = [];
+
+      if (Array.isArray(imagesField)) {
+        list = imagesField;
+      } else {
+        list = String(imagesField || "")
+          .split("\n")
+          .map(s => s.trim())
+          .filter(Boolean);
+      }
+
+      const all = [mainImage, ...list].filter(Boolean);
+      const uniq = [];
+      const seen = new Set();
+      for (const u of all){
+        if(!seen.has(u)){
+          seen.add(u);
+          uniq.push(u);
+        }
+      }
+
+      if(!thumbs) return;
+
+      if(uniq.length <= 1){
+        thumbs.innerHTML = "";
+        thumbs.style.display = "none";
+        return;
+      }
+
+      thumbs.style.display = "flex";
+      thumbs.innerHTML = uniq.map((u, i) => `
+        <button class="thumb-btn ${i===0 ? "active":""}" type="button" data-src="${u}">
+          <img src="${u}" alt="縮圖 ${i+1}" loading="lazy">
+        </button>
+      `).join("");
+
+      thumbs.querySelectorAll(".thumb-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const src = btn.getAttribute("data-src") || "";
+          if(!src) return;
+
+          pImg.src = src;
+
+          thumbs.querySelectorAll(".thumb-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+    }
+
+    async function loadOne(){
+      if(!id){
+        pName.textContent = "找不到商品";
+        return;
+      }
+
+      try{
+        const res = await fetch(`${API_BASE}/products/${encodeURIComponent(id)}`, { cache: "no-store" });
+        if(!res.ok) throw new Error("API error " + res.status);
+        const p = await res.json();
+
+        CURRENT_PRODUCT = p;
+
+        document.title = `${p.title || "商品"}｜十年一日`;
+
+        const cat = p.category || "其他";
+        const series = p.series || "全系列";
+        const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
+
+        pName.textContent = p.title || "（未命名）";
+        pMeta.textContent = `${series}｜${cat}`;
+        pPrice.textContent = `NT$ ${price}`;
+        pDesc.textContent = p.desc || "（商品介紹待補）";
+
+        const main = p.image || "assets/placeholder.png";
+        pImg.src = main;
+
+        buildThumbs(main, p.images);
+
+        if(btnAddCart){
+          btnAddCart.disabled = false;
+          btnAddCart.textContent = "加入購物車";
+        }
+
+      }catch(err){
+        console.error(err);
+        pName.textContent = "載入失敗，請稍後再試";
+        if(btnAddCart) btnAddCart.disabled = true;
       }
     }
 
-    if(!thumbs) return;
+    if(btnAddCart){
+      btnAddCart.addEventListener("click", () => {
+        if(!CURRENT_PRODUCT){
+          toast("商品尚未載入完成", false);
+          return;
+        }
 
-    // 只有一張 → 不顯示縮圖列
-    if(uniq.length <= 1){
-      thumbs.innerHTML = "";
-      thumbs.style.display = "none";
-      return;
-    }
+        const chosen = pImg?.src || CURRENT_PRODUCT.image || "";
+        const r = addToCart(CURRENT_PRODUCT, chosen);
 
-    thumbs.style.display = "flex";
-    thumbs.innerHTML = uniq.map((u, i) => `
-      <button class="thumb-btn ${i===0 ? "active":""}" type="button" data-src="${u}">
-        <img src="${u}" alt="縮圖 ${i+1}" loading="lazy">
-      </button>
-    `).join("");
+        if(!r.ok){
+          toast("加入失敗", false);
+          return;
+        }
 
-    thumbs.querySelectorAll(".thumb-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const src = btn.getAttribute("data-src") || "";
-        if(!src) return;
-
-        // ✅ 點哪張就換哪張（不要再重設回 main）
-        pImg.src = src;
-
-        thumbs.querySelectorAll(".thumb-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
+        toast("已加入購物車 ✅");
       });
-    });
-  }
-
-  async function loadOne(){
-    if(!id){
-      pName.textContent = "找不到商品";
-      return;
     }
 
-    try{
-      // ✅ 直接用單一商品 API
-      const res = await fetch(`${API_BASE}/products/${encodeURIComponent(id)}`, { cache: "no-store" });
-      if(!res.ok) throw new Error("API error " + res.status);
-      const p = await res.json();
-
-      document.title = `${p.title || "商品"}｜十年一日`;
-
-      const cat = p.category || "其他";
-      const series = p.series || "全系列";
-      const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
-
-      pName.textContent = p.title || "（未命名）";
-      pMeta.textContent = `${series}｜${cat}`;
-      pPrice.textContent = `NT$ ${price}`;
-      pDesc.textContent = p.desc || "（商品介紹待補）";
-
-      const main = p.image || "assets/placeholder.png";
-      pImg.src = main;
-
-      // ✅ 只在載入時建縮圖一次
-      buildThumbs(main, p.images);
-
-    }catch(err){
-      console.error(err);
-      pName.textContent = "載入失敗，請稍後再試";
-    }
-  }
-
-  loadOne();
-</script>
-
+    loadOne();
+  </script>
 
 </body>
 </html>
