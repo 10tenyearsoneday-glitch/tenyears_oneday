@@ -324,4 +324,36 @@ html, body { overflow-x: hidden; }
 @media (max-width: 820px){
   .detail-grid{ grid-template-columns: 1fr; }
 }
+/* ✅ 商品頁：子分類固定橫向一排，不要變直條側欄 */
+main{
+  display:block !important;
+}
+
+/* 子分類：橫向、可左右滑 */
+.subcats{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  gap:10px;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:12px 0;
+  margin:0 0 14px;
+}
+
+/* 每顆 chip：不要被撐高、不要變直條 */
+.subcats .chip{
+  flex:0 0 auto !important;
+  height:auto !important;
+  min-height:0 !important;
+  width:auto !important;
+  padding:8px 14px !important;
+  border-radius:999px;
+  white-space:nowrap;
+}
+
+/* 商品格：正常顯示在子分類下面 */
+#productGrid{
+  display:grid;
+}
 
