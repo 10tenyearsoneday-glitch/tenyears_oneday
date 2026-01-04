@@ -19,7 +19,10 @@
   <button class="chip" data-filter="耳環" type="button">耳環</button>
   <button class="chip" data-filter="戒指" type="button">戒指</button>
   <button class="chip" data-filter="其他" type="button">其他</button>
+  
   </div>
+  <!-- ✅ 優惠提示列 -->
+<div class="promo-bar" id="promoBar" style="display:none"></div>
 <div class="grid" id="productGrid"></div>
 </main>
 
@@ -53,23 +56,45 @@
 
   const grid = document.getElementById("productGrid");
   const chips = document.querySelectorAll("#subcats .chip");
+  const promoBar = document.getElementById("promoBar");
+
+// ✅ settings 預設值（就算 settings 讀不到也不會壞）
+let SETTINGS = {
+  shipping_enabled: true,
+  shipping_fee: 60,
+  free_shipping_threshold: 1000,
+  first_purchase_discount: 0.9,
+  birthday_discount: 0.85
+};
+
 
   let ALL_PRODUCTS = [];
-
 function productCard(p){
   const id = p.id ?? "";
   const cat = p.category || "其他";
   const series = p.series || "全系列";
-  const price = (typeof p.price === "number") ? p.price : 0;
+  const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
   const title = p.title || "（未命名）";
+  const img = p.image || "assets/placeholder.png";
 
-  const img = p.image || "assets/placeholder.png"; // ✅ 沒圖就用本機 placeholder
+  // ✅ 這些是「提示標籤」，不會假裝單品就免運
+  const badges = [];
+
+  const firstRate = Number(SETTINGS.first_purchase_discount || 1);
+  const bdayRate  = Number(SETTINGS.birthday_discount || 1);
+  const freeOver  = Number(SETTINGS.free_shipping_threshold || 0);
+  const shipOn    = !!SETTINGS.shipping_enabled;
+
+  if(firstRate > 0 && firstRate < 1) badges.push(`首購 ${Math.round(firstRate*100)} 折`);
+  if(bdayRate > 0 && bdayRate < 1) badges.push(`生日月 ${Math.round(bdayRate*100)} 折`);
+  if(shipOn && freeOver > 0) badges.push(`滿 NT$${freeOver} 免運`);
 
   return `
     <a class="product-link" href="product.html?id=${encodeURIComponent(id)}" title="${title}">
       <div class="product" data-cat="${cat}" data-series="${series}">
         <div class="thumb">
           <img src="${img}" alt="${title}" loading="lazy">
+          ${badges.length ? `<div class="badges">${badges.map(b=>`<span class="badge">${b}</span>`).join("")}</div>` : ``}
         </div>
 
         <div class="body">
@@ -84,10 +109,58 @@ function productCard(p){
   `;
 }
 
-
   function render(products){
     grid.innerHTML = products.map(productCard).join("");
   }
+async function loadSettings(){
+  try{
+    const res = await fetch(`${API_BASE}/settings`, { cache: "no-store" });
+    if(!res.ok) throw new Error("settings error " + res.status);
+
+    const s = await res.json();
+    if(s && typeof s === "object"){
+      SETTINGS = {
+        ...SETTINGS,
+        ...s,
+        shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
+        free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
+        first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
+        birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
+        shipping_enabled: !!s.shipping_enabled
+      };
+    }
+  }catch(e){
+    console.warn("loadSettings failed, fallback defaults", e);
+  }
+
+  renderPromoBar();
+}
+
+function renderPromoBar(){
+  if(!promoBar) return;
+
+  const shipOn = !!SETTINGS.shipping_enabled;
+  const fee = Number(SETTINGS.shipping_fee || 0);
+  const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
+
+  const firstRate = Number(SETTINGS.first_purchase_discount || 1);
+  const bdayRate  = Number(SETTINGS.birthday_discount || 1);
+
+  const chips = [];
+
+  if(shipOn){
+    chips.push(`運費 NT$${fee}`);
+    if(freeOver > 0) chips.push(`滿 NT$${freeOver} 免運`);
+  }else{
+    chips.push(`免運活動中`);
+  }
+
+  if(firstRate > 0 && firstRate < 1) chips.push(`首購 ${Math.round(firstRate*100)} 折`);
+  if(bdayRate > 0 && bdayRate < 1) chips.push(`生日月 ${Math.round(bdayRate*100)} 折`);
+
+  promoBar.innerHTML = chips.map(t => `<span class="promo-chip">${t}</span>`).join("");
+  promoBar.style.display = chips.length ? "flex" : "none";
+}
 
   function applyFilter(filter){
     const visible = ALL_PRODUCTS
@@ -125,8 +198,10 @@ function productCard(p){
       grid.innerHTML = `<div style="color:#8a3b3b; padding:18px;">商品載入失敗，請稍後再試。</div>`;
     }
   }
-
-  loadProducts();
+(async () => {
+  await loadSettings();
+  await loadProducts();
+})();
 
   const btn = document.getElementById("backToTop");
   window.addEventListener("scroll", () => {
