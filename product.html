@@ -84,57 +84,6 @@
 
   loadOne();
 </script>
-<script src="include.js"></script>
-
-<script>
-  const API_BASE = "https://tenyears-oneday-api.onrender.com";
-  const id = new URLSearchParams(location.search).get("id");
-
-  const pImg = document.getElementById("pImg");
-  const pName = document.getElementById("pName");
-  const pMeta = document.getElementById("pMeta");
-  const pPrice = document.getElementById("pPrice");
-  const pDesc = document.getElementById("pDesc");
-
-  async function loadOne(){
-    if(!id){
-      pName.textContent = "找不到商品";
-      return;
-    }
-
-    try{
-      const res = await fetch(`${API_BASE}/products`, { cache: "no-store" });
-      if(!res.ok) throw new Error("API error " + res.status);
-      const list = await res.json();
-
-      const p = Array.isArray(list) ? list.find(x => String(x.id) === String(id)) : null;
-      if(!p){
-        pName.textContent = "商品不存在或已下架";
-        return;
-      }
-
-      document.title = `${p.title || "商品"}｜十年一日`;
-
-      const cat = p.category || "其他";
-      const series = p.series || "全系列";
-      const price = (typeof p.price === "number") ? p.price : 0;
-
-      pName.textContent = p.title || "（未命名）";
-      pMeta.textContent = `${series}｜${cat}`;
-      pPrice.textContent = `NT$ ${price}`;
-      pDesc.textContent = p.desc || "（商品介紹待補）";
-
-      const img = p.image || "";
-      pImg.src = img || "https://via.placeholder.com/900x900?text=TEN+YEARS+ONE+DAY";
-    }catch(err){
-      console.error(err);
-      pName.textContent = "載入失敗，請稍後再試";
-    }
-  }
-
-  loadOne();
-</script>
-
 
 </body>
 </html>
