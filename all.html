@@ -60,40 +60,33 @@
 
 <!-- ✅ 共用 header/nav/icon/badge 都在 include.js -->
 <script src="include.js"></script>
-
 <script>
+(() => {
+  const API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
+  const CART_KEY = window.CART_KEY || "ten_cart";
 
   const grid = document.getElementById("productGrid");
   const chips = document.querySelectorAll("#subcats .chip");
 
   let ALL_PRODUCTS = [];
-function getPid(p){
-  return String(
-    p?.id ??
-    p?._id ??
-    p?.product_id ??
-    p?.sku ??
-    ""
-  );
-}
+
+  function getPid(p){
+    return String(p?.id ?? p?._id ?? p?.product_id ?? p?.sku ?? "");
+  }
 
   // =========================
-  // Cart (use same key as include.js: ten_cart)
+  // Cart
   // =========================
-  const CART_STORAGE_KEY = "ten_cart";
-
   function readCart(){
-    try { return JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]"); }
+    try { return JSON.parse(localStorage.getItem(CART_KEY) || "[]"); }
     catch { return []; }
   }
   function writeCart(items){
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-    // 通知 include.js 更新 badge
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("cart:changed"));
   }
   function addToCart(product, qty){
     qty = Math.max(1, Math.floor(Number(qty || 1)));
-
     const items = readCart();
     const id = String(product.id);
 
@@ -105,7 +98,7 @@ function getPid(p){
         id,
         title: product.title || "（未命名）",
         price: Number(product.price || 0),
-        image: (product.image || product.image1 || product.cover || "assets/placeholder.png"),
+        image: (product.image || "assets/placeholder.png"),
         qty
       });
     }
@@ -116,83 +109,75 @@ function getPid(p){
   // Images helper (multi-image)
   // =========================
   function getImages(p){
-  let arr = [];
+    let arr = [];
 
-  // 1) 最常見：images / image_urls
-  if (Array.isArray(p.images)) arr = arr.concat(p.images);
-  if (Array.isArray(p.image_urls)) arr = arr.concat(p.image_urls);
+    if (Array.isArray(p.images)) arr = arr.concat(p.images);
+    if (Array.isArray(p.image_urls)) arr = arr.concat(p.image_urls);
 
-  // 2) 後台常用：images 用字串存（逗號/換行）
-  if (typeof p.images === "string" && p.images.trim()){
-    arr = arr.concat(p.images.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
+    if (typeof p.images === "string" && p.images.trim()){
+      arr = arr.concat(p.images.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
+    }
+    if (typeof p.image_urls === "string" && p.image_urls.trim()){
+      arr = arr.concat(p.image_urls.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
+    }
+    if (typeof p.images_csv === "string" && p.images_csv.trim()){
+      arr = arr.concat(p.images_csv.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
+    }
+
+    for (let i=1;i<=10;i++){
+      const k = i===1 ? "image" : `image${i}`;
+      if (typeof p[k] === "string" && p[k].trim()) arr.push(p[k].trim());
+    }
+
+    ["cover","main_image","thumb","image1"].forEach(k=>{
+      if (typeof p[k] === "string" && p[k].trim()) arr.push(p[k].trim());
+    });
+
+    arr = arr.map(x=>String(x||"").trim()).filter(Boolean);
+    arr = [...new Set(arr)];
+    if (!arr.length) arr = ["assets/placeholder.png"];
+    return arr;
   }
-  if (typeof p.image_urls === "string" && p.image_urls.trim()){
-    arr = arr.concat(p.image_urls.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
-  }
-  if (typeof p.images_csv === "string" && p.images_csv.trim()){
-    arr = arr.concat(p.images_csv.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
-  }
-
-  // 3) 你先前用過：image2~image10
-  for (let i=1;i<=10;i++){
-    const k = i===1 ? "image" : `image${i}`;
-    if (typeof p[k] === "string" && p[k].trim()) arr.push(p[k].trim());
-  }
-
-  // 4) 其他可能：cover / main_image
-  ["cover","main_image","thumb"].forEach(k=>{
-    if (typeof p[k] === "string" && p[k].trim()) arr.push(p[k].trim());
-  });
-
-  // 清理 + 去重
-  arr = arr.map(x=>String(x||"").trim()).filter(Boolean);
-  arr = [...new Set(arr)];
-
-  // 沒圖就給 placeholder
-  if (!arr.length) arr = ["assets/placeholder.png"];
-  return arr;
-}
-
 
   // =========================
   // Product card + render
   // =========================
-function productCard(p, index){
-  const pid = getPid(p);
-  const isHero = index < 2;
-  const loading = isHero ? "eager" : "lazy";
-  const fetchprio = isHero ? 'fetchpriority="high"' : "";
+  function productCard(p, index){
+    const pid = getPid(p);
+    const isHero = index < 2;
+    const loading = isHero ? "eager" : "lazy";
+    const fetchprio = isHero ? 'fetchpriority="high"' : "";
 
-  const img = (p.image || p.image1 || p.cover || "assets/placeholder.png");
-  const title = p.title || "（未命名）";
-  const series = p.series || "全系列";
-  const cat = p.category || "其他";
-  const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
+    const imgs = getImages(p);
+    const img = imgs[0] || "assets/placeholder.png";
 
-  return `
-    <a class="product-link js-open-product" href="#" data-id="${encodeURIComponent(pid)}">
-      <div class="product">
-        <div class="thumb">
-          <img src="${img}" alt="${title}" loading="${loading}" decoding="async" ${fetchprio}>
-        </div>
-        <div class="body">
-          <div>
-            <div class="name">${title}</div>
-            <div class="meta">${series}｜${cat}</div>
+    const title = p.title || "（未命名）";
+    const series = p.series || "全系列";
+    const cat = p.category || "其他";
+    const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
+
+    return `
+      <a class="product-link js-open-product" href="#" data-id="${encodeURIComponent(pid)}">
+        <div class="product">
+          <div class="thumb">
+            <img src="${img}" alt="${title}" loading="${loading}" decoding="async" ${fetchprio}>
           </div>
-          <div class="price">NT$ ${price}</div>
+          <div class="body">
+            <div>
+              <div class="name">${title}</div>
+              <div class="meta">${series}｜${cat}</div>
+            </div>
+            <div class="price">NT$ ${price}</div>
+          </div>
         </div>
-      </div>
-    </a>
-  `;
-}
-
+      </a>
+    `;
+  }
 
   function render(products){
     grid.innerHTML = products.map((p, i) => productCard(p, i)).join("");
 
-    // 預載第一張（render 後才知道是哪張）
-    const firstImg = products?.[0]?.image || products?.[0]?.image1 || products?.[0]?.cover;
+    const firstImg = getImages(products?.[0] || {})[0];
     if(firstImg && !document.querySelector('link[data-preload="first-product"]')){
       const link = document.createElement("link");
       link.rel = "preload";
@@ -214,7 +199,6 @@ function productCard(p, index){
     render(visible);
   }
 
-  // 子分類切換
   chips.forEach(chip => {
     chip.addEventListener("click", () => {
       chips.forEach(c => c.classList.remove("active"));
@@ -243,14 +227,12 @@ function productCard(p, index){
     }
 
     try{
-  const res = await fetch(`${window.API_BASE}/products`, { cache: "no-store" });
-if(!res.ok) throw new Error("API error " + res.status);
-const data = await res.json();
-
+      const res = await fetch(`${API_BASE}/products`, { cache: "no-store" });
+      if(!res.ok) throw new Error("API error " + res.status);
+      const data = await res.json();
 
       ALL_PRODUCTS = Array.isArray(data) ? data : [];
       localStorage.setItem(cacheKey, JSON.stringify(ALL_PRODUCTS));
-
       applyFilter(document.querySelector("#subcats .chip.active")?.dataset.filter || "全部");
     }catch(err){
       console.error(err);
@@ -267,99 +249,86 @@ const data = await res.json();
   const pdClose = document.getElementById("pdClose");
   const pdWrap = document.getElementById("pdWrap");
 
- function openProductModalById(id){
- const p = ALL_PRODUCTS.find(x => getPid(x) === String(id));
+  function openProductModalById(id){
+    const p = ALL_PRODUCTS.find(x => getPid(x) === String(id));
+    if(!p) return;
 
-  if(!p) return;
+    const title = p.title || "（未命名）";
+    const cat = p.category || "其他";
+    const series = p.series || "全系列";
+    const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
+    const desc = p.description || p.desc || "（尚未提供商品說明）";
 
-  const title = p.title || "（未命名）";
-  const cat = p.category || "其他";
-  const series = p.series || "全系列";
-  const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
-  const desc = p.description || p.desc || "（尚未提供商品說明）";
+    const imgs = getImages(p);
+    const main = imgs[0];
 
-  const imgs = getImages(p);
-  const main = imgs[0];
-
-  pdWrap.innerHTML = `
-    <div class="pd-grid">
-      <div class="pd-media">
-        <img id="pdMainImg" src="${main}" alt="${title}" loading="eager" decoding="async">
-        <div class="pd-thumbs" style="${imgs.length>1?'':'display:none'}">
-          ${imgs.map((src,i)=>`
-            <button class="pd-thumb ${i===0?'active':''}" type="button" data-src="${src}">
-              <img src="${src}" alt="${title} ${i+1}" loading="lazy" decoding="async">
-            </button>
-          `).join("")}
+    pdWrap.innerHTML = `
+      <div class="pd-grid">
+        <div class="pd-media">
+          <img id="pdMainImg" src="${main}" alt="${title}" loading="eager" decoding="async">
+          <div class="pd-thumbs" style="${imgs.length>1?'':'display:none'}">
+            ${imgs.map((src,i)=>`
+              <button class="pd-thumb ${i===0?'active':''}" type="button" data-src="${src}">
+                <img src="${src}" alt="${title} ${i+1}" loading="lazy" decoding="async">
+              </button>
+            `).join("")}
+          </div>
         </div>
-      </div>
 
-      <div class="pd-info">
-        <h2 class="pd-name">${title}</h2>
-        <div class="pd-meta">${series}｜${cat}</div>
-        <div class="pd-price">NT$ ${price}</div>
-        <div class="pd-desc">${desc}</div>
+        <div class="pd-info">
+          <h2 class="pd-name">${title}</h2>
+          <div class="pd-meta">${series}｜${cat}</div>
+          <div class="pd-price">NT$ ${price}</div>
+          <div class="pd-desc">${desc}</div>
 
-        <div class="pd-actions">
-          <div class="qty">
-            <button class="qty-btn" type="button" id="qtyMinus" aria-label="減少">−</button>
-            <input class="qty-input" id="qtyInput" type="number" min="1" value="1" inputmode="numeric">
-            <button class="qty-btn" type="button" id="qtyPlus" aria-label="增加">+</button>
+          <div class="pd-actions">
+            <div class="qty">
+              <button class="qty-btn" type="button" id="qtyMinus" aria-label="減少">−</button>
+              <input class="qty-input" id="qtyInput" type="number" min="1" value="1" inputmode="numeric">
+              <button class="qty-btn" type="button" id="qtyPlus" aria-label="增加">+</button>
+            </div>
+
+            <button class="pd-btn primary" type="button" id="pdAddCart">加入購物車</button>
+            <button class="pd-btn secondary" type="button" id="pdClose2">關閉</button>
           </div>
 
-          <button class="pd-btn primary" type="button" id="pdAddCart">加入購物車</button>
-          <button class="pd-btn secondary" type="button" id="pdClose2">關閉</button>
+          <div class="pd-toast" id="pdToast" style="display:none;">已加入購物車 ✅</div>
         </div>
-
-        <div class="pd-toast" id="pdToast" style="display:none;">已加入購物車 ✅</div>
       </div>
-    </div>
-  `;
+    `;
 
-  // ✅ 縮圖切換
-  const mainImgEl = pdWrap.querySelector("#pdMainImg");
-  pdWrap.querySelectorAll(".pd-thumb").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      pdWrap.querySelectorAll(".pd-thumb").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      mainImgEl.src = btn.dataset.src;
+    const mainImgEl = pdWrap.querySelector("#pdMainImg");
+    pdWrap.querySelectorAll(".pd-thumb").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        pdWrap.querySelectorAll(".pd-thumb").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        mainImgEl.src = btn.dataset.src;
+      });
     });
-  });
 
-  // ✅ 數量加減
-  const qtyInput = pdWrap.querySelector("#qtyInput");
-  pdWrap.querySelector("#qtyMinus").addEventListener("click", ()=>{
-    qtyInput.value = Math.max(1, Number(qtyInput.value||1) - 1);
-  });
-  pdWrap.querySelector("#qtyPlus").addEventListener("click", ()=>{
-    qtyInput.value = Math.max(1, Number(qtyInput.value||1) + 1);
-  });
+    const qtyInput = pdWrap.querySelector("#qtyInput");
+    pdWrap.querySelector("#qtyMinus").addEventListener("click", ()=>{
+      qtyInput.value = Math.max(1, Number(qtyInput.value||1) - 1);
+    });
+    pdWrap.querySelector("#qtyPlus").addEventListener("click", ()=>{
+      qtyInput.value = Math.max(1, Number(qtyInput.value||1) + 1);
+    });
 
-  // ✅ 加入購物車（先示意 toast）
- pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
-  const qty = Math.max(1, Math.floor(Number(qtyInput.value || 1)));
-  addToCart({
-    id: getPid(p),                       // ✅ 主鍵統一
-    title: p.title,
-    price: p.price,
-    image: getImages(p)[0]
-  }, qty);
+    pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
+      const qty = Math.max(1, Math.floor(Number(qtyInput.value || 1)));
+      addToCart({ id: getPid(p), title: p.title, price: p.price, image: imgs[0] }, qty);
 
-  const t = pdWrap.querySelector("#pdToast");
-  t.style.display = "block";
-  setTimeout(()=> t.style.display="none", 1200);
-});
+      const t = pdWrap.querySelector("#pdToast");
+      t.style.display = "block";
+      setTimeout(()=> t.style.display="none", 1200);
+    });
 
+    pdWrap.querySelector("#pdClose2").addEventListener("click", closeProductModal);
 
-  pdWrap.querySelector("#pdClose2").addEventListener("click", closeProductModal);
-
-  pdBackdrop.classList.add("open");
-  pdBackdrop.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-
-  // ✅ Debug：你打開 modal 時看 console 就知道抓到幾張
-  console.log("[images]", imgs);
-}
+    pdBackdrop.classList.add("open");
+    pdBackdrop.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
 
   function closeProductModal(){
     pdBackdrop.classList.remove("open");
@@ -368,14 +337,9 @@ const data = await res.json();
   }
 
   pdClose.addEventListener("click", closeProductModal);
-  pdBackdrop.addEventListener("click", (e) => {
-    if(e.target === pdBackdrop) closeProductModal();
-  });
-  window.addEventListener("keydown", (e) => {
-    if(e.key === "Escape" && pdBackdrop.classList.contains("open")) closeProductModal();
-  });
+  pdBackdrop.addEventListener("click", (e) => { if(e.target === pdBackdrop) closeProductModal(); });
+  window.addEventListener("keydown", (e) => { if(e.key === "Escape" && pdBackdrop.classList.contains("open")) closeProductModal(); });
 
-  // 點商品開 modal（事件委派）
   document.addEventListener("click", (e) => {
     const a = e.target.closest(".js-open-product");
     if(!a) return;
@@ -384,21 +348,13 @@ const data = await res.json();
     openProductModalById(id);
   });
 
-  // =========================
-  // Back to top
-  // =========================
+  // back to top
   const btn = document.getElementById("backToTop");
-  window.addEventListener("scroll", () => {
-    btn.style.display = window.scrollY > 300 ? "block" : "none";
-  });
-  btn.addEventListener("click", () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+  window.addEventListener("scroll", () => { btn.style.display = window.scrollY > 300 ? "block" : "none"; });
+  btn.addEventListener("click", () => { window.scrollTo({ top: 0, behavior: "smooth" }); });
 
-  // =========================
-  // init
-  // =========================
   loadProducts();
+})();
 </script>
 
 </body>
