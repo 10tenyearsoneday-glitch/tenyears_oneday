@@ -35,6 +35,50 @@
     </div>
   </div>
 </header>
+<!-- ✅ Cart Drawer (共用) -->
+<div class="drawer-backdrop" id="cartBackdrop"></div>
+
+<aside class="drawer" id="cartDrawer" aria-label="購物車">
+  <div class="d-hd">
+    <div class="d-title">購物車</div>
+    <button class="ui-close" id="cartClose" aria-label="關閉">×</button>
+  </div>
+
+  <div class="d-bd">
+    <div class="d-items" id="cartItems"></div>
+    <div class="toast" id="cartToast" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="d-ft">
+    <div class="d-sumrow"><span>小計</span><strong id="cartSubtotal">NT$ 0</strong></div>
+    <div class="d-sumrow"><span>折扣</span><strong id="cartDiscount">- NT$ 0</strong></div>
+    <div class="d-sumrow"><span>運費</span><strong id="cartShipping">NT$ 0</strong></div>
+    <div class="d-sumrow d-total"><span>合計</span><strong id="cartTotal">NT$ 0</strong></div>
+
+    <div class="d-actions">
+      <button class="secondary" id="cartClear" type="button">清空</button>
+      <button class="primary" id="cartGoCheckout" type="button">結帳</button>
+    </div>
+
+    <div style="margin-top:10px; font-size:.85rem; opacity:.75;">
+      * 結帳流程用跳出視窗顯示（與商品視窗一致）
+    </div>
+  </div>
+</aside>
+
+<!-- ✅ Checkout Modal -->
+<div class="ui-backdrop" id="ckBackdrop" aria-hidden="true">
+  <div class="ui-panel" role="dialog" aria-modal="true" aria-label="結帳">
+    <div class="ui-hd">
+      <div style="font-weight:900;">結帳</div>
+      <button class="ui-close" id="ckClose" aria-label="關閉">×</button>
+    </div>
+
+    <div class="pd-wrap" id="ckWrap">
+      <!-- JS 塞入內容 -->
+    </div>
+  </div>
+</div>
 
 <nav>
   <div class="nav-row">
