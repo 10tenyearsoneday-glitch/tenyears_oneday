@@ -306,10 +306,12 @@
   });
 
   // ===== init =====
-  (async () => {
-    await loadSettings();
-    await loadProducts();
-  })();
+ // 🚀 商品先載（最重要）
+loadProducts();
+
+// ⚙️ 設定背景載入，不阻塞商品
+loadSettings();
+
 </script>
 
 </body>
