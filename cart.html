@@ -215,12 +215,13 @@
     maybeRevalidateCoupon(true);
   }
 
- function clearCart(){
+function clearCart(){
   writeCart([]);
   APPLIED = { code:"", discount:0, note:"" };
   if(couponCode) couponCode.value = "";
   renderAll();
 }
+
 
     renderAll();
   }
