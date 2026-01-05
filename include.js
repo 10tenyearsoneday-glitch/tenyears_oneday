@@ -7,7 +7,7 @@
 // - 點結帳 → 開 checkout modal（跳出視窗）
 // - 監聽 cart:changed / storage 同步更新
 window.API_BASE = "https://tenyears-oneday-api.onrender.com";
-const CART_KEY = "ten_cart";
+window.CART_KEY = "ten_cart"; 
 
 // ===== header load =====
 async function loadHeader() {
