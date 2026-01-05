@@ -645,3 +645,27 @@ footer{
   .icon{ width:34px; height:34px; min-width:34px; min-height:34px; }
   .icon svg, .icon.icon-img img{ width:16px; height:16px; }
 }
+/* ===== Footer 文字連結（IG / LINE）===== */
+.footer-links{
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-size: .95rem;
+  letter-spacing: .04em;
+}
+
+/* 顏色與尾業標題一致 */
+.footer-links a,
+.footer-links span{
+  color: #cfe0cb; /* 與 .footer-brand 相同色系 */
+  text-decoration: none;
+  opacity: .9;
+}
+
+/* hover 微亮即可，不要太跳 */
+.footer-links a:hover{
+  opacity: 1;
+  text-decoration: underline;
+}
