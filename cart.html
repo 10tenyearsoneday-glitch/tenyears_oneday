@@ -104,19 +104,11 @@
   </main>
 
 <script>
-  // ✅ 你現在用的 API（Render）
   const API_BASE = "https://tenyears-oneday-api.onrender.com";
-
-  // ✅ 你的 GAS Web App
   const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-
-  // ✅ 你指定：用 ten_cart
   const CART_KEY = "ten_cart";
-
-  // ✅ 簡易 memberId：先用 localStorage 固定一個（之後會員系統再換）
   const MEMBER_KEY = "ten_member_id";
 
-  // settings 預設值（讀不到也不會壞）
   let SETTINGS = {
     shipping_enabled: true,
     shipping_fee: 60,
@@ -125,11 +117,9 @@
     birthday_discount: 0.85
   };
 
-  // 本頁狀態
-  let PRODUCTS_BY_ID = {}; // 用 /products 拉到的資料
-  let APPLIED = { code:"", discount:0, note:"" }; // coupon_validate 的結果（試算）
+  let PRODUCTS_BY_ID = {};
+  let APPLIED = { code:"", discount:0, note:"" };
 
-  // DOM
   const itemsEl = document.getElementById("items");
   const toastEl = document.getElementById("toast");
   const cartHint = document.getElementById("cartHint");
@@ -145,7 +135,6 @@
   const couponCode = document.getElementById("couponCode");
   const btnApplyCoupon = document.getElementById("btnApplyCoupon");
   const couponToast = document.getElementById("couponToast");
-
   const btnCheckout = document.getElementById("btnCheckout");
 
   function toast(msg, ok=true){
@@ -192,7 +181,6 @@
     if(i === -1) return;
     cart[i].qty = normalizeQty(qty);
     writeCart(cart);
-    renderAll();
   }
 
   function inc(id, delta){
@@ -201,20 +189,15 @@
     if(i === -1) return;
     cart[i].qty = normalizeQty(Number(cart[i].qty||1) + Number(delta||1));
     writeCart(cart);
-    renderAll();
   }
 
   function removeItem(id){
     const cart = readCart().filter(x => String(x.id) !== String(id));
     writeCart(cart);
-    renderAll();
   }
 
   function clearCart(){
     writeCart([]);
-    APPLIED = { code:"", discount:0, note:"" };
-    if(couponCode) couponCode.value = "";
-    renderAll();
   }
 
   function money(n){
@@ -232,13 +215,13 @@
     return s;
   }
 
-  function calcShipping(subtotal){
+  function calcShipping(subtotalAfterDiscount){
     const shipOn = !!SETTINGS.shipping_enabled;
     const fee = Number(SETTINGS.shipping_fee || 0);
     const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
 
     if(!shipOn) return 0;
-    if(freeOver > 0 && subtotal >= freeOver) return 0;
+    if(freeOver > 0 && subtotalAfterDiscount >= freeOver) return 0;
     return fee;
   }
 
@@ -315,84 +298,6 @@
     });
   }
 
-  function renderAll(){
-    const cart = readCart();
-    const count = cart.reduce((s,x)=> s + normalizeQty(x.qty), 0);
-
-    cartHint.textContent = count ? `共 ${count} 件商品` : "購物車目前是空的";
-    btnClear.disabled = !count;
-
-    // items
-    if(!count){
-      itemsEl.innerHTML = `<div class="muted">還沒有加入任何商品。</div>`;
-    }else{
-      itemsEl.innerHTML = cart.map(itemHtml).join("");
-      wireItemEvents();
-    }
-
-    // sums
-    const subtotal = calcSubtotal(cart);
-    const discount = Math.max(0, Number(APPLIED.discount || 0));
-    const shipping = calcShipping(Math.max(0, subtotal - discount));
-    const total = Math.max(0, subtotal - discount) + shipping;
-
-    sumSubtotal.textContent = money(subtotal);
-    sumDiscount.textContent = `- ${money(discount).replace("NT$ ","NT$ ")}`;
-    sumShipping.textContent = money(shipping);
-    sumTotal.textContent = money(total);
-
-    // checkout (暫時 disable，之後你要做結帳時再開)
-    btnCheckout.disabled = true;
-
-    // 如果折扣 > 小計，修正顯示（避免負數）
-    if(discount > subtotal){
-      sumDiscount.textContent = `- ${money(subtotal).replace("NT$ ","NT$ ")}`;
-    }
-
-    // promo pills
-    renderPromoPills();
-  }
-
-  async function loadSettings(){
-    try{
-      const res = await fetch(`${API_BASE}/settings`, { cache:"no-store" });
-      if(!res.ok) throw new Error("settings error " + res.status);
-      const s = await res.json();
-      if(s && typeof s === "object"){
-        SETTINGS = {
-          ...SETTINGS,
-          ...s,
-          shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
-          free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
-          first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
-          birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
-          shipping_enabled: !!s.shipping_enabled
-        };
-      }
-    }catch(e){
-      console.warn("loadSettings failed, fallback defaults", e);
-    }
-  }
-
-  async function loadProductsIndex(){
-    // 為了購物車能顯示 title/price/image，拉一次 products
-    try{
-      const res = await fetch(`${API_BASE}/products`, { cache:"no-store" });
-      if(!res.ok) throw new Error("products error " + res.status);
-      const list = await res.json();
-      const map = {};
-      if(Array.isArray(list)){
-        for(const p of list){
-          if(p && p.id != null) map[String(p.id)] = p;
-        }
-      }
-      PRODUCTS_BY_ID = map;
-    }catch(e){
-      console.warn("loadProductsIndex failed", e);
-      PRODUCTS_BY_ID = {};
-    }
-  }
-
   function couponErrorText(err){
     const m = {
       "CODE_REQUIRED":"請輸入優惠碼",
@@ -408,10 +313,51 @@
       "SOLD_OUT":"優惠已用完",
       "ALREADY_USED":"你已使用過此優惠碼",
       "BAD_RATE":"折扣設定錯誤（rate）",
-      "BAD_AMOUNT":"折扣設定錯誤（amount）",
-      "SERVER_ERROR":"系統忙碌，請稍後再試"
+      "BAD_AMOUNT":"折扣設定錯誤（amount）"
     };
     return m[String(err||"")] || `套用失敗（${err||"ERROR"}）`;
+  }
+
+  async function validateCouponSilently(){
+    // 若目前沒有套用碼，就不用驗證
+    const code = String(APPLIED.code || "").trim().toUpperCase();
+    if(!code) return;
+
+    const cart = readCart();
+    const subtotal = calcSubtotal(cart);
+
+    // 購物車空了 → 清掉優惠
+    if(subtotal <= 0){
+      APPLIED = { code:"", discount:0, note:"" };
+      if(couponCode) couponCode.value = "";
+      return;
+    }
+
+    const memberId = getMemberId();
+
+    try{
+      const url = `${GAS_URL}?path=coupon_validate`
+        + `&code=${encodeURIComponent(code)}`
+        + `&memberId=${encodeURIComponent(memberId)}`
+        + `&subtotal=${encodeURIComponent(subtotal)}`;
+
+      const res = await fetch(url, { cache:"no-store" });
+      const out = await res.json();
+
+      if(!out || out.ok !== true){
+        APPLIED = { code:"", discount:0, note:"" };
+        return;
+      }
+
+      APPLIED = {
+        code: out.code || code,
+        discount: Math.max(0, Number(out.discount || 0)),
+        note: String(out.note || "")
+      };
+    }catch(e){
+      // 靜默失敗，不打擾使用者
+      console.warn("validateCouponSilently failed", e);
+    }
   }
 
   async function applyCoupon(){
@@ -468,9 +414,87 @@
     }
   }
 
+  function renderAll(){
+    const cart = readCart();
+    const count = cart.reduce((s,x)=> s + normalizeQty(x.qty), 0);
+
+    cartHint.textContent = count ? `共 ${count} 件商品` : "購物車目前是空的";
+    btnClear.disabled = !count;
+
+    if(!count){
+      itemsEl.innerHTML = `<div class="muted">還沒有加入任何商品。</div>`;
+    }else{
+      itemsEl.innerHTML = cart.map(itemHtml).join("");
+      wireItemEvents();
+    }
+
+    const subtotal = calcSubtotal(cart);
+
+    // 折扣不能超過小計
+    let discount = Math.max(0, Number(APPLIED.discount || 0));
+    if(discount > subtotal) discount = subtotal;
+
+    const afterDiscount = Math.max(0, subtotal - discount);
+    const shipping = calcShipping(afterDiscount);
+    const total = afterDiscount + shipping;
+
+    sumSubtotal.textContent = money(subtotal);
+    sumDiscount.textContent = `- ${money(discount).replace("NT$ ","NT$ ")}`;
+    sumShipping.textContent = money(shipping);
+    sumTotal.textContent = money(total);
+
+    btnCheckout.disabled = true;
+
+    renderPromoPills();
+  }
+
+  async function loadSettings(){
+    try{
+      const res = await fetch(`${API_BASE}/settings`, { cache:"no-store" });
+      if(!res.ok) throw new Error("settings error " + res.status);
+      const s = await res.json();
+      if(s && typeof s === "object"){
+        SETTINGS = {
+          ...SETTINGS,
+          ...s,
+          shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
+          free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
+          first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
+          birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
+          shipping_enabled: !!s.shipping_enabled
+        };
+      }
+    }catch(e){
+      console.warn("loadSettings failed, fallback defaults", e remember);
+    }
+  }
+
+  async function loadProductsIndex(){
+    try{
+      const res = await fetch(`${API_BASE}/products`, { cache:"no-store" });
+      if(!res.ok) throw new Error("products error " + res.status);
+      const list = await res.json();
+      const map = {};
+      if(Array.isArray(list)){
+        for(const p of list){
+          if(p && p.id != null) map[String(p.id)] = p;
+        }
+      }
+      PRODUCTS_BY_ID = map;
+    }catch(e){
+      console.warn("loadProductsIndex failed", e);
+      PRODUCTS_BY_ID = {};
+    }
+  }
+
   // events
   btnClear?.addEventListener("click", ()=>{
-    if(confirm("確定要清空購物車嗎？")) clearCart();
+    if(confirm("確定要清空購物車嗎？")){
+      APPLIED = { code:"", discount:0, note:"" };
+      if(couponCode) couponCode.value = "";
+      clearCart();
+      renderAll();
+    }
   });
 
   btnApplyCoupon?.addEventListener("click", applyCoupon);
@@ -478,8 +502,9 @@
     if(e.key === "Enter") applyCoupon();
   });
 
-  // 當其他頁加入購物車後，這頁也會更新
-  window.addEventListener("cart:changed", ()=>{
+  // ✅ 只要購物車變動：重算 + 若有套用碼就自動重新驗證
+  window.addEventListener("cart:changed", async ()=>{
+    await validateCouponSilently();
     renderAll();
   });
 
