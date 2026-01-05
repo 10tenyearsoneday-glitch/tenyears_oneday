@@ -1,84 +1,112 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<title>十年一日｜全系列</title>
-
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
-
+  <title>十年一日｜全系列</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
 </head>
+
 <body>
 
 <main>
-<div class="subcats" id="subcats">
-  <button class="chip active" data-filter="全部" type="button">全部</button>
-  <button class="chip" data-filter="項鍊" type="button">項鍊</button>
-  <button class="chip" data-filter="手鏈" type="button">手鏈</button>
-  <button class="chip" data-filter="耳環" type="button">耳環</button>
-  <button class="chip" data-filter="戒指" type="button">戒指</button>
-  <button class="chip" data-filter="其他" type="button">其他</button>
-  
+  <div class="subcats" id="subcats">
+    <button class="chip active" data-filter="全部" type="button">全部</button>
+    <button class="chip" data-filter="項鍊" type="button">項鍊</button>
+    <button class="chip" data-filter="手鏈" type="button">手鏈</button>
+    <button class="chip" data-filter="耳環" type="button">耳環</button>
+    <button class="chip" data-filter="戒指" type="button">戒指</button>
+    <button class="chip" data-filter="其他" type="button">其他</button>
   </div>
-  <!-- ✅ 優惠提示列 -->
-<div class="grid" id="productGrid"></div>
+
+  <div class="grid" id="productGrid"></div>
 </main>
 
 <footer>
   <a class="admin-link" href="admin.html" aria-label="admin"></a>
+
   <div class="footer-row">
     <div class="col">💎 精選材質<small>不含鉛，安心佩戴</small></div>
     <div class="col center">✨ 獨特設計<small>韓日歐美風格齊聚</small></div>
     <div class="col right">🚚 便利配送<small>超商取貨、宅配到府</small></div>
   </div>
+
   <div class="footer-brand">
     <div class="t">十年一日</div>
     <div class="s">tenyears_oneday</div>
   </div>
+
   <div class="footer-links">
-  <a href="https://www.instagram.com/tenyears_oneday" target="_blank">Instagram</a>
-  <span>｜</span>
-  <a href="https://line.me/R/ti/p/@396kwrga" target="_blank">LINE</a>
-</div>
-
-
+    <a href="https://www.instagram.com/tenyears_oneday" target="_blank" rel="noopener">Instagram</a>
+    <span>｜</span>
+    <a href="https://line.me/R/ti/p/@396kwrga" target="_blank" rel="noopener">LINE</a>
+  </div>
 </footer>
-  <!-- ✅ 商品跳出框框 Modal -->
+
+<!-- ✅ 商品跳出框框 Modal -->
 <div class="ui-backdrop" id="pdBackdrop" aria-hidden="true">
   <div class="ui-panel" role="dialog" aria-modal="true" aria-label="商品資訊">
     <div class="ui-hd">
-      <div style="font-weight:800;">商品資訊</div>
+      <div style="font-weight:900;">商品資訊</div>
       <button class="ui-close" id="pdClose" aria-label="關閉">×</button>
     </div>
 
-    <div class="pd-wrap" id="pdWrap">
-      <!-- 內容由 JS 塞 -->
-    </div>
+    <div class="pd-wrap" id="pdWrap"></div>
   </div>
 </div>
 
 <button id="backToTop" aria-label="回到頂端">↑</button>
 
+<!-- ✅ 共用 header/nav/icon/badge 都在 include.js -->
 <script src="include.js"></script>
+
 <script>
   const API_BASE = "https://tenyears-oneday-api.onrender.com";
 
   const grid = document.getElementById("productGrid");
   const chips = document.querySelectorAll("#subcats .chip");
 
-  // ✅ settings 預設值
-  let SETTINGS = {
-    shipping_enabled: true,
-    shipping_fee: 60,
-    free_shipping_threshold: 1000,
-    first_purchase_discount: 0.9,
-    birthday_discount: 0.85
-  };
-
   let ALL_PRODUCTS = [];
 
-  // ✅ 多圖：統一從各種欄位抓出來
+  // =========================
+  // Cart (use same key as include.js: ten_cart)
+  // =========================
+  const CART_STORAGE_KEY = "ten_cart";
+
+  function readCart(){
+    try { return JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]"); }
+    catch { return []; }
+  }
+  function writeCart(items){
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    // 通知 include.js 更新 badge
+    window.dispatchEvent(new Event("cart:changed"));
+  }
+  function addToCart(product, qty){
+    qty = Math.max(1, Math.floor(Number(qty || 1)));
+
+    const items = readCart();
+    const id = String(product.id);
+
+    const hit = items.find(x => String(x.id) === id);
+    if(hit){
+      hit.qty = Number(hit.qty || 0) + qty;
+    }else{
+      items.push({
+        id,
+        title: product.title || "（未命名）",
+        price: Number(product.price || 0),
+        image: (product.image || product.image1 || product.cover || "assets/placeholder.png"),
+        qty
+      });
+    }
+    writeCart(items);
+  }
+
+  // =========================
+  // Images helper (multi-image)
+  // =========================
   function getImages(p){
     let arr = [];
 
@@ -89,7 +117,7 @@
       arr = arr.concat(p.images_csv.split(",").map(s=>s.trim()).filter(Boolean));
     }
 
-    ["image","image2","image3","image4","image5"].forEach(k=>{
+    ["image","image2","image3","image4","image5","image1","cover"].forEach(k=>{
       if(typeof p[k] === "string" && p[k].trim()) arr.push(p[k].trim());
     });
 
@@ -99,7 +127,9 @@
     return arr;
   }
 
-  // ✅ 商品卡：前 2 張 eager + high priority
+  // =========================
+  // Product card + render
+  // =========================
   function productCard(p, index){
     const isHero = index < 2;
     const loading = isHero ? "eager" : "lazy";
@@ -112,18 +142,10 @@
     const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
 
     return `
-      <a class="product-link js-open-product"
-         href="#"
-         data-id="${encodeURIComponent(p.id)}">
+      <a class="product-link js-open-product" href="#" data-id="${encodeURIComponent(p.id)}">
         <div class="product">
           <div class="thumb">
-            <img 
-              src="${img}"
-              alt="${title}"
-              loading="${loading}"
-              decoding="async"
-              ${fetchprio}
-            >
+            <img src="${img}" alt="${title}" loading="${loading}" decoding="async" ${fetchprio}>
           </div>
 
           <div class="body">
@@ -141,7 +163,7 @@
   function render(products){
     grid.innerHTML = products.map((p, i) => productCard(p, i)).join("");
 
-    // ✅ 預載第一張（render 之後才知道是哪張）
+    // 預載第一張（render 後才知道是哪張）
     const firstImg = products?.[0]?.image || products?.[0]?.image1 || products?.[0]?.cover;
     if(firstImg && !document.querySelector('link[data-preload="first-product"]')){
       const link = document.createElement("link");
@@ -164,7 +186,7 @@
     render(visible);
   }
 
-  // ✅ 子分類切換
+  // 子分類切換
   chips.forEach(chip => {
     chip.addEventListener("click", () => {
       chips.forEach(c => c.classList.remove("active"));
@@ -176,43 +198,9 @@
     });
   });
 
-  // ✅ settings 快取（不阻塞頁面）
-  async function loadSettings(){
-    const cacheKey = "tyod_settings_cache_v1";
-    const cached = localStorage.getItem(cacheKey);
-
-    if(cached){
-      try{
-        const s = JSON.parse(cached);
-        if(s && typeof s === "object"){
-          SETTINGS = { ...SETTINGS, ...s };
-        }
-      }catch(e){}
-    }
-
-    try{
-      const res = await fetch(`${API_BASE}/settings`, { cache: "no-store" });
-      if(!res.ok) throw new Error("settings error " + res.status);
-
-      const s = await res.json();
-      if(s && typeof s === "object"){
-        SETTINGS = {
-          ...SETTINGS,
-          ...s,
-          shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
-          free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
-          first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
-          birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
-          shipping_enabled: !!s.shipping_enabled
-        };
-        localStorage.setItem(cacheKey, JSON.stringify(SETTINGS));
-      }
-    }catch(e){
-      console.warn("loadSettings failed, fallback cache/default", e);
-    }
-  }
-
-  // ✅ products 快取：秒顯示 + 背景更新
+  // =========================
+  // Load products (cache -> instant, then refresh)
+  // =========================
   async function loadProducts(){
     const cacheKey = "tyod_products_cache_v1";
     const cached = localStorage.getItem(cacheKey);
@@ -243,7 +231,9 @@
     }
   }
 
-  // ===== 商品 Modal：多圖版 =====
+  // =========================
+  // Product Modal
+  // =========================
   const pdBackdrop = document.getElementById("pdBackdrop");
   const pdClose = document.getElementById("pdClose");
   const pdWrap = document.getElementById("pdWrap");
@@ -281,24 +271,24 @@
           <div class="pd-meta">${series}｜${cat}</div>
           <div class="pd-price">NT$ ${price}</div>
           <div class="pd-desc">${desc}</div>
-<div class="pd-actions">
-  <div class="qty">
-    <button class="qty-btn" type="button" id="qtyMinus" aria-label="減少">−</button>
-    <input class="qty-input" id="qtyInput" type="number" min="1" value="1" inputmode="numeric">
-    <button class="qty-btn" type="button" id="qtyPlus" aria-label="增加">+</button>
-  </div>
 
-  <button class="pd-btn primary" type="button" id="pdAddCart">加入購物車</button>
-  <button class="pd-btn secondary" type="button" id="pdClose2">關閉</button>
-</div>
+          <div class="pd-actions">
+            <div class="qty">
+              <button class="qty-btn" type="button" id="qtyMinus" aria-label="減少">−</button>
+              <input class="qty-input" id="qtyInput" type="number" min="1" value="1" inputmode="numeric">
+              <button class="qty-btn" type="button" id="qtyPlus" aria-label="增加">+</button>
+            </div>
 
+            <button class="pd-btn primary" type="button" id="pdAddCart">加入購物車</button>
+            <button class="pd-btn secondary" type="button" id="pdClose2">關閉</button>
+          </div>
 
-          <div class="pd-toast" id="pdToast" style="display:none;">已加入購物車 ✅</div>
+          <div class="pd-toast" id="pdToast" style="display:none;"></div>
         </div>
       </div>
     `;
 
-    // ✅ 縮圖切換
+    // 縮圖切換
     const mainImgEl = pdWrap.querySelector("#pdMainImg");
     pdWrap.querySelectorAll(".pd-thumb").forEach(btn=>{
       btn.addEventListener("click", ()=>{
@@ -308,38 +298,37 @@
       });
     });
 
-    // 先做最小版：加入購物車先提示（下一步接購物車抽屜）
-  // ===== qty 控制 =====
-const qtyInput = pdWrap.querySelector("#qtyInput");
-const minus = pdWrap.querySelector("#qtyMinus");
-const plus  = pdWrap.querySelector("#qtyPlus");
+    // qty 控制
+    const qtyInput = pdWrap.querySelector("#qtyInput");
+    const minus = pdWrap.querySelector("#qtyMinus");
+    const plus  = pdWrap.querySelector("#qtyPlus");
 
-function clampQty(v){
-  v = Number(v);
-  if(!Number.isFinite(v) || v < 1) v = 1;
-  return Math.floor(v);
-}
+    function clampQty(v){
+      v = Number(v);
+      if(!Number.isFinite(v) || v < 1) v = 1;
+      return Math.floor(v);
+    }
 
-minus.addEventListener("click", () => {
-  qtyInput.value = String(Math.max(1, clampQty(qtyInput.value) - 1));
-});
-plus.addEventListener("click", () => {
-  qtyInput.value = String(clampQty(qtyInput.value) + 1);
-});
-qtyInput.addEventListener("input", () => {
-  qtyInput.value = String(clampQty(qtyInput.value));
-});
+    minus.addEventListener("click", () => {
+      qtyInput.value = String(Math.max(1, clampQty(qtyInput.value) - 1));
+    });
+    plus.addEventListener("click", () => {
+      qtyInput.value = String(clampQty(qtyInput.value) + 1);
+    });
+    qtyInput.addEventListener("input", () => {
+      qtyInput.value = String(clampQty(qtyInput.value));
+    });
 
-// ✅ 加入購物車（真的加入）
-pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
-  const qty = clampQty(qtyInput.value);
-  Cart.add(p, qty);
+    // 加入購物車（寫入 ten_cart + 更新 badge）
+    pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
+      const qty = clampQty(qtyInput.value);
+      addToCart(p, qty);
 
-  const t = pdWrap.querySelector("#pdToast");
-  t.textContent = `已加入購物車 x${qty} ✅`;
-  t.style.display = "block";
-  setTimeout(()=> t.style.display="none", 1200);
-});
+      const t = pdWrap.querySelector("#pdToast");
+      t.textContent = `已加入購物車 x${qty} ✅`;
+      t.style.display = "block";
+      setTimeout(()=> t.style.display="none", 1200);
+    });
 
     pdWrap.querySelector("#pdClose2").addEventListener("click", closeProductModal);
 
@@ -362,7 +351,7 @@ pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
     if(e.key === "Escape" && pdBackdrop.classList.contains("open")) closeProductModal();
   });
 
-  // ✅ 點商品開 modal（事件委派）
+  // 點商品開 modal（事件委派）
   document.addEventListener("click", (e) => {
     const a = e.target.closest(".js-open-product");
     if(!a) return;
@@ -371,7 +360,9 @@ pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
     openProductModalById(id);
   });
 
-  // ===== 回到頂端 =====
+  // =========================
+  // Back to top
+  // =========================
   const btn = document.getElementById("backToTop");
   window.addEventListener("scroll", () => {
     btn.style.display = window.scrollY > 300 ? "block" : "none";
@@ -380,90 +371,10 @@ pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  // ===== init =====
-  loadProducts(); // 先快顯商品
-  loadSettings(); // 背景載入設定
-// ===== Cart (scoped, no global conflicts) =====
-const Cart = (() => {
-  const KEY = "tyod_cart_v1";
-
-  function read(){
-    try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
-    catch { return []; }
-  }
-
-  function write(items){
-    localStorage.setItem(KEY, JSON.stringify(items));
-  }
-
-  function count(){
-    return read().reduce((sum, it) => sum + Number(it.qty || 0), 0);
-  }
-
-  function updateBadge(){
-    const el = document.getElementById("cartCount");
-    if(!el) return;
-
-    const n = count();
-    if(n > 0){
-      el.textContent = String(n);
-      el.classList.add("cart-badge");
-      el.style.display = "inline-flex";
-    }else{
-      el.textContent = "";
-      el.classList.remove("cart-badge");
-      el.style.display = "none";
-    }
-  }
-
-  function add(product, qty){
-    const items = read();
-    const id = String(product.id);
-
-    const hit = items.find(x => String(x.id) === id);
-    if(hit){
-      hit.qty = Number(hit.qty || 0) + Number(qty || 1);
-    }else{
-      items.push({
-        id,
-        title: product.title || "（未命名）",
-        price: Number(product.price || 0),
-        image: (product.image || product.image1 || product.cover || "assets/placeholder.png"),
-        qty: Number(qty || 1)
-      });
-    }
-
-    write(items);
-    updateBadge();
-  }
-
-  // 進頁面先同步 badge
-  updateBadge();
-
-  return { read, write, add, count, updateBadge };
-})();
-
-
-function cartCount(){
-  return readCart().reduce((sum, it) => sum + Number(it.qty || 0), 0);
-}
-
-// 如果你的 header 有 badge 元素（例如 id="cartCount"），會自動更新
-function updateCartBadge(){
-  const el = document.getElementById("cartCount");
-  if(!el) return;
-
-  const n = cartCount();
-  if(n > 0){
-    el.textContent = String(n);
-    el.style.display = "inline-flex";
-    el.classList.add("cart-badge");
-  }else{
-    el.textContent = "";
-    el.style.display = "none";
-  }
-}
-
+  // =========================
+  // init
+  // =========================
+  loadProducts();
 </script>
 
 </body>
