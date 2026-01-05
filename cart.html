@@ -219,7 +219,10 @@
   function clearCart(){
     writeCart([]);
     APPLIED = { code:"", discount:0, note:"" };
-    if(couponCode) couponCode.value = "";
+  if(clearIfEmpty && couponCode){
+  couponCode.value = "";
+}
+
     renderAll();
   }
 
