@@ -210,7 +210,20 @@
   });
 
   async function loadProducts(){
-    grid.innerHTML = `<div style="opacity:.7; padding:18px;">載入中...</div>`;
+   grid.innerHTML = `
+  <div class="grid">
+    ${Array.from({length:6}).map(()=>`
+      <div class="product" style="opacity:.5">
+        <div class="thumb"></div>
+        <div class="body">
+          <div class="name">載入中</div>
+          <div class="price">—</div>
+        </div>
+      </div>
+    `).join("")}
+  </div>
+`;
+
     try{
       const res = await fetch(`${API_BASE}/products`, { cache: "no-store" });
       if(!res.ok) throw new Error("API error " + res.status);
