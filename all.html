@@ -47,6 +47,20 @@
 </div>
 
 </footer>
+  <!-- ✅ 商品跳出框框 Modal -->
+<div class="ui-backdrop" id="pdBackdrop" aria-hidden="true">
+  <div class="ui-panel" role="dialog" aria-modal="true" aria-label="商品資訊">
+    <div class="ui-hd">
+      <div style="font-weight:800;">商品資訊</div>
+      <button class="ui-close" id="pdClose" aria-label="關閉">×</button>
+    </div>
+
+    <div class="pd-wrap" id="pdWrap">
+      <!-- 內容由 JS 塞 -->
+    </div>
+  </div>
+</div>
+
 <button id="backToTop" aria-label="回到頂端">↑</button>
 
 <script src="include.js"></script>
@@ -97,26 +111,27 @@ if(firstZhe) badges.push(`首購 ${firstZhe} 折`);
 if(bdayZhe)  badges.push(`生日月 ${bdayZhe} 折`);
 
   if(shipOn && freeOver > 0) badges.push(`滿 NT$${freeOver} 免運`);
-
-  return `
-    <a class="product-link" href="product.html?id=${encodeURIComponent(id)}" title="${title}">
-      <div class="product" data-cat="${cat}" data-series="${series}">
-        <div class="thumb">
-          <img src="${img}" alt="${title}" loading="lazy">
-          ${badges.length ? `<div class="badges">${badges.map(b=>`<span class="badge">${b}</span>`).join("")}</div>` : ``}
-        </div>
-
-        <div class="body">
-          <div>
-            <div class="name">${title}</div>
-            <div class="meta">${series}｜${cat}</div>
-          </div>
-          <div class="price">NT$ ${price}</div>
-        </div>
+return `
+  <a class="product-link js-open-product"
+     href="#"
+     data-id="${encodeURIComponent(id)}"
+     title="${title}">
+    <div class="product" data-cat="${cat}" data-series="${series}">
+      <div class="thumb">
+        <img src="${img}" alt="${title}" loading="lazy">
+        ${badges.length ? `<div class="badges">${badges.map(b=>`<span class="badge">${b}</span>`).join("")}</div>` : ``}
       </div>
-    </a>
-  `;
-}
+
+      <div class="body">
+        <div>
+          <div class="name">${title}</div>
+          <div class="meta">${series}｜${cat}</div>
+        </div>
+        <div class="price">NT$ ${price}</div>
+      </div>
+    </div>
+  </a>
+`;
 
   function render(products){
     grid.innerHTML = products.map(productCard).join("");
@@ -214,6 +229,81 @@ if(bdayZhe)  chips.push(`生日月 ${bdayZhe} 折`);
   await loadSettings();
   await loadProducts();
 })();
+<script>
+  // ===== 商品 Modal：開/關 =====
+  const pdBackdrop = document.getElementById("pdBackdrop");
+  const pdClose = document.getElementById("pdClose");
+  const pdWrap = document.getElementById("pdWrap");
+
+  function openProductModalById(id){
+    const p = ALL_PRODUCTS.find(x => String(x.id) === String(id));
+    if(!p) return;
+
+    const title = p.title || "（未命名）";
+    const cat = p.category || "其他";
+    const series = p.series || "全系列";
+    const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
+    const img = p.image || "assets/placeholder.png";
+    const desc = p.description || p.desc || "（尚未提供商品說明）";
+
+    pdWrap.innerHTML = `
+      <div class="pd-grid">
+        <div class="pd-media">
+          <img src="${img}" alt="${title}">
+        </div>
+
+        <div class="pd-info">
+          <h2 class="pd-name">${title}</h2>
+          <div class="pd-meta">${series}｜${cat}</div>
+          <div class="pd-price">NT$ ${price}</div>
+          <div class="pd-desc">${desc}</div>
+
+          <div class="pd-actions">
+            <button class="pd-btn primary" type="button" id="pdAddCart">加入購物車</button>
+            <button class="pd-btn secondary" type="button" id="pdClose2">關閉</button>
+          </div>
+
+          <div class="pd-toast" id="pdToast" style="display:none;">已加入購物車 ✅</div>
+        </div>
+      </div>
+    `;
+
+    // 先做最小版：按了顯示提示（你後面要接購物車抽屜我再幫你接）
+    pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
+      const t = pdWrap.querySelector("#pdToast");
+      t.style.display = "block";
+      setTimeout(()=> t.style.display="none", 1200);
+    });
+    pdWrap.querySelector("#pdClose2").addEventListener("click", closeProductModal);
+
+    pdBackdrop.classList.add("open");
+    pdBackdrop.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeProductModal(){
+    pdBackdrop.classList.remove("open");
+    pdBackdrop.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  pdClose.addEventListener("click", closeProductModal);
+  pdBackdrop.addEventListener("click", (e) => {
+    if(e.target === pdBackdrop) closeProductModal();
+  });
+  window.addEventListener("keydown", (e) => {
+    if(e.key === "Escape" && pdBackdrop.classList.contains("open")) closeProductModal();
+  });
+
+  // 點商品卡：改成開 Modal（用事件委派，render 後也有效）
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest(".js-open-product");
+    if(!a) return;
+    e.preventDefault();
+    const id = decodeURIComponent(a.dataset.id || "");
+    openProductModalById(id);
+  });
+</script>
 
   const btn = document.getElementById("backToTop");
   window.addEventListener("scroll", () => {
