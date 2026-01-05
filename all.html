@@ -85,52 +85,41 @@
 
   let ALL_PRODUCTS = [];
 
-  function productCard(p){
-    const id = p.id ?? "";
-    const cat = p.category || "其他";
-    const series = p.series || "全系列";
-    const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
-    const title = p.title || "（未命名）";
-    const img = p.image || "assets/placeholder.png";
+function productCard(p, index){
+  const isHero = index < 2; // 前 2 個商品
+  const loading = isHero ? "eager" : "lazy";
+  const fetchprio = isHero ? 'fetchpriority="high"' : "";
 
-    const badges = [];
-    const firstRate = Number(SETTINGS.first_purchase_discount || 1);
-    const bdayRate  = Number(SETTINGS.birthday_discount || 1);
-    const freeOver  = Number(SETTINGS.free_shipping_threshold || 0);
-    const shipOn    = !!SETTINGS.shipping_enabled;
-
-    const firstZhe = rateToZhe(firstRate);
-    const bdayZhe  = rateToZhe(bdayRate);
-
-    if(firstZhe) badges.push(`首購 ${firstZhe} 折`);
-    if(bdayZhe)  badges.push(`生日月 ${bdayZhe} 折`);
-    if(shipOn && freeOver > 0) badges.push(`滿 NT$${freeOver} 免運`);
-
-    return `
-      <a class="product-link js-open-product"
-         href="#"
-         data-id="${encodeURIComponent(id)}"
-         title="${title}">
-        <div class="product" data-cat="${cat}" data-series="${series}">
-         <div class="thumb">
-  <img src="${img}" alt="${title}" loading="lazy" decoding="async">
-</div>
-
-
-          <div class="body">
-            <div>
-              <div class="name">${title}</div>
-              <div class="meta">${series}｜${cat}</div>
-            </div>
-            <div class="price">NT$ ${price}</div>
-          </div>
+  return `
+    <a class="product-link js-open-product"
+       href="#"
+       data-id="${encodeURIComponent(p.id)}">
+      <div class="product">
+        <div class="thumb">
+          <img 
+            src="${p.image || 'assets/placeholder.png'}"
+            alt="${p.title}"
+            loading="${loading}"
+            decoding="async"
+            ${fetchprio}
+          >
         </div>
-      </a>
-    `;
-  }
+
+        <div class="body">
+          <div>
+            <div class="name">${p.title}</div>
+            <div class="meta">${p.series}｜${p.category}</div>
+          </div>
+          <div class="price">NT$ ${p.price}</div>
+        </div>
+      </div>
+    </a>
+  `;
+}
+
 
 function render(products){
-  grid.innerHTML = products.map((p, i) => productCard(p, i)).join("");
+ grid.innerHTML = products.map((p, i) => productCard(p, i)).join("");
 }
 
   async function loadSettings(){
