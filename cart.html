@@ -229,7 +229,12 @@
     n = Math.round(Number(n||0));
     return `NT$ ${n}`;
   }
-
+function rateToZhe(rate){
+  rate = Number(rate||1);
+  if(rate >= 1 || rate <= 0) return null;
+  const z = Math.round(rate * 100) / 10; // 0.9→9、0.85→8.5
+  return String(z).replace(/\.0$/, "");
+}
   function calcSubtotal(cart){
     let s = 0;
     for(const it of cart){
