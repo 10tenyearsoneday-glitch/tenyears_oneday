@@ -68,6 +68,15 @@
   const chips = document.querySelectorAll("#subcats .chip");
 
   let ALL_PRODUCTS = [];
+function getPid(p){
+  return String(
+    p?.id ??
+    p?._id ??
+    p?.product_id ??
+    p?.sku ??
+    ""
+  );
+}
 
   // =========================
   // Cart (use same key as include.js: ten_cart)
@@ -149,35 +158,36 @@
   // =========================
   // Product card + render
   // =========================
-  function productCard(p, index){
-    const isHero = index < 2;
-    const loading = isHero ? "eager" : "lazy";
-    const fetchprio = isHero ? 'fetchpriority="high"' : "";
+function productCard(p, index){
+  const pid = getPid(p);
+  const isHero = index < 2;
+  const loading = isHero ? "eager" : "lazy";
+  const fetchprio = isHero ? 'fetchpriority="high"' : "";
 
-    const img = (p.image || p.image1 || p.cover || "assets/placeholder.png");
-    const title = p.title || "（未命名）";
-    const series = p.series || "全系列";
-    const cat = p.category || "其他";
-    const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
+  const img = (p.image || p.image1 || p.cover || "assets/placeholder.png");
+  const title = p.title || "（未命名）";
+  const series = p.series || "全系列";
+  const cat = p.category || "其他";
+  const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
 
-    return `
-      <a class="product-link js-open-product" href="#" data-id="${encodeURIComponent(p.id)}">
-        <div class="product">
-          <div class="thumb">
-            <img src="${img}" alt="${title}" loading="${loading}" decoding="async" ${fetchprio}>
-          </div>
-
-          <div class="body">
-            <div>
-              <div class="name">${title}</div>
-              <div class="meta">${series}｜${cat}</div>
-            </div>
-            <div class="price">NT$ ${price}</div>
-          </div>
+  return `
+    <a class="product-link js-open-product" href="#" data-id="${encodeURIComponent(pid)}">
+      <div class="product">
+        <div class="thumb">
+          <img src="${img}" alt="${title}" loading="${loading}" decoding="async" ${fetchprio}>
         </div>
-      </a>
-    `;
-  }
+        <div class="body">
+          <div>
+            <div class="name">${title}</div>
+            <div class="meta">${series}｜${cat}</div>
+          </div>
+          <div class="price">NT$ ${price}</div>
+        </div>
+      </div>
+    </a>
+  `;
+}
+
 
   function render(products){
     grid.innerHTML = products.map((p, i) => productCard(p, i)).join("");
@@ -258,7 +268,8 @@
   const pdWrap = document.getElementById("pdWrap");
 
  function openProductModalById(id){
-  const p = ALL_PRODUCTS.find(x => String(x.id) === String(id));
+ const p = ALL_PRODUCTS.find(x => getPid(x) === String(id));
+
   if(!p) return;
 
   const title = p.title || "（未命名）";
@@ -325,11 +336,20 @@
   });
 
   // ✅ 加入購物車（先示意 toast）
-  pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
-    const t = pdWrap.querySelector("#pdToast");
-    t.style.display = "block";
-    setTimeout(()=> t.style.display="none", 1200);
-  });
+ pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
+  const qty = Math.max(1, Math.floor(Number(qtyInput.value || 1)));
+  addToCart({
+    id: getPid(p),                       // ✅ 主鍵統一
+    title: p.title,
+    price: p.price,
+    image: getImages(p)[0]
+  }, qty);
+
+  const t = pdWrap.querySelector("#pdToast");
+  t.style.display = "block";
+  setTimeout(()=> t.style.display="none", 1200);
+});
+
 
   pdWrap.querySelector("#pdClose2").addEventListener("click", closeProductModal);
 
