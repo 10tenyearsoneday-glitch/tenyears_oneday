@@ -104,8 +104,6 @@
   </main>
 
 <script>
-  // ✅ Render API
-  const API_BASE = "https://tenyears-oneday-api.onrender.com";
 
   // ✅ GAS Web App
   const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
@@ -360,7 +358,7 @@
 
   async function loadSettings(){
     try{
-      const res = await fetch(`${API_BASE}/settings`, { cache:"no-store" });
+      const res = await fetch(`${window.API_BASE}/settings`, { cache:"no-store" });
       if(!res.ok) throw new Error("settings error " + res.status);
       const s = await res.json();
       if(s && typeof s === "object"){
@@ -381,7 +379,7 @@
 
   async function loadProductsIndex(){
     try{
-      const res = await fetch(`${API_BASE}/products`, { cache:"no-store" });
+      const res = await fetch(`${window.API_BASE}/products`, { cache:"no-store" });
       if(!res.ok) throw new Error("products error " + res.status);
       const list = await res.json();
       const map = {};
