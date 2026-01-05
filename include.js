@@ -1,411 +1,632 @@
-// include.js (完整取代版)
+// include.js（方案 A：header + badge + cart drawer + coupon）
 // - 插入 header.html
 // - nav/icon active
-// - 右上角購物車 badge (#cartCount) with ten_cart
-// - 點購物車 icon → 開 drawer
-// - drawer 內可加減/刪除/清空
-// - 點結帳 → 開 checkout modal（跳出視窗）
-// - 監聽 cart:changed / storage 同步更新
-window.API_BASE = "https://tenyears-oneday-api.onrender.com";
-window.CART_KEY = "ten_cart"; 
+// - 右上角購物車 badge (#cartCount)
+// - 點購物車 icon 直接開抽屜（不用跳 cart.html）
+// - 抽屜內：商品列表/數量/刪除/小計/運費/免運差額/優惠碼/結帳（示意寫入 coupon_use）
+// - 避免重複宣告：全部掛在 window.TEN_* 上並做初始化鎖
 
-// ===== header load =====
-async function loadHeader() {
-  if (document.documentElement.dataset.headerLoaded === "1") return;
-  document.documentElement.dataset.headerLoaded = "1";
+(() => {
+  if (window.TEN_INCLUDE_LOADED) return;
+  window.TEN_INCLUDE_LOADED = true;
 
-  try {
-    const res = await fetch("header.html", { cache: "no-store" });
-    const html = await res.text();
-    document.body.insertAdjacentHTML("afterbegin", html);
+  // ===== 全域設定（避免各頁 const 重複宣告爆掉）=====
+  window.API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
 
-    const page = location.pathname.split("/").pop() || "index.html";
-    const navKey = page.replace(".html", "");
-    const navLink = document.querySelector(`.nav-row a[data-nav="${navKey}"]`);
-    if (navLink) navLink.classList.add("active");
+  const CART_KEY = "ten_cart";
+  const MEMBER_KEY = "ten_member_id";
 
-    const iconMap = { "search.html": "search", "cart.html": "cart", "member.html": "member" };
-    const iconKey = iconMap[page];
-    if (iconKey) {
-      const icon = document.querySelector(`.icon-row a[data-icon="${iconKey}"]`);
-      if (icon) icon.classList.add("active");
-    }
+  // 你 cart.html 用的 GAS（沿用）
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+  const ADMIN_KEY = "10years1day911321"; // ⚠️ 前端公開會曝光；先照你現況沿用
 
-    ensureCartBadgeNode();
-    bindCartIconOpenDrawer();   // ✅ 新增：點 icon 開抽屜
-    bindDrawerUi();             // ✅ 新增：抽屜 UI 行為
-  } catch (e) {
-    console.warn("loadHeader failed:", e);
-  }
-}
-
-// ===== badge =====
-function ensureCartBadgeNode() {
-  if (document.getElementById("cartCount")) return;
-  const cartA = document.querySelector('.icon-row a[data-icon="cart"]');
-  if (!cartA) return;
-
-  const span = document.createElement("span");
-  span.id = "cartCount";
-  span.className = "cart-badge";
-  span.style.display = "none";
-  cartA.appendChild(span);
-}
-
-function readCart() {
-  try {
-    const raw = localStorage.getItem(CART_KEY);
-    const arr = JSON.parse(raw || "[]");
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeCart(arr) {
-  localStorage.setItem(CART_KEY, JSON.stringify(arr));
-  window.dispatchEvent(new Event("cart:changed"));
-}
-
-function readCartCount() {
-  return readCart().reduce((sum, x) => sum + Math.max(0, Number(x.qty || 0)), 0);
-}
-
-function renderCartBadge() {
-  const el = document.getElementById("cartCount");
-  if (!el) return;
-
-  const n = readCartCount();
-  if (n > 0) {
-    el.textContent = String(n);
-    el.style.display = "inline-flex";
-  } else {
-    el.textContent = "";
-    el.style.display = "none";
-  }
-}
-
-// ===== drawer open by icon =====
-function bindCartIconOpenDrawer() {
-  const cartA = document.querySelector('.icon-row a[data-icon="cart"]');
-  if (!cartA) return;
-
-  cartA.addEventListener("click", (e) => {
-    // cart.html 就不要擋：讓它去 cart.html
-    const page = location.pathname.split("/").pop() || "index.html";
-    if (page === "cart.html") return;
-
-    e.preventDefault();
-    openCartDrawer();
-  });
-}
-
-// ===== drawer UI =====
-function qs(id){ return document.getElementById(id); }
-
-function money(n){
-  n = Math.round(Number(n||0));
-  return `NT$ ${n}`;
-}
-function clampQty(v){
-  v = Number(v);
-  if(!Number.isFinite(v) || v < 1) v = 1;
-  return Math.floor(v);
-}
-
-let SETTINGS = {
-  shipping_enabled: true,
-  shipping_fee: 60,
-  free_shipping_threshold: 1000,
-};
-
-async function loadSettingsForDrawer(){
-  try{
-    const res = await fetch(`${API_BASE}/settings`, { cache:"no-store" });
-    if(!res.ok) throw new Error(res.status);
-    const s = await res.json();
-    if(s && typeof s === "object"){
-      SETTINGS = {
-        ...SETTINGS,
-        ...s,
-        shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
-        free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
-        shipping_enabled: !!s.shipping_enabled
-      };
-    }
-  }catch(e){
-    // 沒關係，drawer 仍可用預設值
-  }
-}
-
-function calcSubtotal(cart){
-  return cart.reduce((sum,it)=> sum + Number(it.price||0)*clampQty(it.qty), 0);
-}
-function calcShipping(subtotalAfterDiscount){
-  if(!SETTINGS.shipping_enabled) return 0;
-  const fee = Number(SETTINGS.shipping_fee||0);
-  const freeOver = Number(SETTINGS.free_shipping_threshold||0);
-  if(freeOver > 0 && subtotalAfterDiscount >= freeOver) return 0;
-  return fee;
-}
-
-function renderDrawer(){
-  const itemsEl = qs("cartItems");
-  const subtotalEl = qs("cartSubtotal");
-  const discountEl = qs("cartDiscount");
-  const shipEl = qs("cartShipping");
-  const totalEl = qs("cartTotal");
-  const toastEl = qs("cartToast");
-
-  if(!itemsEl) return;
-
-  const cart = readCart();
-
-  if(cart.length === 0){
-    itemsEl.innerHTML = `<div style="opacity:.75; padding:6px 2px;">購物車目前是空的。</div>`;
-    subtotalEl && (subtotalEl.textContent = money(0));
-    discountEl && (discountEl.textContent = `- ${money(0)}`);
-    shipEl && (shipEl.textContent = money(0));
-    totalEl && (totalEl.textContent = money(0));
-    toastEl && (toastEl.textContent = "");
-    return;
-  }
-
-  itemsEl.innerHTML = cart.map(it => `
-    <div class="d-item">
-      <div class="d-thumb"><img src="${it.image||'assets/placeholder.png'}" alt=""></div>
-      <div class="d-info">
-        <div class="d-name">${it.title||'（未命名）'}</div>
-        <div class="d-meta">${money(it.price||0)}</div>
-      </div>
-      <div class="d-right">
-        <div class="d-price">${money((it.price||0)*clampQty(it.qty))}</div>
-        <div class="d-qty">
-          <button type="button" data-dec="${it.id}">-</button>
-          <input type="number" min="1" value="${clampQty(it.qty)}" data-qty="${it.id}">
-          <button type="button" data-inc="${it.id}">+</button>
-        </div>
-        <button class="d-del" type="button" data-del="${it.id}">刪除</button>
-      </div>
-    </div>
-  `).join("");
-
-  // events
-  itemsEl.querySelectorAll("[data-inc]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const id = String(btn.getAttribute("data-inc"));
-      const arr = readCart();
-      const hit = arr.find(x=>String(x.id)===id);
-      if(hit){ hit.qty = clampQty(Number(hit.qty||1)+1); writeCart(arr); }
-    });
-  });
-  itemsEl.querySelectorAll("[data-dec]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const id = String(btn.getAttribute("data-dec"));
-      const arr = readCart();
-      const hit = arr.find(x=>String(x.id)===id);
-      if(hit){ hit.qty = clampQty(Math.max(1, Number(hit.qty||1)-1)); writeCart(arr); }
-    });
-  });
-  itemsEl.querySelectorAll("[data-del]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const id = String(btn.getAttribute("data-del"));
-      const arr = readCart().filter(x=>String(x.id)!==id);
-      writeCart(arr);
-    });
-  });
-  itemsEl.querySelectorAll("[data-qty]").forEach(inp=>{
-    inp.addEventListener("change", ()=>{
-      const id = String(inp.getAttribute("data-qty"));
-      const v = clampQty(inp.value);
-      const arr = readCart();
-      const hit = arr.find(x=>String(x.id)===id);
-      if(hit){ hit.qty = v; writeCart(arr); }
-    });
-  });
-
-  const subtotal = calcSubtotal(cart);
-  const discount = 0; // drawer 先不做 coupon（要做也可以）
-  const after = Math.max(0, subtotal - discount);
-  const shipping = calcShipping(after);
-  const total = after + shipping;
-
-  subtotalEl && (subtotalEl.textContent = money(subtotal));
-  discountEl && (discountEl.textContent = `- ${money(discount)}`);
-  shipEl && (shipEl.textContent = money(shipping));
-  totalEl && (totalEl.textContent = money(total));
-}
-
-function openCartDrawer(){
-  const drawer = qs("cartDrawer");
-  const back = qs("cartBackdrop");
-  if(!drawer || !back) return;
-
-  drawer.classList.add("open");
-  back.classList.add("open");
-  document.body.style.overflow = "hidden";
-
-  // 進 drawer 才背景抓一次 settings（不阻塞）
-  loadSettingsForDrawer().finally(renderDrawer);
-}
-
-function closeCartDrawer(){
-  const drawer = qs("cartDrawer");
-  const back = qs("cartBackdrop");
-  if(!drawer || !back) return;
-
-  drawer.classList.remove("open");
-  back.classList.remove("open");
-  document.body.style.overflow = "";
-}
-
-function bindDrawerUi(){
-  const back = qs("cartBackdrop");
-  const closeBtn = qs("cartClose");
-  const clearBtn = qs("cartClear");
-  const checkoutBtn = qs("cartGoCheckout");
-
-  back && back.addEventListener("click", closeCartDrawer);
-  closeBtn && closeBtn.addEventListener("click", closeCartDrawer);
-
-  clearBtn && clearBtn.addEventListener("click", ()=>{
-    if(confirm("確定要清空購物車嗎？")){
-      writeCart([]);
-    }
-  });
-
-  checkoutBtn && checkoutBtn.addEventListener("click", ()=>{
-    closeCartDrawer();
-    openCheckoutModal();
-  });
-}
-
-// ===== checkout modal =====
-function openCheckoutModal(){
-  const bd = qs("ckBackdrop");
-  const close = qs("ckClose");
-  const wrap = qs("ckWrap");
-  if(!bd || !wrap) return;
-
-  const cart = readCart();
-  const subtotal = calcSubtotal(cart);
-  const shipping = calcShipping(subtotal);
-  const total = subtotal + shipping;
-
-  wrap.innerHTML = `
-    <div style="padding:4px 2px;">
-      <div style="font-weight:800; margin-bottom:8px;">訂單確認</div>
-
-      <div class="box" style="max-width:none; margin:0 0 12px;">
-        <div style="display:flex;justify-content:space-between;margin:6px 0;">
-          <span>小計</span><strong>${money(subtotal)}</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin:6px 0;">
-          <span>運費</span><strong>${money(shipping)}</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin:6px 0;font-size:1.05rem;">
-          <span>合計</span><strong>${money(total)}</strong>
-        </div>
-      </div>
-
-      <div style="font-weight:800; margin:10px 0 8px;">配送方式</div>
-      <div class="subcats" style="margin:0 0 12px;">
-        <button class="chip active" type="button" data-ship="711">7-11 店取</button>
-        <button class="chip" type="button" data-ship="fam">全家 店取</button>
-        <button class="chip" type="button" data-ship="home">宅配</button>
-      </div>
-
-      <div class="box" style="max-width:none; margin:0 0 12px;">
-        <div style="font-size:.9rem; opacity:.8; margin-bottom:8px;">收件人資料（示意，可接會員資料自動帶入）</div>
-        <div class="field" style="margin-bottom:10px;">
-          <div class="label">姓名</div>
-          <input id="ckName" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);" placeholder="請輸入姓名">
-        </div>
-        <div class="field" style="margin-bottom:10px;">
-          <div class="label">手機</div>
-          <input id="ckPhone" inputmode="numeric" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);" placeholder="請輸入手機">
-        </div>
-        <div class="field" id="ckAddrField">
-          <div class="label">地址 / 門市</div>
-          <input id="ckAddr" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);" placeholder="可貼上門市名稱/地址">
-        </div>
-        <div style="margin-top:8px; font-size:.85rem; opacity:.8;">
-          門市查詢：<a href="https://emap.pcsc.com.tw/emap.aspx" target="_blank" rel="noopener">7-11</a> /
-          <a href="https://www.family.com.tw/Marketing/zh/Map" target="_blank" rel="noopener">全家</a>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="pd-btn secondary" type="button" id="ckCancel">取消</button>
-        <button class="pd-btn primary" type="button" id="ckSubmit">送出訂單（示意）</button>
-      </div>
-
-      <div id="ckToast" style="margin-top:10px; font-size:.9rem; opacity:.85;"></div>
-    </div>
-  `;
-
-  // ship selector
-  let shipType = "711";
-  wrap.querySelectorAll('[data-ship]').forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      wrap.querySelectorAll('[data-ship]').forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      shipType = btn.getAttribute("data-ship");
-    });
-  });
-
-  const closeModal = ()=>{
-    bd.classList.remove("open");
-    bd.setAttribute("aria-hidden","true");
-    document.body.style.overflow = "";
+  // settings 預設（後台抓不到也不會壞）
+  window.TEN_SETTINGS = window.TEN_SETTINGS || {
+    shipping_enabled: true,
+    shipping_fee: 60,
+    free_shipping_threshold: 1000,
+    first_purchase_discount: 0.9,
+    birthday_discount: 0.85
   };
 
-  qs("ckClose")?.addEventListener("click", closeModal);
-  qs("ckCancel")?.addEventListener("click", closeModal);
-  bd.addEventListener("click", (e)=>{ if(e.target===bd) closeModal(); });
-  window.addEventListener("keydown", (e)=>{ if(e.key==="Escape" && bd.classList.contains("open")) closeModal(); });
+  // 已套用優惠碼狀態
+  window.TEN_APPLIED = window.TEN_APPLIED || { code: "", discount: 0, note: "" };
 
-  wrap.querySelector("#ckSubmit").addEventListener("click", ()=>{
-    const name = wrap.querySelector("#ckName").value.trim();
-    const phone = wrap.querySelector("#ckPhone").value.trim();
-    const addr = wrap.querySelector("#ckAddr").value.trim();
-    const t = wrap.querySelector("#ckToast");
+  // ===== 共用工具 =====
+  function getMemberId() {
+    let id = localStorage.getItem(MEMBER_KEY);
+    if (!id) {
+      id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
+      localStorage.setItem(MEMBER_KEY, id);
+    }
+    return id;
+  }
 
-    if(!name || !phone || !addr){
-      t.textContent = "請把姓名/手機/地址(門市)填完整";
-      t.style.color = "#8a3b3b";
+  function readCart() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeCart(items) {
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+    window.dispatchEvent(new Event("cart:changed"));
+  }
+
+  function cartCount() {
+    return readCart().reduce((s, it) => s + Math.max(0, Number(it.qty || 0)), 0);
+  }
+
+  function money(n) {
+    n = Math.round(Number(n || 0));
+    return `NT$ ${n}`;
+  }
+
+  function normalizeQty(n) {
+    n = Number(n || 1);
+    if (!Number.isFinite(n) || n < 1) n = 1;
+    return Math.floor(n);
+  }
+
+  function rateToZhe(rate) {
+    rate = Number(rate || 1);
+    if (rate >= 1 || rate <= 0) return null;
+    const z = Math.round(rate * 100) / 10;
+    return String(z).replace(/\.0$/, "");
+  }
+
+  // ===== Header =====
+  async function loadHeader() {
+    if (document.documentElement.dataset.headerLoaded === "1") return;
+    document.documentElement.dataset.headerLoaded = "1";
+
+    try {
+      const res = await fetch("header.html", { cache: "no-store" });
+      const html = await res.text();
+      document.body.insertAdjacentHTML("afterbegin", html);
+
+      // nav active
+      const page = location.pathname.split("/").pop() || "index.html";
+      const navKey = page.replace(".html", "");
+      const navLink = document.querySelector(`.nav-row a[data-nav="${navKey}"]`);
+      if (navLink) navLink.classList.add("active");
+
+      // icon active（常駐功能頁）
+      const iconMap = { "search.html": "search", "cart.html": "cart", "member.html": "member" };
+      const iconKey = iconMap[page];
+      if (iconKey) {
+        const icon = document.querySelector(`.icon-row a[data-icon="${iconKey}"]`);
+        if (icon) icon.classList.add("active");
+      }
+
+      ensureCartBadgeNode();
+      ensureCartDrawerNode();
+      bindCartIconOpen();
+
+    } catch (e) {
+      console.warn("loadHeader failed:", e);
+    }
+  }
+
+  function ensureCartBadgeNode() {
+    if (document.getElementById("cartCount")) return;
+    const cartA = document.querySelector('.icon-row a[data-icon="cart"]');
+    if (!cartA) return;
+
+    const span = document.createElement("span");
+    span.id = "cartCount";
+    span.className = "cart-badge";
+    span.style.display = "none";
+    cartA.appendChild(span);
+  }
+
+  function renderCartBadge() {
+    const el = document.getElementById("cartCount");
+    if (!el) return;
+
+    const n = cartCount();
+    if (n > 0) {
+      el.textContent = String(n);
+      el.style.display = "inline-flex";
+      el.classList.add("cart-badge");
+    } else {
+      el.textContent = "";
+      el.style.display = "none";
+    }
+  }
+
+  // ===== Drawer DOM =====
+  function ensureCartDrawerNode() {
+    if (document.getElementById("cartDrawer")) return;
+
+    document.body.insertAdjacentHTML("beforeend", `
+      <div class="drawer-backdrop" id="cartDrawerBackdrop" aria-hidden="true"></div>
+
+      <aside class="drawer" id="cartDrawer" aria-hidden="true">
+        <div class="d-hd">
+          <div class="d-title">購物車</div>
+          <button class="ui-close" id="cartDrawerClose" type="button" aria-label="關閉">×</button>
+        </div>
+
+        <div class="d-bd">
+          <div id="cartPromoTips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
+          <div class="d-items" id="cartItems"></div>
+
+          <div id="cartToast" class="pd-toast" style="display:none;margin-top:10px;">已更新 ✅</div>
+        </div>
+
+        <div class="d-ft">
+          <div class="d-sumrow"><span>小計</span><strong id="cartSumSubtotal">NT$ 0</strong></div>
+          <div class="d-sumrow"><span>折扣</span><strong id="cartSumDiscount">- NT$ 0</strong></div>
+          <div class="d-sumrow"><span>運費</span><strong id="cartSumShipping">NT$ 0</strong></div>
+          <div class="d-sumrow d-total"><span>合計</span><strong id="cartSumTotal">NT$ 0</strong></div>
+
+          <div style="height:1px;background:rgba(0,0,0,.06);margin:10px 0;"></div>
+
+          <div class="coupon" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input id="drawerCouponCode" placeholder="輸入優惠碼（例如 HELLO）" autocomplete="off"
+              style="flex:1;min-width:180px;padding:10px 10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.85);outline:none;text-transform:uppercase">
+            <button class="d-actions secondary" id="drawerApplyCoupon" type="button"
+              style="flex:0 0 auto;padding:10px 12px;border-radius:999px;border:none;background:rgba(0,0,0,.08);cursor:pointer">
+              套用
+            </button>
+          </div>
+          <div id="drawerCouponToast" class="toast" style="margin-top:8px;font-size:.9rem;"></div>
+
+          <div class="d-actions" style="margin-top:10px;display:flex;gap:10px;">
+            <button class="secondary" id="drawerClearCart" type="button">清空</button>
+            <button class="primary" id="drawerCheckout" type="button">結帳</button>
+          </div>
+        </div>
+      </aside>
+    `);
+
+    // 綁關閉
+    document.getElementById("cartDrawerClose")?.addEventListener("click", closeDrawer);
+    document.getElementById("cartDrawerBackdrop")?.addEventListener("click", closeDrawer);
+
+    // 綁清空
+    document.getElementById("drawerClearCart")?.addEventListener("click", () => {
+      if (!confirm("確定要清空購物車嗎？")) return;
+      writeCart([]);
+      window.TEN_APPLIED = { code: "", discount: 0, note: "" };
+      const inp = document.getElementById("drawerCouponCode");
+      if (inp) inp.value = "";
+      renderDrawer();
+    });
+
+    // 綁套用優惠碼
+    document.getElementById("drawerApplyCoupon")?.addEventListener("click", applyCouponFromDrawer);
+    document.getElementById("drawerCouponCode")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") applyCouponFromDrawer();
+    });
+
+    // 綁結帳（示意）
+    document.getElementById("drawerCheckout")?.addEventListener("click", checkoutFromDrawer);
+
+    // 事件委派：+/-/刪除/改 qty
+    document.getElementById("cartItems")?.addEventListener("click", (e) => {
+      const incBtn = e.target.closest("[data-inc]");
+      const decBtn = e.target.closest("[data-dec]");
+      const delBtn = e.target.closest("[data-del]");
+
+      if (incBtn) return changeQty(incBtn.getAttribute("data-inc"), +1);
+      if (decBtn) return changeQty(decBtn.getAttribute("data-dec"), -1);
+      if (delBtn) return removeItem(delBtn.getAttribute("data-del"));
+    });
+
+    document.getElementById("cartItems")?.addEventListener("change", (e) => {
+      const inp = e.target.closest("[data-qty]");
+      if (!inp) return;
+      setQty(inp.getAttribute("data-qty"), inp.value);
+    });
+  }
+
+  function openDrawer() {
+    const bd = document.getElementById("cartDrawerBackdrop");
+    const dr = document.getElementById("cartDrawer");
+    if (!bd || !dr) return;
+
+    bd.classList.add("open");
+    dr.classList.add("open");
+    bd.setAttribute("aria-hidden", "false");
+    dr.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    // 同步輸入框顯示目前 code
+    const inp = document.getElementById("drawerCouponCode");
+    if (inp && window.TEN_APPLIED?.code) inp.value = window.TEN_APPLIED.code;
+
+    renderDrawer();
+  }
+
+  function closeDrawer() {
+    const bd = document.getElementById("cartDrawerBackdrop");
+    const dr = document.getElementById("cartDrawer");
+    if (!bd || !dr) return;
+
+    bd.classList.remove("open");
+    dr.classList.remove("open");
+    bd.setAttribute("aria-hidden", "true");
+    dr.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  function bindCartIconOpen() {
+    const cartA = document.querySelector('.icon-row a[data-icon="cart"]');
+    if (!cartA) return;
+
+    cartA.addEventListener("click", (e) => {
+      e.preventDefault();
+      openDrawer();
+    });
+  }
+
+  // ===== settings（讓免運/折扣跟著後台改）=====
+  async function loadSettings() {
+    const cacheKey = "tyod_settings_cache_v1";
+    const cached = localStorage.getItem(cacheKey);
+
+    if (cached) {
+      try {
+        const s = JSON.parse(cached);
+        if (s && typeof s === "object") window.TEN_SETTINGS = { ...window.TEN_SETTINGS, ...s };
+      } catch {}
+    }
+
+    try {
+      const res = await fetch(`${window.API_BASE}/settings`, { cache: "no-store" });
+      if (!res.ok) throw new Error("settings error " + res.status);
+      const s = await res.json();
+      if (s && typeof s === "object") {
+        window.TEN_SETTINGS = {
+          ...window.TEN_SETTINGS,
+          ...s,
+          shipping_fee: Number(s.shipping_fee ?? window.TEN_SETTINGS.shipping_fee),
+          free_shipping_threshold: Number(s.free_shipping_threshold ?? window.TEN_SETTINGS.free_shipping_threshold),
+          first_purchase_discount: Number(s.first_purchase_discount ?? window.TEN_SETTINGS.first_purchase_discount),
+          birthday_discount: Number(s.birthday_discount ?? window.TEN_SETTINGS.birthday_discount),
+          shipping_enabled: !!s.shipping_enabled
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(window.TEN_SETTINGS));
+      }
+    } catch (e) {
+      console.warn("loadSettings failed", e);
+    }
+  }
+
+  // ===== 金額計算（使用 cart items 自帶 price；你目前 addToCart 會寫 price）=====
+  function calcSubtotal(cart) {
+    return cart.reduce((s, it) => s + Number(it.price || 0) * normalizeQty(it.qty), 0);
+  }
+
+  function calcShipping(subtotalAfterDiscount) {
+    const S = window.TEN_SETTINGS || {};
+    const shipOn = !!S.shipping_enabled;
+    const fee = Number(S.shipping_fee || 0);
+    const freeOver = Number(S.free_shipping_threshold || 0);
+
+    if (!shipOn) return 0;
+    if (freeOver > 0 && subtotalAfterDiscount >= freeOver) return 0;
+    return fee;
+  }
+
+  function renderPromoTips(subtotalAfterDiscount) {
+    const el = document.getElementById("cartPromoTips");
+    if (!el) return;
+
+    const S = window.TEN_SETTINGS || {};
+    const chips = [];
+
+    const shipOn = !!S.shipping_enabled;
+    const fee = Number(S.shipping_fee || 0);
+    const freeOver = Number(S.free_shipping_threshold || 0);
+
+    if (shipOn) {
+      if (freeOver > 0) {
+        const remain = Math.max(0, freeOver - subtotalAfterDiscount);
+        if (subtotalAfterDiscount >= freeOver) chips.push(`已達 NT$${freeOver} 免運 ✅`);
+        else chips.push(`滿 NT$${freeOver} 免運｜還差 NT$${remain}`);
+      } else {
+        chips.push(`運費 NT$${fee}`);
+      }
+    } else {
+      chips.push("免運活動中");
+    }
+
+    const firstZhe = rateToZhe(S.first_purchase_discount);
+    const bdayZhe  = rateToZhe(S.birthday_discount);
+    if (firstZhe) chips.push(`首購 ${firstZhe} 折`);
+    if (bdayZhe) chips.push(`生日月 ${bdayZhe} 折`);
+
+    el.innerHTML = chips.map(t => `<span class="pill">${t}</span>`).join("");
+  }
+
+  // ===== Drawer Render =====
+  function itemRowHtml(it) {
+    const id = String(it.id);
+    const title = it.title || id;
+    const img = (it.image || "").trim() || "assets/placeholder.png";
+    const price = Number(it.price || 0);
+    const qty = normalizeQty(it.qty);
+
+    return `
+      <div class="d-item">
+        <div class="d-thumb"><img src="${img}" alt=""></div>
+
+        <div class="d-info">
+          <div class="d-name">${title}</div>
+          <div class="d-meta">${money(price)}</div>
+        </div>
+
+        <div class="d-right">
+          <div class="d-price">${money(price * qty)}</div>
+          <div class="d-qty">
+            <button type="button" data-dec="${id}" aria-label="減少">-</button>
+            <input type="number" min="1" step="1" value="${qty}" data-qty="${id}">
+            <button type="button" data-inc="${id}" aria-label="增加">+</button>
+          </div>
+          <button class="d-del" type="button" data-del="${id}">刪除</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDrawer() {
+    const cart = readCart();
+    const itemsEl = document.getElementById("cartItems");
+    if (!itemsEl) return;
+
+    if (!cart.length) {
+      itemsEl.innerHTML = `<div class="muted">購物車是空的。</div>`;
+    } else {
+      itemsEl.innerHTML = cart.map(itemRowHtml).join("");
+    }
+
+    const subtotal = calcSubtotal(cart);
+    const applied = window.TEN_APPLIED || { discount: 0 };
+    const discount = Math.min(subtotal, Math.max(0, Number(applied.discount || 0)));
+
+    const after = Math.max(0, subtotal - discount);
+    const shipping = calcShipping(after);
+    const total = after + shipping;
+
+    document.getElementById("cartSumSubtotal").textContent = money(subtotal);
+    document.getElementById("cartSumDiscount").textContent = `- ${money(discount)}`;
+    document.getElementById("cartSumShipping").textContent = money(shipping);
+    document.getElementById("cartSumTotal").textContent = money(total);
+
+    renderPromoTips(after);
+
+    const checkoutBtn = document.getElementById("drawerCheckout");
+    if (checkoutBtn) checkoutBtn.disabled = (subtotal <= 0);
+  }
+
+  function showDrawerToast(msg, ok = true) {
+    const el = document.getElementById("cartToast");
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = "block";
+    el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
+    setTimeout(() => { el.style.display = "none"; }, 1200);
+  }
+
+  function showCouponToast(msg, ok = true) {
+    const el = document.getElementById("drawerCouponToast");
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
+    if (msg) setTimeout(() => { el.textContent = ""; }, 2200);
+  }
+
+  // ===== Cart operations =====
+  function setQty(id, qty) {
+    const cart = readCart();
+    const i = cart.findIndex(x => String(x.id) === String(id));
+    if (i === -1) return;
+    cart[i].qty = normalizeQty(qty);
+    writeCart(cart);
+    renderDrawer();
+    maybeRevalidateCoupon();
+  }
+
+  function changeQty(id, delta) {
+    const cart = readCart();
+    const i = cart.findIndex(x => String(x.id) === String(id));
+    if (i === -1) return;
+    cart[i].qty = normalizeQty(Number(cart[i].qty || 1) + Number(delta || 1));
+    writeCart(cart);
+    renderDrawer();
+    maybeRevalidateCoupon();
+  }
+
+  function removeItem(id) {
+    const cart = readCart().filter(x => String(x.id) !== String(id));
+    writeCart(cart);
+    renderDrawer();
+    maybeRevalidateCoupon(true);
+  }
+
+  // ===== Coupon =====
+  async function validateCoupon(code, subtotal) {
+    const memberId = getMemberId();
+    const url = `${GAS_URL}?path=coupon_validate`
+      + `&code=${encodeURIComponent(code)}`
+      + `&memberId=${encodeURIComponent(memberId)}`
+      + `&subtotal=${encodeURIComponent(subtotal)}`;
+
+    const res = await fetch(url, { cache: "no-store" });
+    const out = await res.json();
+    return { res, out };
+  }
+
+  function couponErrorText(err) {
+    const m = {
+      "CODE_REQUIRED": "請輸入優惠碼",
+      "INVALID_CODE": "優惠碼不存在",
+      "DISABLED": "此優惠碼已停用",
+      "MIN_SPEND": "未達最低消費門檻",
+      "NOT_STARTED": "優惠尚未開始",
+      "EXPIRED": "優惠已過期",
+      "SOLD_OUT": "優惠已用完",
+      "ALREADY_USED": "你已使用過此優惠碼",
+      "SERVER_ERROR": "系統忙碌，請稍後再試"
+    };
+    return m[String(err || "")] || `套用失敗（${err || "ERROR"}）`;
+  }
+
+  async function applyCouponFromDrawer() {
+    const cart = readCart();
+    const subtotal = calcSubtotal(cart);
+
+    const inp = document.getElementById("drawerCouponCode");
+    const code = String(inp?.value || "").trim().toUpperCase();
+
+    if (!code) return showCouponToast("請輸入優惠碼", false);
+    if (subtotal <= 0) return showCouponToast("購物車是空的", false);
+
+    try {
+      showCouponToast("驗證中…");
+      const { out } = await validateCoupon(code, subtotal);
+
+      if (!out || out.ok !== true) {
+        window.TEN_APPLIED = { code: "", discount: 0, note: "" };
+        renderDrawer();
+        return showCouponToast(couponErrorText(out?.error), false);
+      }
+
+      window.TEN_APPLIED = {
+        code: out.code || code,
+        discount: Math.max(0, Number(out.discount || 0)),
+        note: String(out.note || "")
+      };
+
+      renderDrawer();
+      showCouponToast(`已套用 ${window.TEN_APPLIED.code} ✅ 折抵 ${money(window.TEN_APPLIED.discount)}`);
+
+    } catch (e) {
+      console.error(e);
+      window.TEN_APPLIED = { code: "", discount: 0, note: "" };
+      renderDrawer();
+      showCouponToast("系統忙碌，請稍後再試", false);
+    }
+  }
+
+  // 套用後改數量：自動重新驗證（避免折扣不跟著變）
+  let revalidateTimer = null;
+  async function maybeRevalidateCoupon(clearIfEmpty = false) {
+    if (!window.TEN_APPLIED?.code) return;
+
+    const cart = readCart();
+    const subtotal = calcSubtotal(cart);
+
+    if (subtotal <= 0) {
+      if (clearIfEmpty) {
+        window.TEN_APPLIED = { code: "", discount: 0, note: "" };
+        const inp = document.getElementById("drawerCouponCode");
+        if (inp) inp.value = "";
+        showCouponToast("購物車空了，已清除優惠碼");
+      }
+      renderDrawer();
       return;
     }
 
-    t.textContent = `✅ 已送出（示意）｜配送：${shipType}｜合計：${money(total)}`;
-    t.style.color = "rgba(47,58,44,.9)";
+    clearTimeout(revalidateTimer);
+    revalidateTimer = setTimeout(async () => {
+      try {
+        const code = window.TEN_APPLIED.code;
+        const { out } = await validateCoupon(code, subtotal);
 
-    // ✅ 示意：送出後清空購物車
-    writeCart([]);
-    setTimeout(closeModal, 900);
-  });
+        if (!out || out.ok !== true) {
+          window.TEN_APPLIED = { code: "", discount: 0, note: "" };
+          renderDrawer();
+          showCouponToast(couponErrorText(out?.error), false);
+          return;
+        }
 
-  bd.classList.add("open");
-  bd.setAttribute("aria-hidden","false");
-  document.body.style.overflow = "hidden";
-}
+        window.TEN_APPLIED.discount = Math.max(0, Number(out.discount || 0));
+        renderDrawer();
+      } catch (e) {
+        console.warn("revalidate failed", e);
+      }
+    }, 350);
+  }
 
-function bindCartBadgeListeners() {
-  window.addEventListener("cart:changed", () => {
-    renderCartBadge();
-    renderDrawer(); // 如果抽屜開著，會即時更新
-  });
+  // ===== Checkout（示意）=====
+  async function checkoutFromDrawer() {
+    const cart = readCart();
+    const subtotal = calcSubtotal(cart);
+    if (subtotal <= 0) return showDrawerToast("購物車是空的", false);
 
-  window.addEventListener("storage", (e) => {
-    if (e.key === CART_KEY) {
-      renderCartBadge();
+    const memberId = getMemberId();
+    const orderId = "O-" + Date.now();
+
+    try {
+      // 有優惠碼才寫入 coupon_use
+      if (window.TEN_APPLIED?.code) {
+        showCouponToast("結帳中：寫入優惠碼使用紀錄…");
+        const res = await fetch(`${GAS_URL}?path=coupon_use&key=${encodeURIComponent(ADMIN_KEY)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: window.TEN_APPLIED.code,
+            memberId,
+            subtotal,
+            orderId
+          })
+        });
+        const out = await res.json();
+        if (!res.ok || !out?.ok) {
+          return showCouponToast(couponErrorText(out?.error), false);
+        }
+        showCouponToast(`✅ 優惠碼已使用：${out.code}（折抵 ${money(out.discount)}）`);
+      }
+
+      // 清空購物車
+      writeCart([]);
+      window.TEN_APPLIED = { code: "", discount: 0, note: "" };
+      const inp = document.getElementById("drawerCouponCode");
+      if (inp) inp.value = "";
+
       renderDrawer();
-    }
-  });
-}
+      renderCartBadge();
+      showDrawerToast("結帳完成（示意）✅");
+      closeDrawer();
 
-window.addEventListener("DOMContentLoaded", async () => {
-  await loadHeader();
-  renderCartBadge();
-  bindCartBadgeListeners();
-});
+    } catch (e) {
+      console.error(e);
+      showDrawerToast("結帳失敗，請稍後再試", false);
+    }
+  }
+
+  // ===== 同步監聽 =====
+  function bindListeners() {
+    window.addEventListener("cart:changed", () => {
+      renderCartBadge();
+      // 抽屜開著就同步更新
+      const dr = document.getElementById("cartDrawer");
+      if (dr?.classList.contains("open")) renderDrawer();
+      maybeRevalidateCoupon();
+    });
+
+    window.addEventListener("storage", (e) => {
+      if (e.key === CART_KEY) {
+        renderCartBadge();
+        const dr = document.getElementById("cartDrawer");
+        if (dr?.classList.contains("open")) renderDrawer();
+      }
+    });
+  }
+
+  // ===== init =====
+  window.addEventListener("DOMContentLoaded", async () => {
+    await loadHeader();
+    await loadSettings();
+    renderCartBadge();
+    bindListeners();
+  });
+
+})();
