@@ -10,22 +10,23 @@
 
 <body>
 
+<!-- ✅ header / nav / cart badge / cart drawer 全部由 include.js 處理 -->
+<script src="include.js"></script>
+
 <main>
   <div class="subcats" id="subcats">
-    <button class="chip active" data-filter="全部" type="button">全部</button>
-    <button class="chip" data-filter="項鍊" type="button">項鍊</button>
-    <button class="chip" data-filter="手鏈" type="button">手鏈</button>
-    <button class="chip" data-filter="耳環" type="button">耳環</button>
-    <button class="chip" data-filter="戒指" type="button">戒指</button>
-    <button class="chip" data-filter="其他" type="button">其他</button>
+    <button class="chip active" data-filter="全部">全部</button>
+    <button class="chip" data-filter="項鍊">項鍊</button>
+    <button class="chip" data-filter="手鏈">手鏈</button>
+    <button class="chip" data-filter="耳環">耳環</button>
+    <button class="chip" data-filter="戒指">戒指</button>
+    <button class="chip" data-filter="其他">其他</button>
   </div>
 
   <div class="grid" id="productGrid"></div>
 </main>
 
 <footer>
-  <a class="admin-link" href="admin.html" aria-label="admin"></a>
-
   <div class="footer-row">
     <div class="col">💎 精選材質<small>不含鉛，安心佩戴</small></div>
     <div class="col center">✨ 獨特設計<small>韓日歐美風格齊聚</small></div>
@@ -38,713 +39,166 @@
   </div>
 
   <div class="footer-links">
-    <a href="https://www.instagram.com/tenyears_oneday" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://www.instagram.com/tenyears_oneday" target="_blank">Instagram</a>
     <span>｜</span>
-    <a href="https://line.me/R/ti/p/@396kwrga" target="_blank" rel="noopener">LINE</a>
+    <a href="https://line.me/R/ti/p/@396kwrga" target="_blank">LINE</a>
   </div>
 </footer>
 
-<!-- ✅ 商品跳出框框 Modal -->
+<!-- ✅ 商品 Modal（只有商品，不含購物車抽屜） -->
 <div class="ui-backdrop" id="pdBackdrop" aria-hidden="true">
-  <div class="ui-panel" role="dialog" aria-modal="true" aria-label="商品資訊">
+  <div class="ui-panel" role="dialog" aria-modal="true">
     <div class="ui-hd">
       <div style="font-weight:900;">商品資訊</div>
-      <button class="ui-close" id="pdClose" aria-label="關閉">×</button>
+      <button class="ui-close" id="pdClose">×</button>
     </div>
-
     <div class="pd-wrap" id="pdWrap"></div>
   </div>
 </div>
 
-<button id="backToTop" aria-label="回到頂端">↑</button>
+<button id="backToTop">↑</button>
 
-<!-- ✅ 共用 header/nav/icon/badge 都在 include.js -->
-<script src="include.js"></script>
 <script>
 (() => {
   const API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
-  const CART_KEY = window.CART_KEY || "ten_cart";
+  const CART_KEY = "ten_cart";
 
   const grid = document.getElementById("productGrid");
   const chips = document.querySelectorAll("#subcats .chip");
+  const pdBackdrop = document.getElementById("pdBackdrop");
+  const pdWrap = document.getElementById("pdWrap");
+  const pdClose = document.getElementById("pdClose");
 
   let ALL_PRODUCTS = [];
 
-  function getPid(p){
-    return String(p?.id ?? p?._id ?? p?.product_id ?? p?.sku ?? "");
-  }
+  /* ---------- helpers ---------- */
+  const getPid = p => String(p?.id ?? p?._id ?? "");
 
-  // =========================
-  // Cart
-  // =========================
-  function readCart(){
-    try { return JSON.parse(localStorage.getItem(CART_KEY) || "[]"); }
-    catch { return []; }
-  }
-  function writeCart(items){
-    localStorage.setItem(CART_KEY, JSON.stringify(items));
-    window.dispatchEvent(new Event("cart:changed"));
-  }
-  function addToCart(product, qty){
-    qty = Math.max(1, Math.floor(Number(qty || 1)));
-    const items = readCart();
-    const id = String(product.id);
-
-    const hit = items.find(x => String(x.id) === id);
-    if(hit){
-      hit.qty = Number(hit.qty || 0) + qty;
-    }else{
-      items.push({
-        id,
-        title: product.title || "（未命名）",
-        price: Number(product.price || 0),
-        image: (product.image || "assets/placeholder.png"),
-        qty
-      });
-    }
-    writeCart(items);
-  }
-
-  // =========================
-  // Images helper (multi-image)
-  // =========================
   function getImages(p){
     let arr = [];
-
-    if (Array.isArray(p.images)) arr = arr.concat(p.images);
-    if (Array.isArray(p.image_urls)) arr = arr.concat(p.image_urls);
-
-    if (typeof p.images === "string" && p.images.trim()){
-      arr = arr.concat(p.images.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
-    }
-    if (typeof p.image_urls === "string" && p.image_urls.trim()){
-      arr = arr.concat(p.image_urls.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
-    }
-    if (typeof p.images_csv === "string" && p.images_csv.trim()){
-      arr = arr.concat(p.images_csv.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
-    }
-
-    for (let i=1;i<=10;i++){
-      const k = i===1 ? "image" : `image${i}`;
-      if (typeof p[k] === "string" && p[k].trim()) arr.push(p[k].trim());
-    }
-
-    ["cover","main_image","thumb","image1"].forEach(k=>{
-      if (typeof p[k] === "string" && p[k].trim()) arr.push(p[k].trim());
+    ["image","image2","image3","image4","image5","cover"].forEach(k=>{
+      if(p[k]) arr.push(p[k]);
     });
-
-    arr = arr.map(x=>String(x||"").trim()).filter(Boolean);
-    arr = [...new Set(arr)];
-    if (!arr.length) arr = ["assets/placeholder.png"];
-    return arr;
+    if(Array.isArray(p.images)) arr.push(...p.images);
+    arr = [...new Set(arr)].filter(Boolean);
+    return arr.length ? arr : ["assets/placeholder.png"];
   }
 
-  // =========================
-  // Product card + render
-  // =========================
-  function productCard(p, index){
-    const pid = getPid(p);
-    const isHero = index < 2;
-    const loading = isHero ? "eager" : "lazy";
-    const fetchprio = isHero ? 'fetchpriority="high"' : "";
+  function addToCart(product, qty){
+    qty = Math.max(1, Math.floor(qty || 1));
+    const cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    const hit = cart.find(x => x.id === product.id);
+    if(hit){
+      hit.qty += qty;
+    }else{
+      cart.push({ ...product, qty });
+    }
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    window.dispatchEvent(new Event("cart:changed"));
+  }
 
-    const imgs = getImages(p);
-    const img = imgs[0] || "assets/placeholder.png";
-
-    const title = p.title || "（未命名）";
-    const series = p.series || "全系列";
-    const cat = p.category || "其他";
-    const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
-
+  /* ---------- render ---------- */
+  function productCard(p, i){
+    const img = getImages(p)[0];
     return `
-      <a class="product-link js-open-product" href="#" data-id="${encodeURIComponent(pid)}">
+      <a href="#" class="product-link js-open-product" data-id="${getPid(p)}">
         <div class="product">
           <div class="thumb">
-            <img src="${img}" alt="${title}" loading="${loading}" decoding="async" ${fetchprio}>
+            <img src="${img}" loading="${i<2?'eager':'lazy'}">
           </div>
           <div class="body">
             <div>
-              <div class="name">${title}</div>
-              <div class="meta">${series}｜${cat}</div>
+              <div class="name">${p.title||""}</div>
+              <div class="meta">${p.series||""}｜${p.category||""}</div>
             </div>
-            <div class="price">NT$ ${price}</div>
+            <div class="price">NT$ ${p.price||0}</div>
           </div>
         </div>
       </a>
     `;
   }
 
-  function render(products){
-    grid.innerHTML = products.map((p, i) => productCard(p, i)).join("");
-
-    const firstImg = getImages(products?.[0] || {})[0];
-    if(firstImg && !document.querySelector('link[data-preload="first-product"]')){
-      const link = document.createElement("link");
-      link.rel = "preload";
-      link.as = "image";
-      link.href = firstImg;
-      link.setAttribute("data-preload","first-product");
-      document.head.appendChild(link);
-    }
+  function render(list){
+    grid.innerHTML = list.map(productCard).join("");
   }
 
-  function applyFilter(filter){
-    const visible = ALL_PRODUCTS
-      .filter(p => (p.status || "上架") === "上架")
-      .filter(p => {
-        const cat = p.category || "其他";
-        return (filter === "全部" || cat === filter);
-      });
-
-    render(visible);
+  function applyFilter(f){
+    render(
+      ALL_PRODUCTS.filter(p =>
+        (p.status||"上架")==="上架" &&
+        (f==="全部" || p.category===f)
+      )
+    );
   }
 
-  chips.forEach(chip => {
-    chip.addEventListener("click", () => {
-      chips.forEach(c => c.classList.remove("active"));
-      chip.classList.add("active");
-
-      const f = chip.dataset.filter || "全部";
-      applyFilter(f);
-      grid.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+  chips.forEach(c=>{
+    c.onclick=()=>{
+      chips.forEach(x=>x.classList.remove("active"));
+      c.classList.add("active");
+      applyFilter(c.dataset.filter);
+    };
   });
 
-  // =========================
-  // Load products (cache -> instant, then refresh)
-  // =========================
-  async function loadProducts(){
-    const cacheKey = "tyod_products_cache_v1";
-    const cached = localStorage.getItem(cacheKey);
-
-    if(cached){
-      try{
-        ALL_PRODUCTS = JSON.parse(cached) || [];
-        applyFilter(document.querySelector("#subcats .chip.active")?.dataset.filter || "全部");
-      }catch(e){}
-    }else{
-      grid.innerHTML = `<div style="opacity:.7; padding:18px;">載入中...</div>`;
-    }
-
-    try{
-      const res = await fetch(`${API_BASE}/products`, { cache: "no-store" });
-      if(!res.ok) throw new Error("API error " + res.status);
-      const data = await res.json();
-
-      ALL_PRODUCTS = Array.isArray(data) ? data : [];
-      localStorage.setItem(cacheKey, JSON.stringify(ALL_PRODUCTS));
-      applyFilter(document.querySelector("#subcats .chip.active")?.dataset.filter || "全部");
-    }catch(err){
-      console.error(err);
-      if(!cached){
-        grid.innerHTML = `<div style="color:#8a3b3b; padding:18px;">商品載入失敗，請稍後再試。</div>`;
-      }
-    }
-  }
-
-  // =========================
-  // Product Modal
-  // =========================
-  const pdBackdrop = document.getElementById("pdBackdrop");
-  const pdClose = document.getElementById("pdClose");
-  const pdWrap = document.getElementById("pdWrap");
-
-  function openProductModalById(id){
-    const p = ALL_PRODUCTS.find(x => getPid(x) === String(id));
-    if(!p) return;
-
-    const title = p.title || "（未命名）";
-    const cat = p.category || "其他";
-    const series = p.series || "全系列";
-    const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
-    const desc = p.description || p.desc || "（尚未提供商品說明）";
-
+  /* ---------- modal ---------- */
+  function openProduct(p){
     const imgs = getImages(p);
-    const main = imgs[0];
-
     pdWrap.innerHTML = `
       <div class="pd-grid">
         <div class="pd-media">
-          <img id="pdMainImg" src="${main}" alt="${title}" loading="eager" decoding="async">
-          <div class="pd-thumbs" style="${imgs.length>1?'':'display:none'}">
-            ${imgs.map((src,i)=>`
-              <button class="pd-thumb ${i===0?'active':''}" type="button" data-src="${src}">
-                <img src="${src}" alt="${title} ${i+1}" loading="lazy" decoding="async">
-              </button>
-            `).join("")}
-          </div>
+          <img id="pdMain" src="${imgs[0]}">
+          ${imgs.length>1?`
+          <div class="pd-thumbs">
+            ${imgs.map(s=>`<button data-src="${s}"><img src="${s}"></button>`).join("")}
+          </div>`:""}
         </div>
-
         <div class="pd-info">
-          <h2 class="pd-name">${title}</h2>
-          <div class="pd-meta">${series}｜${cat}</div>
-          <div class="pd-price">NT$ ${price}</div>
-          <div class="pd-desc">${desc}</div>
+          <h2>${p.title}</h2>
+          <div class="pd-price">NT$ ${p.price}</div>
+          <p>${p.description||""}</p>
 
           <div class="pd-actions">
-            <div class="qty">
-              <button class="qty-btn" type="button" id="qtyMinus" aria-label="減少">−</button>
-              <input class="qty-input" id="qtyInput" type="number" min="1" value="1" inputmode="numeric">
-              <button class="qty-btn" type="button" id="qtyPlus" aria-label="增加">+</button>
-            </div>
-
-            <button class="pd-btn primary" type="button" id="pdAddCart">加入購物車</button>
-            <button class="pd-btn secondary" type="button" id="pdClose2">關閉</button>
+            <input id="qty" type="number" min="1" value="1">
+            <button id="add">加入購物車</button>
           </div>
-
-          <div class="pd-toast" id="pdToast" style="display:none;">已加入購物車 ✅</div>
         </div>
       </div>
     `;
 
-    const mainImgEl = pdWrap.querySelector("#pdMainImg");
-    pdWrap.querySelectorAll(".pd-thumb").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        pdWrap.querySelectorAll(".pd-thumb").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-        mainImgEl.src = btn.dataset.src;
-      });
+    pdWrap.querySelectorAll(".pd-thumbs button").forEach(b=>{
+      b.onclick=()=>pdWrap.querySelector("#pdMain").src=b.dataset.src;
     });
 
-    const qtyInput = pdWrap.querySelector("#qtyInput");
-    pdWrap.querySelector("#qtyMinus").addEventListener("click", ()=>{
-      qtyInput.value = Math.max(1, Number(qtyInput.value||1) - 1);
-    });
-    pdWrap.querySelector("#qtyPlus").addEventListener("click", ()=>{
-      qtyInput.value = Math.max(1, Number(qtyInput.value||1) + 1);
-    });
-
-    pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
-      const qty = Math.max(1, Math.floor(Number(qtyInput.value || 1)));
-      addToCart({ id: getPid(p), title: p.title, price: p.price, image: imgs[0] }, qty);openCart();
-
-
-      const t = pdWrap.querySelector("#pdToast");
-      t.style.display = "block";
-      setTimeout(()=> t.style.display="none", 1200);
-    });
-
-    pdWrap.querySelector("#pdClose2").addEventListener("click", closeProductModal);
+    pdWrap.querySelector("#add").onclick=()=>{
+      addToCart({
+        id:getPid(p),
+        title:p.title,
+        price:p.price,
+        image:imgs[0]
+      }, Number(pdWrap.querySelector("#qty").value));
+    };
 
     pdBackdrop.classList.add("open");
-    pdBackdrop.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
   }
 
-  function closeProductModal(){
-    pdBackdrop.classList.remove("open");
-    pdBackdrop.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
-  }
+  pdClose.onclick=()=>pdBackdrop.classList.remove("open");
+  pdBackdrop.onclick=e=>{ if(e.target===pdBackdrop) pdBackdrop.classList.remove("open"); };
 
-  pdClose.addEventListener("click", closeProductModal);
-  pdBackdrop.addEventListener("click", (e) => { if(e.target === pdBackdrop) closeProductModal(); });
-  window.addEventListener("keydown", (e) => { if(e.key === "Escape" && pdBackdrop.classList.contains("open")) closeProductModal(); });
-
-  document.addEventListener("click", (e) => {
-    const a = e.target.closest(".js-open-product");
+  document.addEventListener("click",e=>{
+    const a=e.target.closest(".js-open-product");
     if(!a) return;
     e.preventDefault();
-    const id = decodeURIComponent(a.dataset.id || "");
-    openProductModalById(id);
+    openProduct(ALL_PRODUCTS.find(p=>getPid(p)===a.dataset.id));
   });
 
-  // back to top
-  const btn = document.getElementById("backToTop");
-  window.addEventListener("scroll", () => { btn.style.display = window.scrollY > 300 ? "block" : "none"; });
-  btn.addEventListener("click", () => { window.scrollTo({ top: 0, behavior: "smooth" }); });
-
-  loadProducts();
-})();
-  // =========================
-// ✅ Shared helpers
-// =========================
-function money(n){
-  n = Math.round(Number(n || 0));
-  return `NT$ ${n}`;
-}
-function rateToZhe(rate){
-  rate = Number(rate||1);
-  if(rate >= 1 || rate <= 0) return null;
-  const z = Math.round(rate * 100) / 10;
-  return String(z).replace(/\.0$/, "");
-}=
-
-// =========================
-// ✅ Cart storage (same as include.js)
-// =========================
-const CART_STORAGE_KEY = "ten_cart";
-
-function readCart(){
-  try { return JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]"); }
-  catch { return []; }
-}
-function writeCart(items){
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  window.dispatchEvent(new Event("cart:changed")); // 讓 include.js badge 更新
-}
-
-// ✅ 加入購物車（你商品 modal 的按鈕要呼叫這個）
-function addToCart(product, qty){
-  qty = Math.max(1, Math.floor(Number(qty || 1)));
-  const items = readCart();
-  const id = String(product.id);
-
-  const hit = items.find(x => String(x.id) === id);
-  if(hit){
-    hit.qty = Number(hit.qty || 0) + qty;
-  }else{
-    items.push({
-      id,
-      title: product.title || "（未命名）",
-      price: Number(product.price || 0),
-      image: (product.image || "assets/placeholder.png"),
-      qty
+  /* ---------- load ---------- */
+  fetch(`${API_BASE}/products`)
+    .then(r=>r.json())
+    .then(d=>{
+      ALL_PRODUCTS=d||[];
+      applyFilter("全部");
     });
-  }
-  writeCart(items);
-}
-
-// =========================
-// ✅ Cart Drawer UI
-// =========================
-const cartBackdrop = document.getElementById("cartBackdrop");
-const cartDrawer = document.getElementById("cartDrawer");
-const cartClose = document.getElementById("cartClose");
-
-const cartItemsEl = document.getElementById("cartItems");
-const cartPromoTipsEl = document.getElementById("cartPromoTips");
-
-const cartSubtotalEl = document.getElementById("cartSubtotal");
-const cartShippingEl = document.getElementById("cartShipping");
-const cartTotalEl = document.getElementById("cartTotal");
-
-const cartClearBtn = document.getElementById("cartClear");
-const cartCheckoutBtn = document.getElementById("cartCheckout");
-
-// ✅ 結帳 Modal
-const ckBackdrop = document.getElementById("ckBackdrop");
-const ckClose = document.getElementById("ckClose");
-const ckWrap = document.getElementById("ckWrap");
-
-function openCart(){
-  cartBackdrop.classList.add("open");
-  cartDrawer.classList.add("open");
-  cartBackdrop.setAttribute("aria-hidden","false");
-  document.body.style.overflow = "hidden";
-  renderCartDrawer();
-}
-function closeCart(){
-  cartBackdrop.classList.remove("open");
-  cartDrawer.classList.remove("open");
-  cartBackdrop.setAttribute("aria-hidden","true");
-  document.body.style.overflow = "";
-}
-
-// ✅ 讓 header 右上角購物車 icon 點了就開抽屜（include.js 插進來後才存在）
-function bindCartIconOpen(){
-  const cartA = document.querySelector('.icon-row a[data-icon="cart"]');
-  if(!cartA) return;
-  cartA.addEventListener("click", (e)=>{
-    // 如果你的 cart icon 原本是連到 cart.html，這裡攔截改開抽屜
-    e.preventDefault();
-    openCart();
-  });
-}
-
-cartClose?.addEventListener("click", closeCart);
-cartBackdrop?.addEventListener("click", closeCart);
-window.addEventListener("keydown", (e)=>{
-  if(e.key === "Escape"){
-    if(cartDrawer?.classList.contains("open")) closeCart();
-    if(ckBackdrop?.classList.contains("open")) closeCheckout();
-  }
-});
-
-cartClearBtn?.addEventListener("click", ()=>{
-  if(confirm("確定要清空購物車嗎？")){
-    writeCart([]);
-    renderCartDrawer();
-  }
-});
-
-cartCheckoutBtn?.addEventListener("click", ()=>{
-  openCheckout();
-});
-
-// =========================
-// ✅ Promo tips (跟 settings 同步)
-// =========================
-function renderPromoTips(subtotalAfterDiscount){
-  if(!cartPromoTipsEl) return;
-
-  const chips = [];
-
-  const shipOn = !!SETTINGS.shipping_enabled;
-  const fee = Number(SETTINGS.shipping_fee || 0);
-  const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
-
-  if(shipOn){
-    chips.push(`運費 ${money(fee)}`);
-    if(freeOver > 0){
-      const remain = Math.max(0, freeOver - subtotalAfterDiscount);
-      if(subtotalAfterDiscount >= freeOver){
-        chips.push(`已達 ${money(freeOver)} 免運 ✅`);
-      }else{
-        chips.push(`滿 ${money(freeOver)} 免運｜還差 ${money(remain)}`);
-      }
-    }
-  }else{
-    chips.push("免運活動中 ✅");
-  }
-
-  const firstZhe = rateToZhe(SETTINGS.first_purchase_discount);
-  const bdayZhe  = rateToZhe(SETTINGS.birthday_discount);
-  if(firstZhe) chips.push(`首購 ${firstZhe} 折`);
-  if(bdayZhe)  chips.push(`生日月 ${bdayZhe} 折`);
-
-  cartPromoTipsEl.innerHTML = chips.map(t => `<span class="pill">${t}</span>`).join("");
-}
-
-// =========================
-// ✅ Cart calc
-// =========================
-function normalizeQty(n){
-  n = Number(n || 1);
-  if(!Number.isFinite(n) || n < 1) n = 1;
-  return Math.floor(n);
-}
-function calcSubtotal(cart){
-  return cart.reduce((sum, it)=> sum + Number(it.price||0) * normalizeQty(it.qty), 0);
-}
-function calcShipping(subtotalAfterDiscount){
-  const shipOn = !!SETTINGS.shipping_enabled;
-  const fee = Number(SETTINGS.shipping_fee || 0);
-  const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
-
-  if(!shipOn) return 0;
-  if(freeOver > 0 && subtotalAfterDiscount >= freeOver) return 0;
-  return fee;
-}
-
-// =========================
-// ✅ Cart render
-// =========================
-function cartItemRow(it){
-  const id = String(it.id);
-  const title = it.title || id;
-  const img = (it.image || "assets/placeholder.png");
-  const price = Number(it.price || 0);
-  const qty = normalizeQty(it.qty);
-
-  return `
-    <div class="d-item">
-      <div class="d-thumb"><img src="${img}" alt=""></div>
-
-      <div class="d-info">
-        <div class="d-name">${title}</div>
-        <div class="d-meta">${money(price)} × ${qty}</div>
-      </div>
-
-      <div class="d-right">
-        <div class="d-price">${money(price * qty)}</div>
-        <div class="d-qty">
-          <button type="button" data-dec="${id}">-</button>
-          <input type="number" min="1" value="${qty}" data-qty="${id}">
-          <button type="button" data-inc="${id}">+</button>
-        </div>
-        <button class="d-del" type="button" data-del="${id}">刪除</button>
-      </div>
-    </div>
-  `;
-}
-
-function wireCartDrawerEvents(){
-  cartItemsEl.querySelectorAll("[data-inc]").forEach(btn=>{
-    btn.addEventListener("click", ()=> changeQty(btn.getAttribute("data-inc"), +1));
-  });
-  cartItemsEl.querySelectorAll("[data-dec]").forEach(btn=>{
-    btn.addEventListener("click", ()=> changeQty(btn.getAttribute("data-dec"), -1));
-  });
-  cartItemsEl.querySelectorAll("[data-del]").forEach(btn=>{
-    btn.addEventListener("click", ()=> removeItem(btn.getAttribute("data-del")));
-  });
-  cartItemsEl.querySelectorAll("[data-qty]").forEach(inp=>{
-    inp.addEventListener("change", ()=>{
-      setQty(inp.getAttribute("data-qty"), inp.value);
-    });
-  });
-}
-
-function setQty(id, qty){
-  const cart = readCart();
-  const i = cart.findIndex(x => String(x.id) === String(id));
-  if(i === -1) return;
-  cart[i].qty = normalizeQty(qty);
-  writeCart(cart);
-  renderCartDrawer();
-}
-
-function changeQty(id, delta){
-  const cart = readCart();
-  const i = cart.findIndex(x => String(x.id) === String(id));
-  if(i === -1) return;
-  cart[i].qty = normalizeQty(Number(cart[i].qty||1) + Number(delta||1));
-  writeCart(cart);
-  renderCartDrawer();
-}
-
-function removeItem(id){
-  const cart = readCart().filter(x => String(x.id) !== String(id));
-  writeCart(cart);
-  renderCartDrawer();
-}
-
-function renderCartDrawer(){
-  if(!cartItemsEl) return;
-
-  const cart = readCart();
-  if(!cart.length){
-    cartItemsEl.innerHTML = `<div class="muted">購物車目前是空的。</div>`;
-    cartSubtotalEl.textContent = money(0);
-    cartShippingEl.textContent = money(0);
-    cartTotalEl.textContent = money(0);
-    renderPromoTips(0);
-    cartCheckoutBtn.disabled = true;
-    return;
-  }
-
-  cartItemsEl.innerHTML = cart.map(cartItemRow).join("");
-  wireCartDrawerEvents();
-
-  const subtotal = calcSubtotal(cart);
-  const shipping = calcShipping(subtotal);
-  const total = subtotal + shipping;
-
-  cartSubtotalEl.textContent = money(subtotal);
-  cartShippingEl.textContent = money(shipping);
-  cartTotalEl.textContent = money(total);
-
-  renderPromoTips(subtotal);
-  cartCheckoutBtn.disabled = false;
-}
-
-// =========================
-// ✅ Checkout modal (方案 A)
-// =========================
-function openCheckout(){
-  const cart = readCart();
-  if(!cart.length) return;
-
-  const subtotal = calcSubtotal(cart);
-  const shipping = calcShipping(subtotal);
-  const total = subtotal + shipping;
-
-  ckWrap.innerHTML = `
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-      <span class="pill">小計 ${money(subtotal)}</span>
-      <span class="pill">運費 ${money(shipping)}</span>
-      <span class="pill ok">合計 ${money(total)}</span>
-    </div>
-
-    <div class="muted" style="line-height:1.8;">
-      方案 A：結帳視窗（示意）<br>
-      如果你要接真正下單（寫入 Google Sheet / API），我下一步再幫你接。
-    </div>
-
-    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="pd-btn secondary" type="button" id="ckBack">返回購物車</button>
-      <button class="pd-btn primary" type="button" id="ckConfirm">確認結帳（示意）</button>
-    </div>
-  `;
-
-  ckBackdrop.classList.add("open");
-  ckBackdrop.setAttribute("aria-hidden","false");
-
-  document.getElementById("ckBack").addEventListener("click", ()=>{
-    closeCheckout();
-    openCart();
-  });
-
-  document.getElementById("ckConfirm").addEventListener("click", ()=>{
-    // 示意：清空
-    writeCart([]);
-    renderCartDrawer();
-    closeCheckout();
-    closeCart();
-    alert("結帳完成（示意）✅");
-  });
-
-  // 把購物車抽屜先收掉，視覺更乾淨
-  closeCart();
-}
-function closeCheckout(){
-  ckBackdrop.classList.remove("open");
-  ckBackdrop.setAttribute("aria-hidden","true");
-}
-
-ckClose?.addEventListener("click", closeCheckout);
-ckBackdrop?.addEventListener("click", (e)=>{
-  if(e.target === ckBackdrop) closeCheckout();
-});
-
-// =========================
-// ✅ Sync updates
-// =========================
-window.addEventListener("cart:changed", ()=>{
-  // badge 由 include.js 更新；抽屜若開著，也更新內容
-  if(cartDrawer?.classList.contains("open")) renderCartDrawer();
-});
-
-// =========================
-// ✅ INIT
-// =========================
-(async ()=>{
-  await loadSettings();           // ✅ 先拿 settings（讓免運/折扣提示正確）
-  renderCartDrawer();             // ✅ 預先算一次
-  // include.js 會插 header，所以延後綁定 icon
-  setTimeout(bindCartIconOpen, 0);
 })();
-
 </script>
-<!-- ✅ Cart Drawer -->
-<div class="drawer-backdrop" id="cartBackdrop" aria-hidden="true"></div>
-
-<aside class="drawer" id="cartDrawer" aria-label="購物車" role="dialog" aria-modal="true">
-  <div class="d-hd">
-    <div class="d-title">購物車</div>
-    <button class="ui-close" id="cartClose" type="button" aria-label="關閉">×</button>
-  </div>
-
-  <div class="d-bd">
-    <!-- ✅ 促銷/免運提示：會跟 settings 同步 -->
-    <div id="cartPromoTips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
-
-    <div class="d-items" id="cartItems"></div>
-  </div>
-
-  <div class="d-ft">
-    <div class="d-sumrow"><span>小計</span><strong id="cartSubtotal">NT$ 0</strong></div>
-    <div class="d-sumrow"><span>運費</span><strong id="cartShipping">NT$ 0</strong></div>
-    <div class="d-sumrow d-total"><span>合計</span><strong id="cartTotal">NT$ 0</strong></div>
-
-    <div class="d-actions">
-      <button class="secondary" id="cartClear" type="button">清空</button>
-      <button class="primary" id="cartCheckout" type="button">結帳</button>
-    </div>
-  </div>
-</aside>
-
-<!-- ✅ Checkout Modal（結帳跳出視窗：方案 A） -->
-<div class="ui-backdrop" id="ckBackdrop" aria-hidden="true">
-  <div class="ui-panel" role="dialog" aria-modal="true" aria-label="結帳">
-    <div class="ui-hd">
-      <div style="font-weight:900;">結帳</div>
-      <button class="ui-close" id="ckClose" aria-label="關閉">×</button>
-    </div>
-    <div class="pd-wrap" id="ckWrap"></div>
-  </div>
-</div>
 
 </body>
 </html>
