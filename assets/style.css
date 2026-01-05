@@ -695,3 +695,27 @@ footer{
   position: relative;
   z-index: 1;
 }
+/* =========================
+   Mobile 修正：購物車優惠碼不被吃掉
+   （只影響手機）
+========================= */
+@media (max-width: 860px){
+  /* 卡片內容不要被裁切 */
+  .card{
+    overflow: visible !important;
+  }
+
+  /* 優惠碼區塊強制顯示 */
+  .coupon{
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative;
+    z-index: 5;
+  }
+
+  /* 確保 input 不會被擠扁 */
+  .coupon input{
+    min-height: 44px;
+  }
+}
