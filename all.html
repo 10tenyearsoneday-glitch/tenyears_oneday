@@ -281,11 +281,17 @@
           <div class="pd-meta">${series}｜${cat}</div>
           <div class="pd-price">NT$ ${price}</div>
           <div class="pd-desc">${desc}</div>
+<div class="pd-actions">
+  <div class="qty">
+    <button class="qty-btn" type="button" id="qtyMinus" aria-label="減少">−</button>
+    <input class="qty-input" id="qtyInput" type="number" min="1" value="1" inputmode="numeric">
+    <button class="qty-btn" type="button" id="qtyPlus" aria-label="增加">+</button>
+  </div>
 
-          <div class="pd-actions">
-            <button class="pd-btn primary" type="button" id="pdAddCart">加入購物車</button>
-            <button class="pd-btn secondary" type="button" id="pdClose2">關閉</button>
-          </div>
+  <button class="pd-btn primary" type="button" id="pdAddCart">加入購物車</button>
+  <button class="pd-btn secondary" type="button" id="pdClose2">關閉</button>
+</div>
+
 
           <div class="pd-toast" id="pdToast" style="display:none;">已加入購物車 ✅</div>
         </div>
@@ -350,6 +356,63 @@
   // ===== init =====
   loadProducts(); // 先快顯商品
   loadSettings(); // 背景載入設定
+  // ===== Cart (localStorage) =====
+const CART_KEY = "tyod_cart_v1";
+
+function readCart(){
+  try{
+    return JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+  }catch(e){
+    return [];
+  }
+}
+
+function writeCart(items){
+  localStorage.setItem(CART_KEY, JSON.stringify(items));
+}
+
+function addToCart(product, qty){
+  const items = readCart();
+  const id = String(product.id);
+
+  // ✅ 同一商品 id：累加數量
+  const hit = items.find(x => String(x.id) === id);
+  if(hit){
+    hit.qty = Number(hit.qty || 0) + Number(qty || 1);
+  }else{
+    items.push({
+      id,
+      title: product.title || "（未命名）",
+      price: Number(product.price || 0),
+      image: (product.image || product.image1 || product.cover || "assets/placeholder.png"),
+      qty: Number(qty || 1)
+    });
+  }
+
+  writeCart(items);
+  updateCartBadge();
+}
+
+function cartCount(){
+  return readCart().reduce((sum, it) => sum + Number(it.qty || 0), 0);
+}
+
+// 如果你的 header 有 badge 元素（例如 id="cartCount"），會自動更新
+function updateCartBadge(){
+  const el = document.getElementById("cartCount");
+  if(!el) return;
+
+  const n = cartCount();
+  if(n > 0){
+    el.textContent = String(n);
+    el.style.display = "inline-flex";
+    el.classList.add("cart-badge");
+  }else{
+    el.textContent = "";
+    el.style.display = "none";
+  }
+}
+
 </script>
 
 </body>
