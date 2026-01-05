@@ -108,24 +108,43 @@
   // Images helper (multi-image)
   // =========================
   function getImages(p){
-    let arr = [];
+  let arr = [];
 
-    if(Array.isArray(p.images)) arr = arr.concat(p.images);
-    if(Array.isArray(p.image_urls)) arr = arr.concat(p.image_urls);
+  // 1) 最常見：images / image_urls
+  if (Array.isArray(p.images)) arr = arr.concat(p.images);
+  if (Array.isArray(p.image_urls)) arr = arr.concat(p.image_urls);
 
-    if(typeof p.images_csv === "string" && p.images_csv.trim()){
-      arr = arr.concat(p.images_csv.split(",").map(s=>s.trim()).filter(Boolean));
-    }
-
-    ["image","image2","image3","image4","image5","image1","cover"].forEach(k=>{
-      if(typeof p[k] === "string" && p[k].trim()) arr.push(p[k].trim());
-    });
-
-    arr = arr.filter(Boolean);
-    arr = [...new Set(arr)];
-    if(!arr.length) arr = ["assets/placeholder.png"];
-    return arr;
+  // 2) 後台常用：images 用字串存（逗號/換行）
+  if (typeof p.images === "string" && p.images.trim()){
+    arr = arr.concat(p.images.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
   }
+  if (typeof p.image_urls === "string" && p.image_urls.trim()){
+    arr = arr.concat(p.image_urls.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
+  }
+  if (typeof p.images_csv === "string" && p.images_csv.trim()){
+    arr = arr.concat(p.images_csv.split(/[\n,]/).map(s=>s.trim()).filter(Boolean));
+  }
+
+  // 3) 你先前用過：image2~image10
+  for (let i=1;i<=10;i++){
+    const k = i===1 ? "image" : `image${i}`;
+    if (typeof p[k] === "string" && p[k].trim()) arr.push(p[k].trim());
+  }
+
+  // 4) 其他可能：cover / main_image
+  ["cover","main_image","thumb"].forEach(k=>{
+    if (typeof p[k] === "string" && p[k].trim()) arr.push(p[k].trim());
+  });
+
+  // 清理 + 去重
+  arr = arr.map(x=>String(x||"").trim()).filter(Boolean);
+  arr = [...new Set(arr)];
+
+  // 沒圖就給 placeholder
+  if (!arr.length) arr = ["assets/placeholder.png"];
+  return arr;
+}
+
 
   // =========================
   // Product card + render
@@ -238,104 +257,89 @@
   const pdClose = document.getElementById("pdClose");
   const pdWrap = document.getElementById("pdWrap");
 
-  function openProductModalById(id){
-    const p = ALL_PRODUCTS.find(x => String(x.id) === String(id));
-    if(!p) return;
+ function openProductModalById(id){
+  const p = ALL_PRODUCTS.find(x => String(x.id) === String(id));
+  if(!p) return;
 
-    const title = p.title || "（未命名）";
-    const cat = p.category || "其他";
-    const series = p.series || "全系列";
-    const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
-    const desc = p.description || p.desc || "（尚未提供商品說明）";
+  const title = p.title || "（未命名）";
+  const cat = p.category || "其他";
+  const series = p.series || "全系列";
+  const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
+  const desc = p.description || p.desc || "（尚未提供商品說明）";
 
-    const imgs = getImages(p);
-    const main = imgs[0];
+  const imgs = getImages(p);
+  const main = imgs[0];
 
-    pdWrap.innerHTML = `
-      <div class="pd-grid">
-        <div class="pd-media">
-          <img id="pdMainImg" src="${main}" alt="${title}" loading="eager" decoding="async">
-          ${imgs.length > 1 ? `
-            <div class="pd-thumbs">
-              ${imgs.map((src,i)=>`
-                <button class="pd-thumb ${i===0?'active':''}" type="button" data-src="${src}">
-                  <img src="${src}" alt="${title} ${i+1}" loading="lazy" decoding="async">
-                </button>
-              `).join("")}
-            </div>
-          ` : ``}
-        </div>
-
-        <div class="pd-info">
-          <h2 class="pd-name">${title}</h2>
-          <div class="pd-meta">${series}｜${cat}</div>
-          <div class="pd-price">NT$ ${price}</div>
-          <div class="pd-desc">${desc}</div>
-
-          <div class="pd-actions">
-            <div class="qty">
-              <button class="qty-btn" type="button" id="qtyMinus" aria-label="減少">−</button>
-              <input class="qty-input" id="qtyInput" type="number" min="1" value="1" inputmode="numeric">
-              <button class="qty-btn" type="button" id="qtyPlus" aria-label="增加">+</button>
-            </div>
-
-            <button class="pd-btn primary" type="button" id="pdAddCart">加入購物車</button>
-            <button class="pd-btn secondary" type="button" id="pdClose2">關閉</button>
-          </div>
-
-          <div class="pd-toast" id="pdToast" style="display:none;"></div>
+  pdWrap.innerHTML = `
+    <div class="pd-grid">
+      <div class="pd-media">
+        <img id="pdMainImg" src="${main}" alt="${title}" loading="eager" decoding="async">
+        <div class="pd-thumbs" style="${imgs.length>1?'':'display:none'}">
+          ${imgs.map((src,i)=>`
+            <button class="pd-thumb ${i===0?'active':''}" type="button" data-src="${src}">
+              <img src="${src}" alt="${title} ${i+1}" loading="lazy" decoding="async">
+            </button>
+          `).join("")}
         </div>
       </div>
-    `;
 
-    // 縮圖切換
-    const mainImgEl = pdWrap.querySelector("#pdMainImg");
-    pdWrap.querySelectorAll(".pd-thumb").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        pdWrap.querySelectorAll(".pd-thumb").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-        mainImgEl.src = btn.dataset.src;
-      });
+      <div class="pd-info">
+        <h2 class="pd-name">${title}</h2>
+        <div class="pd-meta">${series}｜${cat}</div>
+        <div class="pd-price">NT$ ${price}</div>
+        <div class="pd-desc">${desc}</div>
+
+        <div class="pd-actions">
+          <div class="qty">
+            <button class="qty-btn" type="button" id="qtyMinus" aria-label="減少">−</button>
+            <input class="qty-input" id="qtyInput" type="number" min="1" value="1" inputmode="numeric">
+            <button class="qty-btn" type="button" id="qtyPlus" aria-label="增加">+</button>
+          </div>
+
+          <button class="pd-btn primary" type="button" id="pdAddCart">加入購物車</button>
+          <button class="pd-btn secondary" type="button" id="pdClose2">關閉</button>
+        </div>
+
+        <div class="pd-toast" id="pdToast" style="display:none;">已加入購物車 ✅</div>
+      </div>
+    </div>
+  `;
+
+  // ✅ 縮圖切換
+  const mainImgEl = pdWrap.querySelector("#pdMainImg");
+  pdWrap.querySelectorAll(".pd-thumb").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      pdWrap.querySelectorAll(".pd-thumb").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      mainImgEl.src = btn.dataset.src;
     });
+  });
 
-    // qty 控制
-    const qtyInput = pdWrap.querySelector("#qtyInput");
-    const minus = pdWrap.querySelector("#qtyMinus");
-    const plus  = pdWrap.querySelector("#qtyPlus");
+  // ✅ 數量加減
+  const qtyInput = pdWrap.querySelector("#qtyInput");
+  pdWrap.querySelector("#qtyMinus").addEventListener("click", ()=>{
+    qtyInput.value = Math.max(1, Number(qtyInput.value||1) - 1);
+  });
+  pdWrap.querySelector("#qtyPlus").addEventListener("click", ()=>{
+    qtyInput.value = Math.max(1, Number(qtyInput.value||1) + 1);
+  });
 
-    function clampQty(v){
-      v = Number(v);
-      if(!Number.isFinite(v) || v < 1) v = 1;
-      return Math.floor(v);
-    }
+  // ✅ 加入購物車（先示意 toast）
+  pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
+    const t = pdWrap.querySelector("#pdToast");
+    t.style.display = "block";
+    setTimeout(()=> t.style.display="none", 1200);
+  });
 
-    minus.addEventListener("click", () => {
-      qtyInput.value = String(Math.max(1, clampQty(qtyInput.value) - 1));
-    });
-    plus.addEventListener("click", () => {
-      qtyInput.value = String(clampQty(qtyInput.value) + 1);
-    });
-    qtyInput.addEventListener("input", () => {
-      qtyInput.value = String(clampQty(qtyInput.value));
-    });
+  pdWrap.querySelector("#pdClose2").addEventListener("click", closeProductModal);
 
-    // 加入購物車（寫入 ten_cart + 更新 badge）
-    pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
-      const qty = clampQty(qtyInput.value);
-      addToCart(p, qty);
+  pdBackdrop.classList.add("open");
+  pdBackdrop.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
 
-      const t = pdWrap.querySelector("#pdToast");
-      t.textContent = `已加入購物車 x${qty} ✅`;
-      t.style.display = "block";
-      setTimeout(()=> t.style.display="none", 1200);
-    });
-
-    pdWrap.querySelector("#pdClose2").addEventListener("click", closeProductModal);
-
-    pdBackdrop.classList.add("open");
-    pdBackdrop.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-  }
+  // ✅ Debug：你打開 modal 時看 console 就知道抓到幾張
+  console.log("[images]", imgs);
+}
 
   function closeProductModal(){
     pdBackdrop.classList.remove("open");
