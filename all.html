@@ -66,7 +66,6 @@
 
   const grid = document.getElementById("productGrid");
   const chips = document.querySelectorAll("#subcats .chip");
-  const promoBar = document.getElementById("promoBar");
 
   // ✅ settings 預設值
   let SETTINGS = {
@@ -77,120 +76,81 @@
     birthday_discount: 0.85
   };
 
-  function rateToZhe(rate){
-    if(rate >= 1 || rate <= 0) return null;
-    const z = Math.round(rate * 100) / 10;
-    return String(z).replace(/\.0$/, "");
-  }
-
   let ALL_PRODUCTS = [];
 
-function productCard(p, index){
-  const isHero = index < 2; // 前 2 個商品
-  const loading = isHero ? "eager" : "lazy";
-  const fetchprio = isHero ? 'fetchpriority="high"' : "";
+  // ✅ 多圖：統一從各種欄位抓出來
+  function getImages(p){
+    let arr = [];
 
-  return `
-    <a class="product-link js-open-product"
-       href="#"
-       data-id="${encodeURIComponent(p.id)}">
-      <div class="product">
-        <div class="thumb">
-          <img 
-            src="${p.image || 'assets/placeholder.png'}"
-            alt="${p.title}"
-            loading="${loading}"
-            decoding="async"
-            ${fetchprio}
-          >
-        </div>
+    if(Array.isArray(p.images)) arr = arr.concat(p.images);
+    if(Array.isArray(p.image_urls)) arr = arr.concat(p.image_urls);
 
-        <div class="body">
-          <div>
-            <div class="name">${p.title}</div>
-            <div class="meta">${p.series}｜${p.category}</div>
+    if(typeof p.images_csv === "string" && p.images_csv.trim()){
+      arr = arr.concat(p.images_csv.split(",").map(s=>s.trim()).filter(Boolean));
+    }
+
+    ["image","image2","image3","image4","image5"].forEach(k=>{
+      if(typeof p[k] === "string" && p[k].trim()) arr.push(p[k].trim());
+    });
+
+    arr = arr.filter(Boolean);
+    arr = [...new Set(arr)];
+    if(!arr.length) arr = ["assets/placeholder.png"];
+    return arr;
+  }
+
+  // ✅ 商品卡：前 2 張 eager + high priority
+  function productCard(p, index){
+    const isHero = index < 2;
+    const loading = isHero ? "eager" : "lazy";
+    const fetchprio = isHero ? 'fetchpriority="high"' : "";
+
+    const img = (p.image || p.image1 || p.cover || "assets/placeholder.png");
+    const title = p.title || "（未命名）";
+    const series = p.series || "全系列";
+    const cat = p.category || "其他";
+    const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
+
+    return `
+      <a class="product-link js-open-product"
+         href="#"
+         data-id="${encodeURIComponent(p.id)}">
+        <div class="product">
+          <div class="thumb">
+            <img 
+              src="${img}"
+              alt="${title}"
+              loading="${loading}"
+              decoding="async"
+              ${fetchprio}
+            >
           </div>
-          <div class="price">NT$ ${p.price}</div>
+
+          <div class="body">
+            <div>
+              <div class="name">${title}</div>
+              <div class="meta">${series}｜${cat}</div>
+            </div>
+            <div class="price">NT$ ${price}</div>
+          </div>
         </div>
-      </div>
-    </a>
-  `;
-}
-
-
-function render(products){
- grid.innerHTML = products.map((p, i) => productCard(p, i)).join("");
-}
-
-async function loadSettings(){
-  const cacheKey = "tyod_settings_cache_v1";
-  const cacheTimeKey = "tyod_settings_cache_time_v1";
-
-  // 先用快取（立即讓 badges/promo 計算有值，即使你現在已經不顯示也沒差）
-  const cached = localStorage.getItem(cacheKey);
-  if(cached){
-    try{
-      const s = JSON.parse(cached);
-      if(s && typeof s === "object"){
-        SETTINGS = { ...SETTINGS, ...s };
-      }
-    }catch(e){}
+      </a>
+    `;
   }
 
-  // 背景更新
-  try{
-    const res = await fetch(`${API_BASE}/settings`, { cache: "no-store" });
-    if(!res.ok) throw new Error("settings error " + res.status);
+  function render(products){
+    grid.innerHTML = products.map((p, i) => productCard(p, i)).join("");
 
-    const s = await res.json();
-    if(s && typeof s === "object"){
-      SETTINGS = {
-        ...SETTINGS,
-        ...s,
-        shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
-        free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
-        first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
-        birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
-        shipping_enabled: !!s.shipping_enabled
-      };
-      localStorage.setItem(cacheKey, JSON.stringify(SETTINGS));
-      localStorage.setItem(cacheTimeKey, String(Date.now()));
+    // ✅ 預載第一張（render 之後才知道是哪張）
+    const firstImg = products?.[0]?.image || products?.[0]?.image1 || products?.[0]?.cover;
+    if(firstImg && !document.querySelector('link[data-preload="first-product"]')){
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "image";
+      link.href = firstImg;
+      link.setAttribute("data-preload","first-product");
+      document.head.appendChild(link);
     }
-  }catch(e){
-    console.warn("loadSettings failed, fallback cache/default", e);
-  }
-}
-
-    renderPromoBar();
-  }
-
-  function renderPromoBar(){
-    if(!promoBar) return;
-
-    const shipOn = !!SETTINGS.shipping_enabled;
-    const fee = Number(SETTINGS.shipping_fee || 0);
-    const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
-
-    const firstRate = Number(SETTINGS.first_purchase_discount || 1);
-    const bdayRate  = Number(SETTINGS.birthday_discount || 1);
-
-    const items = [];
-
-    if(shipOn){
-      items.push(`運費 NT$${fee}`);
-      if(freeOver > 0) items.push(`滿 NT$${freeOver} 免運`);
-    }else{
-      items.push(`免運活動中`);
-    }
-
-    const firstZhe = rateToZhe(firstRate);
-    const bdayZhe  = rateToZhe(bdayRate);
-
-    if(firstZhe) items.push(`首購 ${firstZhe} 折`);
-    if(bdayZhe)  items.push(`生日月 ${bdayZhe} 折`);
-
-    promoBar.innerHTML = items.map(t => `<span class="promo-chip">${t}</span>`).join("");
-    promoBar.style.display = items.length ? "flex" : "none";
   }
 
   function applyFilter(filter){
@@ -204,6 +164,7 @@ async function loadSettings(){
     render(visible);
   }
 
+  // ✅ 子分類切換
   chips.forEach(chip => {
     chip.addEventListener("click", () => {
       chips.forEach(c => c.classList.remove("active"));
@@ -215,41 +176,74 @@ async function loadSettings(){
     });
   });
 
-async function loadProducts(){
-  const cacheKey = "tyod_products_cache_v1";
-  const cached = localStorage.getItem(cacheKey);
+  // ✅ settings 快取（不阻塞頁面）
+  async function loadSettings(){
+    const cacheKey = "tyod_settings_cache_v1";
+    const cached = localStorage.getItem(cacheKey);
 
-  // ✅ 先從快取秒顯示
-  if(cached){
+    if(cached){
+      try{
+        const s = JSON.parse(cached);
+        if(s && typeof s === "object"){
+          SETTINGS = { ...SETTINGS, ...s };
+        }
+      }catch(e){}
+    }
+
     try{
-      ALL_PRODUCTS = JSON.parse(cached) || [];
-      applyFilter(document.querySelector("#subcats .chip.active")?.dataset.filter || "全部");
-    }catch(e){}
-  }else{
-    grid.innerHTML = `<div style="opacity:.7; padding:18px;">載入中...</div>`;
-  }
+      const res = await fetch(`${API_BASE}/settings`, { cache: "no-store" });
+      if(!res.ok) throw new Error("settings error " + res.status);
 
-  // ✅ 再去 API 拿最新（背景更新）
-  try{
-    const res = await fetch(`${API_BASE}/products`, { cache: "no-store" });
-    if(!res.ok) throw new Error("API error " + res.status);
-    const data = await res.json();
-
-    ALL_PRODUCTS = Array.isArray(data) ? data : [];
-    localStorage.setItem(cacheKey, JSON.stringify(ALL_PRODUCTS));
-
-    applyFilter(document.querySelector("#subcats .chip.active")?.dataset.filter || "全部");
-  }catch(err){
-    console.error(err);
-    if(!cached){
-      grid.innerHTML = `<div style="color:#8a3b3b; padding:18px;">商品載入失敗，請稍後再試。</div>`;
+      const s = await res.json();
+      if(s && typeof s === "object"){
+        SETTINGS = {
+          ...SETTINGS,
+          ...s,
+          shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
+          free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
+          first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
+          birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
+          shipping_enabled: !!s.shipping_enabled
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(SETTINGS));
+      }
+    }catch(e){
+      console.warn("loadSettings failed, fallback cache/default", e);
     }
   }
-}
 
+  // ✅ products 快取：秒顯示 + 背景更新
+  async function loadProducts(){
+    const cacheKey = "tyod_products_cache_v1";
+    const cached = localStorage.getItem(cacheKey);
 
+    if(cached){
+      try{
+        ALL_PRODUCTS = JSON.parse(cached) || [];
+        applyFilter(document.querySelector("#subcats .chip.active")?.dataset.filter || "全部");
+      }catch(e){}
+    }else{
+      grid.innerHTML = `<div style="opacity:.7; padding:18px;">載入中...</div>`;
+    }
 
-  // ===== 商品 Modal：開/關 =====
+    try{
+      const res = await fetch(`${API_BASE}/products`, { cache: "no-store" });
+      if(!res.ok) throw new Error("API error " + res.status);
+      const data = await res.json();
+
+      ALL_PRODUCTS = Array.isArray(data) ? data : [];
+      localStorage.setItem(cacheKey, JSON.stringify(ALL_PRODUCTS));
+
+      applyFilter(document.querySelector("#subcats .chip.active")?.dataset.filter || "全部");
+    }catch(err){
+      console.error(err);
+      if(!cached){
+        grid.innerHTML = `<div style="color:#8a3b3b; padding:18px;">商品載入失敗，請稍後再試。</div>`;
+      }
+    }
+  }
+
+  // ===== 商品 Modal：多圖版 =====
   const pdBackdrop = document.getElementById("pdBackdrop");
   const pdClose = document.getElementById("pdClose");
   const pdWrap = document.getElementById("pdWrap");
@@ -262,13 +256,24 @@ async function loadProducts(){
     const cat = p.category || "其他";
     const series = p.series || "全系列";
     const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
-    const img = p.image || "assets/placeholder.png";
     const desc = p.description || p.desc || "（尚未提供商品說明）";
+
+    const imgs = getImages(p);
+    const main = imgs[0];
 
     pdWrap.innerHTML = `
       <div class="pd-grid">
         <div class="pd-media">
-          <img src="${img}" alt="${title}">
+          <img id="pdMainImg" src="${main}" alt="${title}" loading="eager" decoding="async">
+          ${imgs.length > 1 ? `
+            <div class="pd-thumbs">
+              ${imgs.map((src,i)=>`
+                <button class="pd-thumb ${i===0?'active':''}" type="button" data-src="${src}">
+                  <img src="${src}" alt="${title} ${i+1}" loading="lazy" decoding="async">
+                </button>
+              `).join("")}
+            </div>
+          ` : ``}
         </div>
 
         <div class="pd-info">
@@ -287,6 +292,17 @@ async function loadProducts(){
       </div>
     `;
 
+    // ✅ 縮圖切換
+    const mainImgEl = pdWrap.querySelector("#pdMainImg");
+    pdWrap.querySelectorAll(".pd-thumb").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        pdWrap.querySelectorAll(".pd-thumb").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        mainImgEl.src = btn.dataset.src;
+      });
+    });
+
+    // 先做最小版：加入購物車先提示（下一步接購物車抽屜）
     pdWrap.querySelector("#pdAddCart").addEventListener("click", () => {
       const t = pdWrap.querySelector("#pdToast");
       t.style.display = "block";
@@ -313,6 +329,7 @@ async function loadProducts(){
     if(e.key === "Escape" && pdBackdrop.classList.contains("open")) closeProductModal();
   });
 
+  // ✅ 點商品開 modal（事件委派）
   document.addEventListener("click", (e) => {
     const a = e.target.closest(".js-open-product");
     if(!a) return;
@@ -331,12 +348,8 @@ async function loadProducts(){
   });
 
   // ===== init =====
- // 🚀 商品先載（最重要）
-loadProducts();
-
-// ⚙️ 設定背景載入，不阻塞商品
-loadSettings();
-
+  loadProducts(); // 先快顯商品
+  loadSettings(); // 背景載入設定
 </script>
 
 </body>
