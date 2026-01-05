@@ -368,50 +368,7 @@ function rateToZhe(rate){
   if(rate >= 1 || rate <= 0) return null;
   const z = Math.round(rate * 100) / 10;
   return String(z).replace(/\.0$/, "");
-}
-
-// =========================
-// ✅ SETTINGS（跟後台同步）
-// =========================
-let SETTINGS = {
-  shipping_enabled: true,
-  shipping_fee: 60,
-  free_shipping_threshold: 1000,
-  first_purchase_discount: 0.9,
-  birthday_discount: 0.85
-};
-
-async function loadSettings(){
-  const cacheKey = "tyod_settings_cache_v1";
-  const cached = localStorage.getItem(cacheKey);
-
-  if(cached){
-    try{
-      const s = JSON.parse(cached);
-      if(s && typeof s === "object") SETTINGS = { ...SETTINGS, ...s };
-    }catch(e){}
-  }
-
-  try{
-    const res = await fetch(`${window.API_BASE}/settings`, { cache:"no-store" });
-    if(!res.ok) throw new Error("settings error " + res.status);
-    const s = await res.json();
-    if(s && typeof s === "object"){
-      SETTINGS = {
-        ...SETTINGS,
-        ...s,
-        shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
-        free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
-        first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
-        birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
-        shipping_enabled: !!s.shipping_enabled
-      };
-      localStorage.setItem(cacheKey, JSON.stringify(SETTINGS));
-    }
-  }catch(e){
-    console.warn("loadSettings failed", e);
-  }
-}
+}=
 
 // =========================
 // ✅ Cart storage (same as include.js)
