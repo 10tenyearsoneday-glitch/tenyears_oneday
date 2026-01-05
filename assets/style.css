@@ -636,49 +636,6 @@ main{
 }
 /* 購物車數量 badge */
 .cart-icon{ position: relative; }
-.cart-badge{
-  position:absolute;
-  top:-6px;
-  right:-6px;
-  min-width:18px;
-  height:18px;
-  padding:0 6px;
-  border-radius:999px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-size:12px;
-  font-weight:700;
-  background:#8a3b3b;
-  color:#fff;
-  line-height:1;
-}
-/* ===== 購物車數量 Badge（右上角） ===== */
-.icon[data-icon="cart"]{
-  position: relative;
-}
-
-.cart-badge{
-  position: absolute;
-  top: -6px;
-  right: -6px;
-
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-
-  border-radius: 999px;
-  background: #8a3b3b;        /* 深紅色，跟你品牌很搭 */
-  color: #fff;
-
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 18px;
-  text-align: center;
-
-  display: none;              /* JS 有數量才顯示 */
-  pointer-events: none;       /* 不影響點擊購物車 */
-}
 /* 修復 header 右上角 SVG 圖示不顯示（購物車/搜尋/會員） */
 .icon svg{
   width: 20px;
@@ -689,23 +646,6 @@ main{
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-/* ===== Cart badge ===== */
-.cart-badge{
-  position:absolute;
-  top:-6px; right:-6px;
-  min-width:18px; height:18px;
-  padding:0 6px;
-  border-radius:999px;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  font-size:12px;
-  font-weight:700;
-  background:#5d6b59;
-  color:#fff;
-  border:2px solid rgba(255,255,255,.85);
-  line-height:1;
 }
 
 /* 讓 icon 可定位 badge */
@@ -922,3 +862,23 @@ main{
 }
 .d-actions .primary{ background:#5d6b59; color:#fff; }
 .d-actions .secondary{ background:rgba(0,0,0,.08); color:rgba(47,58,44,.9); }
+/* ===== Cart badge (final) ===== */
+.icon[data-icon="cart"]{ position:relative; }
+
+#cartCount.cart-badge{
+  position:absolute;
+  top:-6px; right:-6px;
+  min-width:18px; height:18px;
+  padding:0 6px;
+  border-radius:999px;
+  display:none;                 /* JS 有數量才顯示 */
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:700;
+  background:#8a3b3b;
+  color:#fff;
+  border:2px solid rgba(255,255,255,.85);
+  line-height:1;
+  pointer-events:none;
+}
