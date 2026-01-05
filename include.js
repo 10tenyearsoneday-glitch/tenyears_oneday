@@ -6,9 +6,8 @@
 // - drawer 內可加減/刪除/清空
 // - 點結帳 → 開 checkout modal（跳出視窗）
 // - 監聽 cart:changed / storage 同步更新
-
+window.API_BASE = "https://tenyears-oneday-api.onrender.com";
 const CART_KEY = "ten_cart";
-const API_BASE = "https://tenyears-oneday-api.onrender.com";
 
 // ===== header load =====
 async function loadHeader() {
