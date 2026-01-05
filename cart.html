@@ -104,6 +104,7 @@
   </main>
 
 <script>
+  window.API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
 
   // ✅ GAS Web App
   const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
@@ -214,11 +215,11 @@
     maybeRevalidateCoupon(true);
   }
 
-  function clearCart(){
-    writeCart([]);
-    APPLIED = { code:"", discount:0, note:"" };
-  if(clearIfEmpty && couponCode){
-  couponCode.value = "";
+ function clearCart(){
+  writeCart([]);
+  APPLIED = { code:"", discount:0, note:"" };
+  if(couponCode) couponCode.value = "";
+  renderAll();
 }
 
     renderAll();
