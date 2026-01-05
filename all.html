@@ -122,26 +122,44 @@ function render(products){
  grid.innerHTML = products.map((p, i) => productCard(p, i)).join("");
 }
 
-  async function loadSettings(){
-    try{
-      const res = await fetch(`${API_BASE}/settings`, { cache: "no-store" });
-      if(!res.ok) throw new Error("settings error " + res.status);
+async function loadSettings(){
+  const cacheKey = "tyod_settings_cache_v1";
+  const cacheTimeKey = "tyod_settings_cache_time_v1";
 
-      const s = await res.json();
+  // 先用快取（立即讓 badges/promo 計算有值，即使你現在已經不顯示也沒差）
+  const cached = localStorage.getItem(cacheKey);
+  if(cached){
+    try{
+      const s = JSON.parse(cached);
       if(s && typeof s === "object"){
-        SETTINGS = {
-          ...SETTINGS,
-          ...s,
-          shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
-          free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
-          first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
-          birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
-          shipping_enabled: !!s.shipping_enabled
-        };
+        SETTINGS = { ...SETTINGS, ...s };
       }
-    }catch(e){
-      console.warn("loadSettings failed, fallback defaults", e);
+    }catch(e){}
+  }
+
+  // 背景更新
+  try{
+    const res = await fetch(`${API_BASE}/settings`, { cache: "no-store" });
+    if(!res.ok) throw new Error("settings error " + res.status);
+
+    const s = await res.json();
+    if(s && typeof s === "object"){
+      SETTINGS = {
+        ...SETTINGS,
+        ...s,
+        shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
+        free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
+        first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
+        birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
+        shipping_enabled: !!s.shipping_enabled
+      };
+      localStorage.setItem(cacheKey, JSON.stringify(SETTINGS));
+      localStorage.setItem(cacheTimeKey, String(Date.now()));
     }
+  }catch(e){
+    console.warn("loadSettings failed, fallback cache/default", e);
+  }
+}
 
     renderPromoBar();
   }
@@ -198,11 +216,10 @@ function render(products){
   });
 
 async function loadProducts(){
-  // ✅ 先從快取顯示（秒開）
   const cacheKey = "tyod_products_cache_v1";
-  const cacheTimeKey = "tyod_products_cache_time_v1";
   const cached = localStorage.getItem(cacheKey);
 
+  // ✅ 先從快取秒顯示
   if(cached){
     try{
       ALL_PRODUCTS = JSON.parse(cached) || [];
@@ -212,7 +229,7 @@ async function loadProducts(){
     grid.innerHTML = `<div style="opacity:.7; padding:18px;">載入中...</div>`;
   }
 
-  // ✅ 再去 API 背景更新（拿最新）
+  // ✅ 再去 API 拿最新（背景更新）
   try{
     const res = await fetch(`${API_BASE}/products`, { cache: "no-store" });
     if(!res.ok) throw new Error("API error " + res.status);
@@ -220,7 +237,6 @@ async function loadProducts(){
 
     ALL_PRODUCTS = Array.isArray(data) ? data : [];
     localStorage.setItem(cacheKey, JSON.stringify(ALL_PRODUCTS));
-    localStorage.setItem(cacheTimeKey, String(Date.now()));
 
     applyFilter(document.querySelector("#subcats .chip.active")?.dataset.filter || "全部");
   }catch(err){
@@ -230,6 +246,7 @@ async function loadProducts(){
     }
   }
 }
+
 
 
   // ===== 商品 Modal：開/關 =====
