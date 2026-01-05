@@ -687,3 +687,11 @@ footer{
   background: rgba(255,255,255,.95);
   font-size:1rem;
 }
+/* 強制顯示優惠碼區塊 */
+.coupon{
+  display:flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 1;
+}
