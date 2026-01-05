@@ -508,9 +508,6 @@ main{
 .img-row{display:flex;gap:8px;align-items:center;margin-top:8px;}
 .btn-mini{border:none;border-radius:999px;padding:8px 10px;background:rgba(0,0,0,.08);cursor:pointer}
 
-    <img id="imgPreview" alt="預覽" style="max-width:220px;border-radius:12px;display:none;margin-top:10px;">
-  </div>
-</div>
 /* 讓 modal 的 panel 在小螢幕不會超出 */
 .panel{
   max-height: calc(100vh - 36px);
