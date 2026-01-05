@@ -243,9 +243,10 @@ function productCard(p, index){
     }
 
     try{
-      const res = await fetch(`${API_BASE}/products`, { cache: "no-store" });
-      if(!res.ok) throw new Error("API error " + res.status);
-      const data = await res.json();
+  const res = await fetch(`${window.API_BASE}/products`, { cache: "no-store" });
+if(!res.ok) throw new Error("API error " + res.status);
+const data = await res.json();
+
 
       ALL_PRODUCTS = Array.isArray(data) ? data : [];
       localStorage.setItem(cacheKey, JSON.stringify(ALL_PRODUCTS));
