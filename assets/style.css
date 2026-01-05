@@ -669,3 +669,33 @@ footer{
   opacity: 1;
   text-decoration: underline;
 }
+/* ===== Qty selector ===== */
+.qty{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px;
+  border-radius:999px;
+  background: rgba(0,0,0,.06);
+}
+
+.qty-btn{
+  width:36px;
+  height:36px;
+  border:none;
+  border-radius:999px;
+  background: rgba(255,255,255,.9);
+  cursor:pointer;
+  font-size:18px;
+  line-height:1;
+}
+
+.qty-input{
+  width:64px;
+  text-align:center;
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:12px;
+  padding:8px 10px;
+  background: rgba(255,255,255,.95);
+  font-size:1rem;
+}
