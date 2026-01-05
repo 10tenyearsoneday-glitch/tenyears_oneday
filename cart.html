@@ -266,8 +266,11 @@
 
     const firstRate = Number(SETTINGS.first_purchase_discount || 1);
     const bdayRate  = Number(SETTINGS.birthday_discount || 1);
-    if(firstRate > 0 && firstRate < 1) chips.push(`首購 ${Math.round(firstRate*100)} 折`);
-    if(bdayRate > 0 && bdayRate < 1) chips.push(`生日月 ${Math.round(bdayRate*100)} 折`);
+const firstZhe = rateToZhe(firstRate);
+const bdayZhe  = rateToZhe(bdayRate);
+if(firstZhe) chips.push(`首購 ${firstZhe} 折`);
+if(bdayZhe)  chips.push(`生日月 ${bdayZhe} 折`);
+
 
     promoPills.innerHTML = chips.map(t => `<span class="pill">${t}</span>`).join("");
   }
@@ -356,26 +359,39 @@
     renderPromoPills();
   }
 
-  async function loadSettings(){
+async function loadSettings(){
+  const cacheKey = "tyod_settings_cache_v1";
+  const cached = localStorage.getItem(cacheKey);
+
+  // 先用快取
+  if(cached){
     try{
-      const res = await fetch(`${window.API_BASE}/settings`, { cache:"no-store" });
-      if(!res.ok) throw new Error("settings error " + res.status);
-      const s = await res.json();
-      if(s && typeof s === "object"){
-        SETTINGS = {
-          ...SETTINGS,
-          ...s,
-          shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
-          free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
-          first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
-          birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
-          shipping_enabled: !!s.shipping_enabled
-        };
-      }
-    }catch(e){
-      console.warn("loadSettings failed, fallback defaults", e);
-    }
+      const s = JSON.parse(cached);
+      if(s && typeof s === "object") SETTINGS = { ...SETTINGS, ...s };
+    }catch(e){}
   }
+
+  // 再更新最新
+  try{
+    const res = await fetch(`${window.API_BASE}/settings`, { cache:"no-store" });
+    if(!res.ok) throw new Error("settings error " + res.status);
+    const s = await res.json();
+    if(s && typeof s === "object"){
+      SETTINGS = {
+        ...SETTINGS,
+        ...s,
+        shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
+        free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
+        first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
+        birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
+        shipping_enabled: !!s.shipping_enabled
+      };
+      localStorage.setItem(cacheKey, JSON.stringify(SETTINGS));
+    }
+  }catch(e){
+    console.warn("loadSettings failed", e);
+  }
+}
 
   async function loadProductsIndex(){
     try{
