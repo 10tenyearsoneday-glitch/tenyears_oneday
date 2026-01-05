@@ -5,514 +5,204 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>購物車｜十年一日</title>
   <link rel="stylesheet" href="assets/style.css">
-  <style>
-    .cart-wrap{max-width:980px;margin:auto;padding:18px;}
-    .cart-title{font-size:1.15rem;letter-spacing:.08em;color:rgba(47,58,44,.85);margin:10px 0 14px;}
-    .cart-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;align-items:start}
-    @media (max-width: 860px){.cart-grid{grid-template-columns:1fr}}
-    .card{background:rgba(255,255,255,.70);border:1px solid rgba(0,0,0,.06);box-shadow:0 10px 30px rgba(0,0,0,.06);border-radius:16px;overflow:hidden}
-    .card .hd{padding:14px 14px 10px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-    .card .bd{padding:14px}
-    .btn2{border:none;border-radius:999px;padding:10px 14px;background:#5d6b59;color:#fff;cursor:pointer}
-    .btn2.secondary{background:rgba(0,0,0,.08);color:rgba(47,58,44,.9)}
-    .btn2.danger{background:#8a3b3b}
-    .muted{opacity:.75}
-    .items{display:flex;flex-direction:column;gap:10px}
-    .item{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.62);border:1px solid rgba(0,0,0,.06);border-radius:14px;padding:10px}
-    .thumb{width:72px;height:56px;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.06);flex:0 0 auto}
-    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-    .it-info{min-width:0;flex:1}
-    .it-title{font-weight:600;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .it-meta{font-size:.86rem;opacity:.75;margin-top:3px}
-    .it-right{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-    .it-price{font-weight:700;color:#6c7f67}
-    .qty{display:flex;gap:8px;align-items:center}
-    .qty button{width:34px;height:34px;border-radius:999px;border:none;background:rgba(0,0,0,.08);cursor:pointer}
-    .qty input{width:54px;text-align:center;border-radius:10px;border:1px solid rgba(0,0,0,.12);padding:8px;background:rgba(255,255,255,.85)}
-    .link{color:rgba(47,58,44,.9);text-decoration:none}
-    .sum-row{display:flex;justify-content:space-between;gap:10px;margin:8px 0;font-size:.95rem}
-    .sum-row strong{font-weight:700}
-    .sum-total{font-size:1.08rem}
-    .hr{height:1px;background:rgba(0,0,0,.06);margin:10px 0}
-    .coupon{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .coupon input{flex:1;min-width:180px;padding:10px 10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.85);outline:none}
-    .toast{margin-top:10px;font-size:.9rem}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.06);font-size:.85rem;white-space:nowrap}
-    .pill.ok{background:rgba(93,107,89,.18);color:rgba(47,58,44,.9)}
-    .pill.bad{background:rgba(138,59,59,.12);color:#8a3b3b}
-  </style>
 </head>
 <body>
 
-  <script src="include.js"></script>
+<script src="include.js"></script>
 
-  <main class="cart-wrap">
-    <div class="cart-title">購物車</div>
+<main class="cart-wrap">
+  <h2 style="margin:18px 0;">購物車</h2>
 
-    <div class="cart-grid">
+  <div class="cart-grid">
 
-      <!-- 左：商品列表 -->
-      <section class="card">
-        <div class="hd">
-          <div class="muted" id="cartHint">載入中…</div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn2 secondary" id="btnClear" type="button">清空</button>
-            <a class="btn2 secondary" href="all.html">繼續逛逛</a>
-          </div>
-        </div>
-        <div class="bd">
-          <div class="items" id="items"></div>
-          <div class="toast" id="toast"></div>
-        </div>
-      </section>
-
-      <!-- 右：結帳摘要 -->
-      <aside class="card">
-        <div class="hd">
-          <div style="font-weight:700;letter-spacing:.03em;">訂單摘要</div>
-          <div id="promoPills" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-        </div>
-        <div class="bd">
-          <div class="coupon">
-            <input id="couponCode" placeholder="輸入優惠碼（例如 HELLO）" autocomplete="off">
-            <button class="btn2 secondary" id="btnApplyCoupon" type="button">套用</button>
-          </div>
-          <div class="toast" id="couponToast"></div>
-
-          <div class="hr"></div>
-
-          <div class="sum-row"><span>小計</span><strong id="sumSubtotal">NT$ 0</strong></div>
-          <div class="sum-row"><span>折扣</span><strong id="sumDiscount">- NT$ 0</strong></div>
-          <div class="sum-row"><span>運費</span><strong id="sumShipping">NT$ 0</strong></div>
-
-          <div class="hr"></div>
-
-          <div class="sum-row sum-total"><span>合計</span><strong id="sumTotal">NT$ 0</strong></div>
-
-          <div style="margin-top:12px;">
-            <button class="btn2" id="btnCheckout" type="button" style="width:100%" disabled>
-              結帳（下一步再做）
-            </button>
-            <div class="muted" style="font-size:.85rem;margin-top:8px;">
-              目前先做到購物車 + 優惠碼試算；之後結帳再寫入 coupon_uses。
-            </div>
-          </div>
-        </div>
-      </aside>
-
-    </div>
-  </main>
-
-<script>
-  const API_BASE = "https://tenyears-oneday-api.onrender.com";
-  const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-  const CART_KEY = "ten_cart";
-  const MEMBER_KEY = "ten_member_id";
-
-  let SETTINGS = {
-    shipping_enabled: true,
-    shipping_fee: 60,
-    free_shipping_threshold: 1000,
-    first_purchase_discount: 0.9,
-    birthday_discount: 0.85
-  };
-
-  let PRODUCTS_BY_ID = {};
-  let APPLIED = { code:"", discount:0, note:"" };
-
-  const itemsEl = document.getElementById("items");
-  const toastEl = document.getElementById("toast");
-  const cartHint = document.getElementById("cartHint");
-  const btnClear = document.getElementById("btnClear");
-
-  const promoPills = document.getElementById("promoPills");
-
-  const sumSubtotal = document.getElementById("sumSubtotal");
-  const sumDiscount = document.getElementById("sumDiscount");
-  const sumShipping = document.getElementById("sumShipping");
-  const sumTotal = document.getElementById("sumTotal");
-
-  const couponCode = document.getElementById("couponCode");
-  const btnApplyCoupon = document.getElementById("btnApplyCoupon");
-  const couponToast = document.getElementById("couponToast");
-  const btnCheckout = document.getElementById("btnCheckout");
-
-  function toast(msg, ok=true){
-    toastEl.textContent = msg;
-    toastEl.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
-    setTimeout(()=>{ toastEl.textContent = ""; }, 1800);
-  }
-  function toastCoupon(msg, ok=true){
-    couponToast.textContent = msg;
-    couponToast.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
-    if(msg) setTimeout(()=>{ couponToast.textContent = ""; }, 2200);
-  }
-
-  function getMemberId(){
-    let id = localStorage.getItem(MEMBER_KEY);
-    if(!id){
-      id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
-      localStorage.setItem(MEMBER_KEY, id);
-    }
-    return id;
-  }
-
-  function readCart(){
-    try{
-      const raw = localStorage.getItem(CART_KEY);
-      const arr = JSON.parse(raw || "[]");
-      return Array.isArray(arr) ? arr : [];
-    }catch(e){ return []; }
-  }
-  function writeCart(arr){
-    localStorage.setItem(CART_KEY, JSON.stringify(arr));
-    window.dispatchEvent(new Event("cart:changed"));
-  }
-
-  function normalizeQty(n){
-    n = Number(n || 1);
-    if(!Number.isFinite(n) || n < 1) n = 1;
-    return Math.floor(n);
-  }
-
-  function setQty(id, qty){
-    const cart = readCart();
-    const i = cart.findIndex(x => String(x.id) === String(id));
-    if(i === -1) return;
-    cart[i].qty = normalizeQty(qty);
-    writeCart(cart);
-  }
-
-  function inc(id, delta){
-    const cart = readCart();
-    const i = cart.findIndex(x => String(x.id) === String(id));
-    if(i === -1) return;
-    cart[i].qty = normalizeQty(Number(cart[i].qty||1) + Number(delta||1));
-    writeCart(cart);
-  }
-
-  function removeItem(id){
-    const cart = readCart().filter(x => String(x.id) !== String(id));
-    writeCart(cart);
-  }
-
-  function clearCart(){
-    writeCart([]);
-  }
-
-  function money(n){
-    n = Math.round(Number(n||0));
-    return `NT$ ${n}`;
-  }
-
-  function calcSubtotal(cart){
-    let s = 0;
-    for(const it of cart){
-      const p = PRODUCTS_BY_ID[String(it.id)] || null;
-      const price = p ? Number(p.price||0) : 0;
-      s += price * normalizeQty(it.qty);
-    }
-    return s;
-  }
-
-  function calcShipping(subtotalAfterDiscount){
-    const shipOn = !!SETTINGS.shipping_enabled;
-    const fee = Number(SETTINGS.shipping_fee || 0);
-    const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
-
-    if(!shipOn) return 0;
-    if(freeOver > 0 && subtotalAfterDiscount >= freeOver) return 0;
-    return fee;
-  }
-
-  function renderPromoPills(){
-    if(!promoPills) return;
-
-    const chips = [];
-    const shipOn = !!SETTINGS.shipping_enabled;
-    const fee = Number(SETTINGS.shipping_fee || 0);
-    const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
-
-    if(shipOn){
-      chips.push(`運費 NT$${fee}`);
-      if(freeOver > 0) chips.push(`滿 NT$${freeOver} 免運`);
-    }else{
-      chips.push(`免運活動中`);
-    }
-
-    const firstRate = Number(SETTINGS.first_purchase_discount || 1);
-    const bdayRate  = Number(SETTINGS.birthday_discount || 1);
-    if(firstRate > 0 && firstRate < 1) chips.push(`首購 ${Math.round(firstRate*100)} 折`);
-    if(bdayRate > 0 && bdayRate < 1) chips.push(`生日月 ${Math.round(bdayRate*100)} 折`);
-
-    promoPills.innerHTML = chips.map(t => `<span class="pill">${t}</span>`).join("");
-  }
-
-  function itemHtml(it){
-    const pid = String(it.id);
-    const p = PRODUCTS_BY_ID[pid] || {};
-    const title = p.title || pid;
-    const img = (p.image || "").trim() || "assets/placeholder.png";
-    const price = Number(p.price || 0);
-    const qty = normalizeQty(it.qty);
-
-    return `
-      <div class="item">
-        <a class="thumb" href="product.html?id=${encodeURIComponent(pid)}" title="查看商品">
-          <img src="${img}" alt="">
-        </a>
-
-        <div class="it-info">
-          <div class="it-title"><a class="link" href="product.html?id=${encodeURIComponent(pid)}">${title}</a></div>
-          <div class="it-meta">${money(price)} × ${qty}</div>
-        </div>
-
-        <div class="it-right">
-          <div class="it-price">${money(price * qty)}</div>
-          <div class="qty">
-            <button type="button" data-dec="${pid}" aria-label="減少">-</button>
-            <input type="number" min="1" step="1" value="${qty}" data-qty="${pid}">
-            <button type="button" data-inc="${pid}" aria-label="增加">+</button>
-            <button type="button" class="btn2 secondary" style="padding:8px 10px" data-del="${pid}">刪除</button>
-          </div>
+    <!-- 左：商品 -->
+    <section class="card">
+      <div class="hd">
+        <span id="cartHint">載入中…</span>
+        <div>
+          <button id="btnClear" class="btn2 secondary">清空</button>
+          <a href="all.html" class="btn2 secondary">繼續逛逛</a>
         </div>
       </div>
-    `;
+      <div class="bd">
+        <div id="items"></div>
+        <div id="toast" class="toast"></div>
+      </div>
+    </section>
+
+    <!-- 右：摘要 -->
+    <aside class="card">
+      <div class="hd">
+        <strong>訂單摘要</strong>
+      </div>
+      <div class="bd">
+
+        <div class="coupon">
+          <input id="couponCode" placeholder="輸入優惠碼">
+          <button id="btnApplyCoupon" class="btn2 secondary">套用</button>
+        </div>
+        <div id="couponToast" class="toast"></div>
+
+        <hr>
+
+        <div class="sum-row"><span>小計</span><strong id="sumSubtotal">NT$ 0</strong></div>
+        <div class="sum-row"><span>折扣</span><strong id="sumDiscount">- NT$ 0</strong></div>
+        <div class="sum-row"><span>運費</span><strong id="sumShipping">NT$ 0</strong></div>
+
+        <hr>
+
+        <div class="sum-row sum-total">
+          <span>合計</span><strong id="sumTotal">NT$ 0</strong>
+        </div>
+
+        <button class="btn2" style="width:100%;margin-top:12px;" disabled>
+          結帳（下一步再做）
+        </button>
+
+      </div>
+    </aside>
+
+  </div>
+</main>
+
+<script>
+/* ===== 基本設定 ===== */
+const API_BASE = "https://tenyears-oneday-api.onrender.com";
+const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+const CART_KEY = "ten_cart";
+const MEMBER_KEY = "ten_member_id";
+
+let SETTINGS = {
+  shipping_enabled: true,
+  shipping_fee: 60,
+  free_shipping_threshold: 1000
+};
+
+let PRODUCTS = {};
+let APPLIED = { code:"", discount:0 };
+
+/* ===== DOM ===== */
+const itemsEl = document.getElementById("items");
+const cartHint = document.getElementById("cartHint");
+const btnClear = document.getElementById("btnClear");
+const sumSubtotal = document.getElementById("sumSubtotal");
+const sumDiscount = document.getElementById("sumDiscount");
+const sumShipping = document.getElementById("sumShipping");
+const sumTotal = document.getElementById("sumTotal");
+const couponCode = document.getElementById("couponCode");
+const btnApplyCoupon = document.getElementById("btnApplyCoupon");
+const couponToast = document.getElementById("couponToast");
+
+/* ===== helpers ===== */
+function readCart(){
+  try{ return JSON.parse(localStorage.getItem(CART_KEY)||"[]"); }
+  catch(e){ return []; }
+}
+function writeCart(arr){
+  localStorage.setItem(CART_KEY, JSON.stringify(arr));
+  window.dispatchEvent(new Event("cart:changed"));
+}
+function money(n){ return `NT$ ${Math.round(n||0)}`; }
+function memberId(){
+  let id = localStorage.getItem(MEMBER_KEY);
+  if(!id){
+    id = "M-" + Math.random().toString(36).slice(2,8).toUpperCase();
+    localStorage.setItem(MEMBER_KEY,id);
+  }
+  return id;
+}
+
+/* ===== render ===== */
+function render(){
+  const cart = readCart();
+  const count = cart.reduce((s,x)=>s+(x.qty||1),0);
+  cartHint.textContent = count ? `共 ${count} 件商品` : "購物車是空的";
+
+  if(!count){
+    itemsEl.innerHTML = "<div style='opacity:.7'>尚未加入商品</div>";
+  }else{
+    itemsEl.innerHTML = cart.map(it=>{
+      const p = PRODUCTS[it.id]||{};
+      return `
+        <div class="item">
+          <img src="${p.image||'assets/placeholder.png'}" width="60">
+          <div style="flex:1">
+            <div>${p.title||it.id}</div>
+            <small>${money(p.price)} × ${it.qty||1}</small>
+          </div>
+          <strong>${money((p.price||0)*(it.qty||1))}</strong>
+        </div>
+      `;
+    }).join("");
   }
 
-  function wireItemEvents(){
-    itemsEl.querySelectorAll("[data-inc]").forEach(btn=>{
-      btn.addEventListener("click", ()=> inc(btn.getAttribute("data-inc"), +1));
-    });
-    itemsEl.querySelectorAll("[data-dec]").forEach(btn=>{
-      btn.addEventListener("click", ()=> inc(btn.getAttribute("data-dec"), -1));
-    });
-    itemsEl.querySelectorAll("[data-del]").forEach(btn=>{
-      btn.addEventListener("click", ()=> removeItem(btn.getAttribute("data-del")));
-    });
-    itemsEl.querySelectorAll("[data-qty]").forEach(inp=>{
-      inp.addEventListener("change", ()=>{
-        const id = inp.getAttribute("data-qty");
-        setQty(id, inp.value);
-      });
-    });
+  const subtotal = cart.reduce((s,it)=>{
+    const p = PRODUCTS[it.id]||{};
+    return s + (p.price||0)*(it.qty||1);
+  },0);
+
+  const discount = APPLIED.discount || 0;
+  const shipping = SETTINGS.shipping_enabled &&
+    subtotal-discount < SETTINGS.free_shipping_threshold
+    ? SETTINGS.shipping_fee : 0;
+
+  sumSubtotal.textContent = money(subtotal);
+  sumDiscount.textContent = "- " + money(discount);
+  sumShipping.textContent = money(shipping);
+  sumTotal.textContent = money(subtotal-discount+shipping);
+}
+
+/* ===== load ===== */
+async function loadSettings(){
+  try{
+    const r = await fetch(`${API_BASE}/settings`);
+    Object.assign(SETTINGS, await r.json());
+  }catch(e){
+    console.warn("settings fallback", e);
   }
+}
 
-  function couponErrorText(err){
-    const m = {
-      "CODE_REQUIRED":"請輸入優惠碼",
-      "MEMBER_REQUIRED":"會員資料不足",
-      "SUBTOTAL_REQUIRED":"小計不足以套用",
-      "NO_COUPONS_SHEET":"找不到 coupons 表",
-      "NO_COUPONS":"目前沒有可用優惠碼",
-      "INVALID_CODE":"優惠碼不存在",
-      "DISABLED":"此優惠碼已停用",
-      "MIN_SPEND":"未達最低消費門檻",
-      "NOT_STARTED":"優惠尚未開始",
-      "EXPIRED":"優惠已過期",
-      "SOLD_OUT":"優惠已用完",
-      "ALREADY_USED":"你已使用過此優惠碼",
-      "BAD_RATE":"折扣設定錯誤（rate）",
-      "BAD_AMOUNT":"折扣設定錯誤（amount）"
-    };
-    return m[String(err||"")] || `套用失敗（${err||"ERROR"}）`;
+async function loadProducts(){
+  const r = await fetch(`${API_BASE}/products`);
+  const arr = await r.json();
+  arr.forEach(p=> PRODUCTS[p.id]=p );
+}
+
+/* ===== coupon ===== */
+async function applyCoupon(){
+  const subtotal = readCart().reduce((s,it)=>{
+    const p = PRODUCTS[it.id]||{};
+    return s + (p.price||0)*(it.qty||1);
+  },0);
+
+  const code = couponCode.value.trim().toUpperCase();
+  if(!code) return;
+
+  const url = `${GAS_URL}?path=coupon_validate&code=${code}&memberId=${memberId()}&subtotal=${subtotal}`;
+  const res = await fetch(url);
+  const out = await res.json();
+
+  if(!out.ok){
+    couponToast.textContent = "優惠碼無效";
+    APPLIED = {code:"",discount:0};
+  }else{
+    APPLIED = out;
+    couponToast.textContent = `已套用 ${code}`;
   }
+  render();
+}
 
-  async function validateCouponSilently(){
-    // 若目前沒有套用碼，就不用驗證
-    const code = String(APPLIED.code || "").trim().toUpperCase();
-    if(!code) return;
+/* ===== events ===== */
+btnClear.onclick = ()=>{ writeCart([]); APPLIED={}; render(); };
+btnApplyCoupon.onclick = applyCoupon;
+window.addEventListener("cart:changed", render);
 
-    const cart = readCart();
-    const subtotal = calcSubtotal(cart);
-
-    // 購物車空了 → 清掉優惠
-    if(subtotal <= 0){
-      APPLIED = { code:"", discount:0, note:"" };
-      if(couponCode) couponCode.value = "";
-      return;
-    }
-
-    const memberId = getMemberId();
-
-    try{
-      const url = `${GAS_URL}?path=coupon_validate`
-        + `&code=${encodeURIComponent(code)}`
-        + `&memberId=${encodeURIComponent(memberId)}`
-        + `&subtotal=${encodeURIComponent(subtotal)}`;
-
-      const res = await fetch(url, { cache:"no-store" });
-      const out = await res.json();
-
-      if(!out || out.ok !== true){
-        APPLIED = { code:"", discount:0, note:"" };
-        return;
-      }
-
-      APPLIED = {
-        code: out.code || code,
-        discount: Math.max(0, Number(out.discount || 0)),
-        note: String(out.note || "")
-      };
-    }catch(e){
-      // 靜默失敗，不打擾使用者
-      console.warn("validateCouponSilently failed", e);
-    }
-  }
-
-  async function applyCoupon(){
-    const cart = readCart();
-    const subtotal = calcSubtotal(cart);
-
-    const code = String(couponCode?.value || "").trim().toUpperCase();
-    if(!code){
-      toastCoupon("請輸入優惠碼", false);
-      return;
-    }
-    if(subtotal <= 0){
-      toastCoupon("購物車是空的", false);
-      return;
-    }
-
-    const memberId = getMemberId();
-
-    try{
-      btnApplyCoupon.disabled = true;
-      toastCoupon("驗證中…");
-
-      const url = `${GAS_URL}?path=coupon_validate`
-        + `&code=${encodeURIComponent(code)}`
-        + `&memberId=${encodeURIComponent(memberId)}`
-        + `&subtotal=${encodeURIComponent(subtotal)}`;
-
-      const res = await fetch(url, { cache:"no-store" });
-      const out = await res.json();
-
-      if(!out || out.ok !== true){
-        APPLIED = { code:"", discount:0, note:"" };
-        renderAll();
-        toastCoupon(couponErrorText(out?.error), false);
-        return;
-      }
-
-      APPLIED = {
-        code: out.code || code,
-        discount: Math.max(0, Number(out.discount || 0)),
-        note: String(out.note || "")
-      };
-
-      renderAll();
-      toastCoupon(`已套用 ${APPLIED.code} ✅ 折抵 ${money(APPLIED.discount)}`);
-
-    }catch(e){
-      console.error(e);
-      APPLIED = { code:"", discount:0, note:"" };
-      renderAll();
-      toastCoupon("系統忙碌，請稍後再試", false);
-    }finally{
-      btnApplyCoupon.disabled = false;
-    }
-  }
-
-  function renderAll(){
-    const cart = readCart();
-    const count = cart.reduce((s,x)=> s + normalizeQty(x.qty), 0);
-
-    cartHint.textContent = count ? `共 ${count} 件商品` : "購物車目前是空的";
-    btnClear.disabled = !count;
-
-    if(!count){
-      itemsEl.innerHTML = `<div class="muted">還沒有加入任何商品。</div>`;
-    }else{
-      itemsEl.innerHTML = cart.map(itemHtml).join("");
-      wireItemEvents();
-    }
-
-    const subtotal = calcSubtotal(cart);
-
-    // 折扣不能超過小計
-    let discount = Math.max(0, Number(APPLIED.discount || 0));
-    if(discount > subtotal) discount = subtotal;
-
-    const afterDiscount = Math.max(0, subtotal - discount);
-    const shipping = calcShipping(afterDiscount);
-    const total = afterDiscount + shipping;
-
-    sumSubtotal.textContent = money(subtotal);
-    sumDiscount.textContent = `- ${money(discount).replace("NT$ ","NT$ ")}`;
-    sumShipping.textContent = money(shipping);
-    sumTotal.textContent = money(total);
-
-    btnCheckout.disabled = true;
-
-    renderPromoPills();
-  }
-
-  async function loadSettings(){
-    try{
-      const res = await fetch(`${API_BASE}/settings`, { cache:"no-store" });
-      if(!res.ok) throw new Error("settings error " + res.status);
-      const s = await res.json();
-      if(s && typeof s === "object"){
-        SETTINGS = {
-          ...SETTINGS,
-          ...s,
-          shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
-          free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
-          first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
-          birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
-          shipping_enabled: !!s.shipping_enabled
-        };
-      }
-    }catch(e){
-      console.warn("loadSettings failed, fallback defaults", e remember);
-    }
-  }
-
-  async function loadProductsIndex(){
-    try{
-      const res = await fetch(`${API_BASE}/products`, { cache:"no-store" });
-      if(!res.ok) throw new Error("products error " + res.status);
-      const list = await res.json();
-      const map = {};
-      if(Array.isArray(list)){
-        for(const p of list){
-          if(p && p.id != null) map[String(p.id)] = p;
-        }
-      }
-      PRODUCTS_BY_ID = map;
-    }catch(e){
-      console.warn("loadProductsIndex failed", e);
-      PRODUCTS_BY_ID = {};
-    }
-  }
-
-  // events
-  btnClear?.addEventListener("click", ()=>{
-    if(confirm("確定要清空購物車嗎？")){
-      APPLIED = { code:"", discount:0, note:"" };
-      if(couponCode) couponCode.value = "";
-      clearCart();
-      renderAll();
-    }
-  });
-
-  btnApplyCoupon?.addEventListener("click", applyCoupon);
-  couponCode?.addEventListener("keydown", (e)=>{
-    if(e.key === "Enter") applyCoupon();
-  });
-
-  // ✅ 只要購物車變動：重算 + 若有套用碼就自動重新驗證
-  window.addEventListener("cart:changed", async ()=>{
-    await validateCouponSilently();
-    renderAll();
-  });
-
-  (async ()=>{
-    await loadSettings();
-    await loadProductsIndex();
-    renderAll();
-  })();
+/* ===== init ===== */
+(async()=>{
+  await loadSettings();
+  await loadProducts();
+  render();
+})();
 </script>
 
 </body>
