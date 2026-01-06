@@ -1,0 +1,121 @@
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <h1>十年一日</h1>
+      <div class="sub">tenyears_oneday</div>
+    </div>
+
+    <div class="icon-row">
+      <a class="icon" data-icon="search" href="search.html" aria-label="搜尋" title="搜尋">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+        </svg>
+      </a>
+
+      <a class="icon icon-img" href="https://www.instagram.com/tenyears_oneday" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
+        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg" alt="Instagram">
+      </a>
+
+      <a class="icon icon-img" href="https://line.me/R/ti/p/@396kwrga" target="_blank" rel="noopener" aria-label="LINE" title="LINE">
+        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/line.svg" alt="LINE">
+      </a>
+
+      <a class="icon" data-icon="cart" href="cart.html" aria-label="購物車" title="購物車">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="9" cy="20" r="1"></circle>
+          <circle cx="17" cy="20" r="1"></circle>
+          <path d="M3 4h2l2 10.5a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 2-1.6L21 8H6"></path>
+        </svg>
+
+        <!-- ✅ 改：拿掉 hidden，改用 display:none -->
+        <span id="cartCount" class="cart-badge" aria-live="polite" style="display:none;"></span>
+      </a>
+
+      <a class="icon" data-icon="member" href="member.html" aria-label="會員" title="會員">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="8" r="3"></circle>
+          <path d="M4 20c1.8-4 13.2-4 16 0"></path>
+        </svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-row">
+    <a data-nav="index" href="index.html">關於我們</a>
+    <a data-nav="all" href="all.html">全系列🌸</a>
+    <a data-nav="silver" href="silver.html">純銀飾品✨</a>
+    <a data-nav="promo" href="promo.html">優惠活動🎁</a>
+    <a data-nav="knowledge" href="knowledge.html">飾品小知識💡</a>
+    <a data-nav="faq" href="faq.html">相關問題❗️</a>
+  </div>
+</nav>
+
+<!-- ✅ Cart Drawer (共用) -->
+<!-- ✅ 改：補 aria-hidden -->
+<div class="drawer-backdrop" id="cartBackdrop" aria-hidden="true" hidden></div>
+
+<!-- ✅ 改：加 hidden，避免初始擋點擊 -->
+<aside class="drawer" id="cartDrawer" aria-label="購物車" aria-hidden="true" hidden>
+  <div class="d-hd">
+    <div class="d-title">購物車</div>
+    <button class="ui-close" id="cartClose" aria-label="關閉" type="button">×</button>
+  </div>
+
+  <div class="d-bd">
+    <div id="cartPromoTips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
+    <div class="d-items" id="cartItems"></div>
+    <div class="toast" id="cartToast" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="d-ft">
+    <div class="d-sumrow"><span>小計</span><strong id="cartSubtotal">NT$ 0</strong></div>
+    <div class="d-sumrow"><span>折扣</span><strong id="cartDiscount">- NT$ 0</strong></div>
+    <div class="d-sumrow"><span>運費</span><strong id="cartShipping">NT$ 0</strong></div>
+    <div class="d-sumrow d-total"><span>合計</span><strong id="cartTotal">NT$ 0</strong></div>
+
+    <div style="height:1px;background:rgba(0,0,0,.06);margin:10px 0;"></div>
+
+    <div class="coupon" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input
+        id="drawerCouponCode"
+        placeholder="輸入優惠碼（例如 HELLO）"
+        autocomplete="off"
+        style="flex:1;min-width:180px;padding:10px 10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.85);outline:none;text-transform:uppercase"
+      >
+      <button
+        id="drawerApplyCoupon"
+        type="button"
+        style="flex:0 0 auto;padding:10px 12px;border-radius:999px;border:none;background:rgba(0,0,0,.08);cursor:pointer"
+      >
+        套用
+      </button>
+    </div>
+    <div id="drawerCouponToast" class="toast" style="margin-top:8px;font-size:.9rem;"></div>
+
+    <div class="d-actions" style="margin-top:10px;">
+      <button class="secondary" id="cartClear" type="button">清空</button>
+      <button class="primary" id="cartGoCheckout" type="button">結帳</button>
+    </div>
+
+    <div style="margin-top:10px; font-size:.85rem; opacity:.75;">
+      * 結帳流程用跳出視窗顯示（與商品視窗一致）
+    </div>
+  </div>
+</aside>
+
+<!-- ✅ Checkout Modal -->
+<div class="ui-backdrop" id="ckBackdrop" aria-hidden="true" hidden>
+  <div class="ui-panel" role="dialog" aria-modal="true" aria-label="結帳">
+    <div class="ui-hd">
+      <div style="font-weight:900;">結帳</div>
+      <button class="ui-close" id="ckClose" aria-label="關閉" type="button">×</button>
+    </div>
+
+    <div class="pd-wrap" id="ckWrap">
+      <!-- JS 塞入內容 -->
+    </div>
+  </div>
+</div>
