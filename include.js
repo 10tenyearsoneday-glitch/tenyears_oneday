@@ -121,43 +121,64 @@
   }
 
   // ===== Drawer：以 header.html 的 DOM 為主（A 架構）=====
-  function openDrawer() {
-    const bd = document.getElementById("cartBackdrop");
-    const dr = document.getElementById("cartDrawer");
-    if (!bd || !dr) return;
+ function openDrawer() {
+  const bd = document.getElementById("cartBackdrop");
+  const dr = document.getElementById("cartDrawer");
+  if (!bd || !dr) return;
 
-    bd.classList.add("open");
-    dr.classList.add("open");
-    document.body.style.overflow = "hidden";
+  // 顯示（兼容你 header.html 有 hidden 的情況）
+  bd.hidden = false;
+  dr.hidden = false;
 
-    // 同步輸入框（若存在）
-    const inp = document.getElementById("drawerCouponCode");
-    if (inp && window.TEN_APPLIED?.code) inp.value = window.TEN_APPLIED.code;
+  bd.classList.add("open");
+  dr.classList.add("open");
 
-    renderDrawer();
-  }
+  bd.setAttribute("aria-hidden", "false");
+  dr.setAttribute("aria-hidden", "false");
 
-  function closeDrawer() {
-    const bd = document.getElementById("cartBackdrop");
-    const dr = document.getElementById("cartDrawer");
-    if (!bd || !dr) return;
+  document.body.style.overflow = "hidden";
 
-    bd.classList.remove("open");
-    dr.classList.remove("open");
-    document.body.style.overflow = "";
-  }
+  // 同步優惠碼輸入框（若存在）
+  const inp = document.getElementById("drawerCouponCode");
+  if (inp && window.TEN_APPLIED?.code) inp.value = window.TEN_APPLIED.code;
 
-  function bindDrawerClose() {
-    // 防止重複綁定
-    if (window.TEN_DRAWER_CLOSE_BOUND) return;
-    window.TEN_DRAWER_CLOSE_BOUND = true;
+  renderDrawer();
+}
 
-    document.getElementById("cartClose")?.addEventListener("click", closeDrawer);
-    document.getElementById("cartBackdrop")?.addEventListener("click", closeDrawer);
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeDrawer();
-    });
-  }
+function closeDrawer() {
+  const bd = document.getElementById("cartBackdrop");
+  const dr = document.getElementById("cartDrawer");
+  if (!bd || !dr) return;
+
+  bd.classList.remove("open");
+  dr.classList.remove("open");
+
+  bd.setAttribute("aria-hidden", "true");
+  dr.setAttribute("aria-hidden", "true");
+
+  document.body.style.overflow = "";
+
+  // 讓關閉動畫跑完再 hidden（避免閃一下）
+  setTimeout(() => {
+    bd.hidden = true;
+    // drawer 通常不需要 hidden（看你 CSS），但保守起見也一起藏
+    // 若你希望 drawer 仍佔位/可被 transition 控制，可把下一行刪掉
+    dr.hidden = true;
+  }, 180);
+}
+
+function bindDrawerClose() {
+  if (window.TEN_DRAWER_CLOSE_BOUND) return;
+  window.TEN_DRAWER_CLOSE_BOUND = true;
+
+  document.getElementById("cartClose")?.addEventListener("click", closeDrawer);
+  document.getElementById("cartBackdrop")?.addEventListener("click", closeDrawer);
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeDrawer();
+  });
+}
+
 
   function bindCartIconOpen() {
     if (window.TEN_CART_ICON_BOUND) return;
