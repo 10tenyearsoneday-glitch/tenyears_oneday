@@ -5,43 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>購物車｜十年一日</title>
   <link rel="stylesheet" href="assets/style.css">
+
   <style>
     .cart-wrap{max-width:980px;margin:auto;padding:18px;}
     .cart-title{font-size:1.15rem;letter-spacing:.08em;color:rgba(47,58,44,.85);margin:10px 0 14px;}
     .cart-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;align-items:start}
     @media (max-width: 860px){.cart-grid{grid-template-columns:1fr}}
+
     .card{background:rgba(255,255,255,.70);border:1px solid rgba(0,0,0,.06);box-shadow:0 10px 30px rgba(0,0,0,.06);border-radius:16px;overflow:hidden}
     .card .hd{padding:14px 14px 10px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
     .card .bd{padding:14px}
+
     .btn2{border:none;border-radius:999px;padding:10px 14px;background:#5d6b59;color:#fff;cursor:pointer}
     .btn2.secondary{background:rgba(0,0,0,.08);color:rgba(47,58,44,.9)}
     .btn2.danger{background:#8a3b3b}
+
     .muted{opacity:.75}
     .items{display:flex;flex-direction:column;gap:10px}
+
     .item{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.62);border:1px solid rgba(0,0,0,.06);border-radius:14px;padding:10px}
     .thumb{width:72px;height:56px;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.06);flex:0 0 auto}
     .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+
     .it-info{min-width:0;flex:1}
     .it-title{font-weight:600;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .it-meta{font-size:.86rem;opacity:.75;margin-top:3px}
+
     .it-right{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
     .it-price{font-weight:700;color:#6c7f67}
-    .qty{display:flex;gap:8px;align-items:center}
+
+    .qty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
     .qty button{width:34px;height:34px;border-radius:999px;border:none;background:rgba(0,0,0,.08);cursor:pointer}
     .qty input{width:54px;text-align:center;border-radius:10px;border:1px solid rgba(0,0,0,.12);padding:8px;background:rgba(255,255,255,.85)}
+
     .link{color:rgba(47,58,44,.9);text-decoration:none}
+
     .sum-row{display:flex;justify-content:space-between;gap:10px;margin:8px 0;font-size:.95rem}
     .sum-row strong{font-weight:700}
     .sum-total{font-size:1.08rem}
+
     .hr{height:1px;background:rgba(0,0,0,.06);margin:10px 0}
+
     .coupon{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     .coupon input{flex:1;min-width:180px;padding:10px 10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.85);outline:none;text-transform:uppercase}
     .toast{margin-top:10px;font-size:.9rem}
+
     .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.06);font-size:.85rem;white-space:nowrap}
-    .pill.ok{background:rgba(93,107,89,.18);color:rgba(47,58,44,.9)}
-    .pill.bad{background:rgba(138,59,59,.12);color:#8a3b3b}
   </style>
 </head>
+
 <body>
   <main class="cart-wrap">
     <div class="cart-title">購物車</div>
@@ -100,523 +112,475 @@
     </div>
   </main>
 
-<script>
-  window.API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
+  <!-- ✅ header / drawer -->
+  <script src="./include.js"></script>
 
-  // ✅ GAS Web App
-  const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+  <script>
+  (() => {
+    window.API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
 
-  // ✅ 指定：ten_cart
-  const CART_KEY = "ten_cart";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+    const CART_KEY = "ten_cart";
+    const MEMBER_KEY = "ten_member_id";
+    const ADMIN_KEY = "10years1day911321";
 
-  // ✅ 簡易 memberId（先用 localStorage 固定一個）
-  const MEMBER_KEY = "ten_member_id";
+    let SETTINGS = {
+      shipping_enabled: true,
+      shipping_fee: 60,
+      free_shipping_threshold: 1000,
+      first_purchase_discount: 0.9,
+      birthday_discount: 0.85
+    };
 
-  // ✅ 你目前的 ADMIN_KEY（注意：公開前端會曝光，之後要改成伺服器端才安全）
-  const ADMIN_KEY = "10years1day911321";
+    let PRODUCTS_BY_ID = {};
+    let APPLIED = { code:"", discount:0, note:"" };
 
-  // settings 預設值
-  let SETTINGS = {
-    shipping_enabled: true,
-    shipping_fee: 60,
-    free_shipping_threshold: 1000,
-    first_purchase_discount: 0.9,
-    birthday_discount: 0.85
-  };
+    const itemsEl = document.getElementById("items");
+    const toastEl = document.getElementById("toast");
+    const cartHint = document.getElementById("cartHint");
+    const btnClear = document.getElementById("btnClear");
 
-  // 狀態
-  let PRODUCTS_BY_ID = {};
-  let APPLIED = { code:"", discount:0, note:"" };
+    const promoPills = document.getElementById("promoPills");
 
-  // DOM
-  const itemsEl = document.getElementById("items");
-  const toastEl = document.getElementById("toast");
-  const cartHint = document.getElementById("cartHint");
-  const btnClear = document.getElementById("btnClear");
+    const sumSubtotal = document.getElementById("sumSubtotal");
+    const sumDiscount = document.getElementById("sumDiscount");
+    const sumShipping = document.getElementById("sumShipping");
+    const sumTotal = document.getElementById("sumTotal");
 
-  const promoPills = document.getElementById("promoPills");
+    const couponCode = document.getElementById("couponCode");
+    const btnApplyCoupon = document.getElementById("btnApplyCoupon");
+    const couponToast = document.getElementById("couponToast");
 
-  const sumSubtotal = document.getElementById("sumSubtotal");
-  const sumDiscount = document.getElementById("sumDiscount");
-  const sumShipping = document.getElementById("sumShipping");
-  const sumTotal = document.getElementById("sumTotal");
+    const btnCheckout = document.getElementById("btnCheckout");
 
-  const couponCode = document.getElementById("couponCode");
-  const btnApplyCoupon = document.getElementById("btnApplyCoupon");
-  const couponToast = document.getElementById("couponToast");
-
-  const btnCheckout = document.getElementById("btnCheckout");
-
-  function toast(msg, ok=true){
-    toastEl.textContent = msg;
-    toastEl.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
-    if(msg) setTimeout(()=>{ toastEl.textContent = ""; }, 1800);
-  }
-  function toastCoupon(msg, ok=true){
-    couponToast.textContent = msg;
-    couponToast.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
-    if(msg) setTimeout(()=>{ couponToast.textContent = ""; }, 2200);
-  }
-
-  function getMemberId(){
-    let id = localStorage.getItem(MEMBER_KEY);
-    if(!id){
-      id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
-      localStorage.setItem(MEMBER_KEY, id);
+    function toast(msg, ok=true){
+      toastEl.textContent = msg;
+      toastEl.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
+      if(msg) setTimeout(()=>{ toastEl.textContent = ""; }, 1800);
     }
-    return id;
-  }
-
-  function readCart(){
-    try{
-      const raw = localStorage.getItem(CART_KEY);
-      const arr = JSON.parse(raw || "[]");
-      return Array.isArray(arr) ? arr : [];
-    }catch(e){ return []; }
-  }
-  function writeCart(arr){
-    localStorage.setItem(CART_KEY, JSON.stringify(arr));
-    window.dispatchEvent(new Event("cart:changed"));
-  }
-
-  function normalizeQty(n){
-    n = Number(n || 1);
-    if(!Number.isFinite(n) || n < 1) n = 1;
-    return Math.floor(n);
-  }
-
-  function setQty(id, qty){
-    const cart = readCart();
-    const i = cart.findIndex(x => String(x.id) === String(id));
-    if(i === -1) return;
-    cart[i].qty = normalizeQty(qty);
-    writeCart(cart);
-    renderAll();               // ✅ 重新算金額
-    maybeRevalidateCoupon();   // ✅ 重新驗證優惠
-  }
-
-  function inc(id, delta){
-    const cart = readCart();
-    const i = cart.findIndex(x => String(x.id) === String(id));
-    if(i === -1) return;
-    cart[i].qty = normalizeQty(Number(cart[i].qty||1) + Number(delta||1));
-    writeCart(cart);
-    renderAll();
-    maybeRevalidateCoupon();
-  }
-
-  function removeItem(id){
-    const cart = readCart().filter(x => String(x.id) !== String(id));
-    writeCart(cart);
-    renderAll();
-    maybeRevalidateCoupon(true);
-  }
-
-function clearCart(){
-  writeCart([]);
-  APPLIED = { code:"", discount:0, note:"" };
-  if(couponCode) couponCode.value = "";
-  renderAll();
-}
-
-
-    renderAll();
-  }
-
-  function money(n){
-    n = Math.round(Number(n||0));
-    return `NT$ ${n}`;
-  }
-function rateToZhe(rate){
-  rate = Number(rate||1);
-  if(rate >= 1 || rate <= 0) return null;
-  const z = Math.round(rate * 100) / 10; // 0.9→9、0.85→8.5
-  return String(z).replace(/\.0$/, "");
-}
-  function calcSubtotal(cart){
-    let s = 0;
-    for(const it of cart){
-      const p = PRODUCTS_BY_ID[String(it.id)] || null;
-      const price = p ? Number(p.price||0) : 0;
-      s += price * normalizeQty(it.qty);
-    }
-    return s;
-  }
-
-  function calcShipping(subtotalAfterDiscount){
-    const shipOn = !!SETTINGS.shipping_enabled;
-    const fee = Number(SETTINGS.shipping_fee || 0);
-    const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
-
-    if(!shipOn) return 0;
-    if(freeOver > 0 && subtotalAfterDiscount >= freeOver) return 0;
-    return fee;
-  }
-
-  function renderPromoPills(){
-    if(!promoPills) return;
-
-    const chips = [];
-    const shipOn = !!SETTINGS.shipping_enabled;
-    const fee = Number(SETTINGS.shipping_fee || 0);
-    const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
-
-    if(shipOn){
-      chips.push(`運費 NT$${fee}`);
-      if(freeOver > 0) chips.push(`滿 NT$${freeOver} 免運`);
-    }else{
-      chips.push(`免運活動中`);
+    function toastCoupon(msg, ok=true){
+      couponToast.textContent = msg;
+      couponToast.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
+      if(msg) setTimeout(()=>{ couponToast.textContent = ""; }, 2200);
     }
 
-    const firstRate = Number(SETTINGS.first_purchase_discount || 1);
-    const bdayRate  = Number(SETTINGS.birthday_discount || 1);
-const firstZhe = rateToZhe(firstRate);
-const bdayZhe  = rateToZhe(bdayRate);
-if(firstZhe) chips.push(`首購 ${firstZhe} 折`);
-if(bdayZhe)  chips.push(`生日月 ${bdayZhe} 折`);
+    function getMemberId(){
+      let id = localStorage.getItem(MEMBER_KEY);
+      if(!id){
+        id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
+        localStorage.setItem(MEMBER_KEY, id);
+      }
+      return id;
+    }
 
+    function readCart(){
+      try{
+        const raw = localStorage.getItem(CART_KEY);
+        const arr = JSON.parse(raw || "[]");
+        return Array.isArray(arr) ? arr : [];
+      }catch(e){ return []; }
+    }
+    function writeCart(arr){
+      localStorage.setItem(CART_KEY, JSON.stringify(arr));
+      window.dispatchEvent(new Event("cart:changed"));
+    }
 
-    promoPills.innerHTML = chips.map(t => `<span class="pill">${t}</span>`).join("");
-  }
+    function normalizeQty(n){
+      n = Number(n || 1);
+      if(!Number.isFinite(n) || n < 1) n = 1;
+      return Math.floor(n);
+    }
 
-  function itemHtml(it){
-    const pid = String(it.id);
-    const p = PRODUCTS_BY_ID[pid] || {};
-    const title = p.title || pid;
-    const img = (p.image || "").trim() || "assets/placeholder.png";
-    const price = Number(p.price || 0);
-    const qty = normalizeQty(it.qty);
+    function setQty(id, qty){
+      const cart = readCart();
+      const i = cart.findIndex(x => String(x.id) === String(id));
+      if(i === -1) return;
+      cart[i].qty = normalizeQty(qty);
+      writeCart(cart);
+      renderAll();
+      maybeRevalidateCoupon();
+    }
 
-    return `
-      <div class="item">
-        <a class="thumb" href="product.html?id=${encodeURIComponent(pid)}" title="查看商品">
-          <img src="${img}" alt="">
-        </a>
+    function inc(id, delta){
+      const cart = readCart();
+      const i = cart.findIndex(x => String(x.id) === String(id));
+      if(i === -1) return;
+      cart[i].qty = normalizeQty(Number(cart[i].qty||1) + Number(delta||1));
+      writeCart(cart);
+      renderAll();
+      maybeRevalidateCoupon();
+    }
 
-        <div class="it-info">
-          <div class="it-title"><a class="link" href="product.html?id=${encodeURIComponent(pid)}">${title}</a></div>
-          <div class="it-meta">${money(price)} × ${qty}</div>
-        </div>
+    function removeItem(id){
+      const cart = readCart().filter(x => String(x.id) !== String(id));
+      writeCart(cart);
+      renderAll();
+      maybeRevalidateCoupon(true);
+    }
 
-        <div class="it-right">
-          <div class="it-price">${money(price * qty)}</div>
-          <div class="qty">
-            <button type="button" data-dec="${pid}" aria-label="減少">-</button>
-            <input type="number" min="1" step="1" value="${qty}" data-qty="${pid}">
-            <button type="button" data-inc="${pid}" aria-label="增加">+</button>
-            <button type="button" class="btn2 secondary" style="padding:8px 10px" data-del="${pid}">刪除</button>
+    function clearCart(){
+      writeCart([]);
+      APPLIED = { code:"", discount:0, note:"" };
+      if(couponCode) couponCode.value = "";
+      renderAll();
+    }
+
+    function money(n){
+      n = Math.round(Number(n||0));
+      return `NT$ ${n}`;
+    }
+
+    function rateToZhe(rate){
+      rate = Number(rate||1);
+      if(rate >= 1 || rate <= 0) return null;
+      const z = Math.round(rate * 100) / 10;
+      return String(z).replace(/\.0$/, "");
+    }
+
+    function calcSubtotal(cart){
+      let s = 0;
+      for(const it of cart){
+        const p = PRODUCTS_BY_ID[String(it.id)] || null;
+        const price = p ? Number(p.price||0) : 0;
+        s += price * normalizeQty(it.qty);
+      }
+      return s;
+    }
+
+    function calcShipping(subtotalAfterDiscount){
+      const shipOn = !!SETTINGS.shipping_enabled;
+      const fee = Number(SETTINGS.shipping_fee || 0);
+      const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
+
+      if(!shipOn) return 0;
+      if(freeOver > 0 && subtotalAfterDiscount >= freeOver) return 0;
+      return fee;
+    }
+
+    function renderPromoPills(){
+      if(!promoPills) return;
+
+      const chips = [];
+      const shipOn = !!SETTINGS.shipping_enabled;
+      const fee = Number(SETTINGS.shipping_fee || 0);
+      const freeOver = Number(SETTINGS.free_shipping_threshold || 0);
+
+      if(shipOn){
+        if(freeOver > 0) chips.push(`滿 NT$${freeOver} 免運`);
+        else chips.push(`運費 NT$${fee}`);
+      }else{
+        chips.push(`免運活動中`);
+      }
+
+      const firstZhe = rateToZhe(SETTINGS.first_purchase_discount);
+      const bdayZhe  = rateToZhe(SETTINGS.birthday_discount);
+      if(firstZhe) chips.push(`首購 ${firstZhe} 折`);
+      if(bdayZhe)  chips.push(`生日月 ${bdayZhe} 折`);
+
+      promoPills.innerHTML = chips.map(t => `<span class="pill">${t}</span>`).join("");
+    }
+
+    function itemHtml(it){
+      const pid = String(it.id);
+      const p = PRODUCTS_BY_ID[pid] || {};
+      const title = p.title || pid;
+      const img = (p.image || "").trim() || "assets/placeholder.png";
+      const price = Number(p.price || 0);
+      const qty = normalizeQty(it.qty);
+
+      return `
+        <div class="item">
+          <a class="thumb" href="product.html?id=${encodeURIComponent(pid)}" title="查看商品">
+            <img src="${img}" alt="">
+          </a>
+
+          <div class="it-info">
+            <div class="it-title">
+              <a class="link" href="product.html?id=${encodeURIComponent(pid)}">${title}</a>
+            </div>
+            <div class="it-meta">${money(price)} × ${qty}</div>
+          </div>
+
+          <div class="it-right">
+            <div class="it-price">${money(price * qty)}</div>
+            <div class="qty">
+              <button type="button" data-dec="${pid}" aria-label="減少">-</button>
+              <input type="number" min="1" step="1" value="${qty}" data-qty="${pid}">
+              <button type="button" data-inc="${pid}" aria-label="增加">+</button>
+              <button type="button" class="btn2 secondary" style="padding:8px 10px" data-del="${pid}">刪除</button>
+            </div>
           </div>
         </div>
-      </div>
-    `;
-  }
+      `;
+    }
 
-  function wireItemEvents(){
-    itemsEl.querySelectorAll("[data-inc]").forEach(btn=>{
-      btn.addEventListener("click", ()=> inc(btn.getAttribute("data-inc"), +1));
-    });
-    itemsEl.querySelectorAll("[data-dec]").forEach(btn=>{
-      btn.addEventListener("click", ()=> inc(btn.getAttribute("data-dec"), -1));
-    });
-    itemsEl.querySelectorAll("[data-del]").forEach(btn=>{
-      btn.addEventListener("click", ()=> removeItem(btn.getAttribute("data-del")));
-    });
-    itemsEl.querySelectorAll("[data-qty]").forEach(inp=>{
-      inp.addEventListener("change", ()=>{
-        const id = inp.getAttribute("data-qty");
-        setQty(id, inp.value);
+    function wireItemEvents(){
+      itemsEl.querySelectorAll("[data-inc]").forEach(btn=>{
+        btn.addEventListener("click", ()=> inc(btn.getAttribute("data-inc"), +1));
       });
-    });
-  }
-
-  function renderAll(){
-    const cart = readCart();
-    const count = cart.reduce((s,x)=> s + normalizeQty(x.qty), 0);
-
-    cartHint.textContent = count ? `共 ${count} 件商品` : "購物車目前是空的";
-    btnClear.disabled = !count;
-
-    if(!count){
-      itemsEl.innerHTML = `<div class="muted">還沒有加入任何商品。</div>`;
-    }else{
-      itemsEl.innerHTML = cart.map(itemHtml).join("");
-      wireItemEvents();
+      itemsEl.querySelectorAll("[data-dec]").forEach(btn=>{
+        btn.addEventListener("click", ()=> inc(btn.getAttribute("data-dec"), -1));
+      });
+      itemsEl.querySelectorAll("[data-del]").forEach(btn=>{
+        btn.addEventListener("click", ()=> removeItem(btn.getAttribute("data-del")));
+      });
+      itemsEl.querySelectorAll("[data-qty]").forEach(inp=>{
+        inp.addEventListener("change", ()=>{
+          const id = inp.getAttribute("data-qty");
+          setQty(id, inp.value);
+        });
+      });
     }
 
-    const subtotal = calcSubtotal(cart);
+    function renderAll(){
+      const cart = readCart();
+      const count = cart.reduce((s,x)=> s + normalizeQty(x.qty), 0);
 
-    // ✅ 折扣永遠不超過小計
-    const discount = Math.min(subtotal, Math.max(0, Number(APPLIED.discount || 0)));
+      cartHint.textContent = count ? `共 ${count} 件商品` : "購物車目前是空的";
+      btnClear.disabled = !count;
 
-    const subtotalAfterDiscount = Math.max(0, subtotal - discount);
-    const shipping = calcShipping(subtotalAfterDiscount);
-    const total = subtotalAfterDiscount + shipping;
-
-    sumSubtotal.textContent = money(subtotal);
-    sumDiscount.textContent = `- ${money(discount).replace("NT$ ","NT$ ")}`;
-    sumShipping.textContent = money(shipping);
-    sumTotal.textContent = money(total);
-
-    // ✅ 小計 > 0 才能結帳
-    btnCheckout.disabled = (subtotal <= 0);
-
-    renderPromoPills();
-  }
-
-async function loadSettings(){
-  const cacheKey = "tyod_settings_cache_v1";
-  const cached = localStorage.getItem(cacheKey);
-
-  // 先用快取
-  if(cached){
-    try{
-      const s = JSON.parse(cached);
-      if(s && typeof s === "object") SETTINGS = { ...SETTINGS, ...s };
-    }catch(e){}
-  }
-
-  // 再更新最新
-  try{
-    const res = await fetch(`${window.API_BASE}/settings`, { cache:"no-store" });
-    if(!res.ok) throw new Error("settings error " + res.status);
-    const s = await res.json();
-    if(s && typeof s === "object"){
-      SETTINGS = {
-        ...SETTINGS,
-        ...s,
-        shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
-        free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
-        first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
-        birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
-        shipping_enabled: !!s.shipping_enabled
-      };
-      localStorage.setItem(cacheKey, JSON.stringify(SETTINGS));
-    }
-  }catch(e){
-    console.warn("loadSettings failed", e);
-  }
-}
-
-  async function loadProductsIndex(){
-    try{
-      const res = await fetch(`${window.API_BASE}/products`, { cache:"no-store" });
-      if(!res.ok) throw new Error("products error " + res.status);
-      const list = await res.json();
-      const map = {};
-      if(Array.isArray(list)){
-        for(const p of list){
-          if(p && p.id != null) map[String(p.id)] = p;
-        }
-      }
-      PRODUCTS_BY_ID = map;
-    }catch(e){
-      console.warn("loadProductsIndex failed", e);
-      PRODUCTS_BY_ID = {};
-    }
-  }
-
-  function couponErrorText(err){
-    const m = {
-      "CODE_REQUIRED":"請輸入優惠碼",
-      "MEMBER_REQUIRED":"會員資料不足",
-      "SUBTOTAL_REQUIRED":"小計不足以套用",
-      "NO_COUPONS_SHEET":"找不到 coupons 表",
-      "NO_COUPONS":"目前沒有可用優惠碼",
-      "INVALID_CODE":"優惠碼不存在",
-      "DISABLED":"此優惠碼已停用",
-      "MIN_SPEND":"未達最低消費門檻",
-      "NOT_STARTED":"優惠尚未開始",
-      "EXPIRED":"優惠已過期",
-      "SOLD_OUT":"優惠已用完",
-      "ALREADY_USED":"你已使用過此優惠碼",
-      "BAD_RATE":"折扣設定錯誤（rate）",
-      "BAD_AMOUNT":"折扣設定錯誤（amount）",
-      "UNAUTHORIZED":"沒有權限（ADMIN_KEY）",
-      "SERVER_ERROR":"系統忙碌，請稍後再試"
-    };
-    return m[String(err||"")] || `套用失敗（${err||"ERROR"}）`;
-  }
-
-  async function validateCoupon(code, subtotal){
-    const memberId = getMemberId();
-    const url = `${GAS_URL}?path=coupon_validate`
-      + `&code=${encodeURIComponent(code)}`
-      + `&memberId=${encodeURIComponent(memberId)}`
-      + `&subtotal=${encodeURIComponent(subtotal)}`;
-
-    const res = await fetch(url, { cache:"no-store" });
-    const out = await res.json();
-    return { res, out };
-  }
-
-  async function applyCoupon(){
-    const cart = readCart();
-    const subtotal = calcSubtotal(cart);
-
-    const code = String(couponCode?.value || "").trim().toUpperCase();
-    if(!code){
-      toastCoupon("請輸入優惠碼", false);
-      return;
-    }
-    if(subtotal <= 0){
-      toastCoupon("購物車是空的", false);
-      return;
-    }
-
-    try{
-      btnApplyCoupon.disabled = true;
-      toastCoupon("驗證中…");
-
-      const { out } = await validateCoupon(code, subtotal);
-
-      if(!out || out.ok !== true){
-        APPLIED = { code:"", discount:0, note:"" };
-        renderAll();
-        toastCoupon(couponErrorText(out?.error), false);
-        return;
+      if(!count){
+        itemsEl.innerHTML = `<div class="muted">還沒有加入任何商品。</div>`;
+      }else{
+        itemsEl.innerHTML = cart.map(itemHtml).join("");
+        wireItemEvents();
       }
 
-      APPLIED = {
-        code: out.code || code,
-        discount: Math.max(0, Number(out.discount || 0)),
-        note: String(out.note || "")
-      };
+      const subtotal = calcSubtotal(cart);
+      const discount = Math.min(subtotal, Math.max(0, Number(APPLIED.discount || 0)));
 
-      renderAll();
-      toastCoupon(`已套用 ${APPLIED.code} ✅ 折抵 ${money(APPLIED.discount)}`);
+      const after = Math.max(0, subtotal - discount);
+      const shipping = calcShipping(after);
+      const total = after + shipping;
 
-    }catch(e){
-      console.error(e);
-      APPLIED = { code:"", discount:0, note:"" };
-      renderAll();
-      toastCoupon("系統忙碌，請稍後再試", false);
-    }finally{
-      btnApplyCoupon.disabled = false;
+      sumSubtotal.textContent = money(subtotal);
+      sumDiscount.textContent = `- ${money(discount)}`;
+      sumShipping.textContent = money(shipping);
+      sumTotal.textContent = money(total);
+
+      btnCheckout.disabled = (subtotal <= 0);
+
+      renderPromoPills();
     }
-  }
 
-  // ✅ 你說的 bug：套用後調整數量，折扣不跟著變
-  // → 這裡做「自動重新驗證」
-  let revalidateTimer = null;
-  async function maybeRevalidateCoupon(clearIfEmpty=false){
-    if(!APPLIED.code) return;
+    async function loadSettings(){
+      const cacheKey = "tyod_settings_cache_v1";
+      const cached = localStorage.getItem(cacheKey);
 
-    const cart = readCart();
-    const subtotal = calcSubtotal(cart);
-
-    if(subtotal <= 0){
-      if(clearIfEmpty){
-        APPLIED = { code:"", discount:0, note:"" };
-        if(couponCode) couponCode.value = "";
-        toastCoupon("購物車空了，已清除優惠碼");
+      if(cached){
+        try{
+          const s = JSON.parse(cached);
+          if(s && typeof s === "object") SETTINGS = { ...SETTINGS, ...s };
+        }catch(e){}
       }
-      renderAll();
-      return;
-    }
 
-    // debounce，避免你一直按 + - 會狂打 GAS
-    clearTimeout(revalidateTimer);
-    revalidateTimer = setTimeout(async ()=>{
       try{
-        const code = APPLIED.code;
+        const res = await fetch(`${window.API_BASE}/settings`, { cache:"no-store" });
+        if(!res.ok) throw new Error("settings error " + res.status);
+        const s = await res.json();
+        if(s && typeof s === "object"){
+          SETTINGS = {
+            ...SETTINGS,
+            ...s,
+            shipping_fee: Number(s.shipping_fee ?? SETTINGS.shipping_fee),
+            free_shipping_threshold: Number(s.free_shipping_threshold ?? SETTINGS.free_shipping_threshold),
+            first_purchase_discount: Number(s.first_purchase_discount ?? SETTINGS.first_purchase_discount),
+            birthday_discount: Number(s.birthday_discount ?? SETTINGS.birthday_discount),
+            shipping_enabled: !!s.shipping_enabled
+          };
+          localStorage.setItem(cacheKey, JSON.stringify(SETTINGS));
+        }
+      }catch(e){
+        console.warn("loadSettings failed", e);
+      }
+    }
+
+    async function loadProductsIndex(){
+      try{
+        const res = await fetch(`${window.API_BASE}/products`, { cache:"no-store" });
+        if(!res.ok) throw new Error("products error " + res.status);
+        const list = await res.json();
+        const map = {};
+        if(Array.isArray(list)){
+          for(const p of list){
+            if(p && p.id != null) map[String(p.id)] = p;
+          }
+        }
+        PRODUCTS_BY_ID = map;
+      }catch(e){
+        console.warn("loadProductsIndex failed", e);
+        PRODUCTS_BY_ID = {};
+      }
+    }
+
+    function couponErrorText(err){
+      const m = {
+        CODE_REQUIRED: "請輸入優惠碼",
+        INVALID_CODE: "優惠碼不存在",
+        DISABLED: "此優惠碼已停用",
+        MIN_SPEND: "未達最低消費門檻",
+        NOT_STARTED: "優惠尚未開始",
+        EXPIRED: "優惠已過期",
+        SOLD_OUT: "優惠已用完",
+        ALREADY_USED: "你已使用過此優惠碼",
+        UNAUTHORIZED: "沒有權限（ADMIN_KEY）",
+        SERVER_ERROR: "系統忙碌，請稍後再試"
+      };
+      return m[String(err||"")] || `套用失敗（${err||"ERROR"}）`;
+    }
+
+    async function validateCoupon(code, subtotal){
+      const memberId = getMemberId();
+      const url = `${GAS_URL}?path=coupon_validate`
+        + `&code=${encodeURIComponent(code)}`
+        + `&memberId=${encodeURIComponent(memberId)}`
+        + `&subtotal=${encodeURIComponent(subtotal)}`;
+
+      const res = await fetch(url, { cache:"no-store" });
+      const out = await res.json();
+      return { res, out };
+    }
+
+    async function applyCoupon(){
+      const cart = readCart();
+      const subtotal = calcSubtotal(cart);
+      const code = String(couponCode?.value || "").trim().toUpperCase();
+
+      if(!code) return toastCoupon("請輸入優惠碼", false);
+      if(subtotal <= 0) return toastCoupon("購物車是空的", false);
+
+      try{
+        btnApplyCoupon.disabled = true;
+        toastCoupon("驗證中…");
+
         const { out } = await validateCoupon(code, subtotal);
 
         if(!out || out.ok !== true){
           APPLIED = { code:"", discount:0, note:"" };
           renderAll();
-          toastCoupon(couponErrorText(out?.error), false);
-          return;
+          return toastCoupon(couponErrorText(out?.error), false);
         }
 
-        APPLIED.discount = Math.max(0, Number(out.discount || 0));
+        APPLIED = {
+          code: out.code || code,
+          discount: Math.max(0, Number(out.discount || 0)),
+          note: String(out.note || "")
+        };
+
         renderAll();
+        toastCoupon(`已套用 ${APPLIED.code} ✅ 折抵 ${money(APPLIED.discount)}`);
+
       }catch(e){
-        console.warn("revalidate failed", e);
+        console.error(e);
+        APPLIED = { code:"", discount:0, note:"" };
+        renderAll();
+        toastCoupon("系統忙碌，請稍後再試", false);
+      }finally{
+        btnApplyCoupon.disabled = false;
       }
-    }, 350);
-  }
-
-  // ✅ 結帳（示意）：如果有套用優惠碼 → 真正寫入 coupon_uses
-  async function checkout(){
-    const cart = readCart();
-    const subtotal = calcSubtotal(cart);
-
-    if(subtotal <= 0){
-      toast("購物車是空的", false);
-      return;
     }
 
-    const memberId = getMemberId();
-    const orderId = "O-" + Date.now();
+    let revalidateTimer = null;
+    async function maybeRevalidateCoupon(clearIfEmpty=false){
+      if(!APPLIED.code) return;
 
-    try{
-      btnCheckout.disabled = true;
+      const cart = readCart();
+      const subtotal = calcSubtotal(cart);
 
-      if(APPLIED.code){
-        toastCoupon("結帳中：寫入優惠碼使用紀錄…");
+      if(subtotal <= 0){
+        if(clearIfEmpty){
+          APPLIED = { code:"", discount:0, note:"" };
+          if(couponCode) couponCode.value = "";
+          toastCoupon("購物車空了，已清除優惠碼");
+        }
+        renderAll();
+        return;
+      }
 
-        const res = await fetch(`${GAS_URL}?path=coupon_use&key=${encodeURIComponent(ADMIN_KEY)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            code: APPLIED.code,
-            memberId,
-            subtotal,
-            orderId
-          })
-        });
+      clearTimeout(revalidateTimer);
+      revalidateTimer = setTimeout(async ()=>{
+        try{
+          const { out } = await validateCoupon(APPLIED.code, subtotal);
 
-        const out = await res.json();
+          if(!out || out.ok !== true){
+            APPLIED = { code:"", discount:0, note:"" };
+            renderAll();
+            toastCoupon(couponErrorText(out?.error), false);
+            return;
+          }
 
-        if(!res.ok || !out?.ok){
-          toastCoupon(couponErrorText(out?.error), false);
-          btnCheckout.disabled = false;
-          return;
+          APPLIED.discount = Math.max(0, Number(out.discount || 0));
+          renderAll();
+        }catch(e){
+          console.warn("revalidate failed", e);
+        }
+      }, 350);
+    }
+
+    async function checkout(){
+      const cart = readCart();
+      const subtotal = calcSubtotal(cart);
+      if(subtotal <= 0) return toast("購物車是空的", false);
+
+      const memberId = getMemberId();
+      const orderId = "O-" + Date.now();
+
+      try{
+        btnCheckout.disabled = true;
+
+        if(APPLIED.code){
+          toastCoupon("結帳中：寫入優惠碼使用紀錄…");
+
+          const res = await fetch(`${GAS_URL}?path=coupon_use&key=${encodeURIComponent(ADMIN_KEY)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code: APPLIED.code, memberId, subtotal, orderId })
+          });
+
+          const out = await res.json();
+
+          if(!res.ok || !out?.ok){
+            toastCoupon(couponErrorText(out?.error), false);
+            btnCheckout.disabled = false;
+            return;
+          }
+
+          toastCoupon(`✅ 優惠碼已使用：${out.code}（折抵 ${money(out.discount)}）`);
         }
 
-        toastCoupon(`✅ 優惠碼已使用：${out.code}（折抵 ${money(out.discount)}）`);
+        clearCart();
+        toast("結帳完成（示意）✅");
+
+      }catch(e){
+        console.error(e);
+        toast("結帳失敗，請稍後再試", false);
+      }finally{
+        renderAll();
       }
-
-      // ✅ 示意：清空購物車
-      clearCart();
-      toast("結帳完成（示意）✅");
-
-    }catch(e){
-      console.error(e);
-      toast("結帳失敗，請稍後再試", false);
-    }finally{
-      // 重新 render，避免按鈕卡住
-      renderAll();
     }
-  }
 
-  // events
-  btnClear?.addEventListener("click", ()=>{
-    if(confirm("確定要清空購物車嗎？")) clearCart();
-  });
+    // events
+    btnClear?.addEventListener("click", ()=>{
+      if(confirm("確定要清空購物車嗎？")) clearCart();
+    });
 
-  btnApplyCoupon?.addEventListener("click", applyCoupon);
-  couponCode?.addEventListener("keydown", (e)=>{
-    if(e.key === "Enter") applyCoupon();
-  });
+    btnApplyCoupon?.addEventListener("click", applyCoupon);
+    couponCode?.addEventListener("keydown", (e)=>{ if(e.key === "Enter") applyCoupon(); });
 
-  btnCheckout?.addEventListener("click", checkout);
+    btnCheckout?.addEventListener("click", checkout);
 
-  // 如果你其他頁有用 window.dispatchEvent(new Event("cart:changed"));
-  window.addEventListener("cart:changed", ()=>{
-    renderAll();
-    maybeRevalidateCoupon();
-  });
+    window.addEventListener("cart:changed", ()=>{
+      renderAll();
+      maybeRevalidateCoupon();
+    });
 
-  (async ()=>{
-    await loadSettings();
-    await loadProductsIndex();
-    renderAll();
+    (async ()=>{
+      await loadSettings();
+      await loadProductsIndex();
+      renderAll();
+    })();
   })();
-</script>
-<script src="./include.js"></script>
-</body>
+  </script>
 
 </body>
-
 </html>
