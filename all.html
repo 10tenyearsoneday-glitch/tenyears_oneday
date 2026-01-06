@@ -6,6 +6,167 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
+
+  <!-- ✅ 商品 Modal 專用（避免撞到 include.js 的 checkout/cart modal） -->
+  <style>
+    /* =========================
+       Product Modal (Canva Feel, scoped)
+    ========================= */
+    #pdBackdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.35);
+      display:none;
+      z-index:12000;
+      padding:18px;
+      overflow:auto;
+      align-items:center;
+      justify-content:center;
+    }
+    #pdBackdrop.open{ display:flex; }
+
+    #pdBackdrop .pd-panel{
+      width:min(560px, 100%);
+      background:#fff;
+      border-radius:22px;
+      box-shadow:0 18px 55px rgba(0,0,0,.18);
+      overflow:hidden;
+      position:relative;
+    }
+
+    #pdBackdrop .pd-close{
+      position:absolute;
+      right:12px;
+      top:12px;
+      width:38px;
+      height:38px;
+      border:none;
+      border-radius:999px;
+      background:rgba(0,0,0,.08);
+      cursor:pointer;
+      font-size:18px;
+      z-index:2;
+    }
+
+    #pdBackdrop .pd-body{
+      padding:14px;
+      text-align:center;
+    }
+
+    #pdBackdrop .pd-media{
+      border-radius:18px;
+      overflow:hidden;
+      background:#f3f3f3;
+    }
+    #pdBackdrop #pdMainImg{
+      width:100%;
+      height:auto;
+      display:block;
+      object-fit:cover;
+    }
+
+    #pdBackdrop .pd-thumbs{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      margin:12px 0 10px;
+      overflow:auto;
+      padding-bottom:2px;
+    }
+    #pdBackdrop .pd-thumbs button{
+      border:none;
+      background:transparent;
+      padding:0;
+      cursor:pointer;
+      border-radius:12px;
+    }
+    #pdBackdrop .pd-thumbs img{
+      width:62px;
+      height:50px;
+      object-fit:cover;
+      border-radius:12px;
+      border:2px solid transparent;
+      display:block;
+    }
+    #pdBackdrop .pd-thumbs button.active img{
+      border-color:#5d6b59;
+    }
+
+    #pdBackdrop .pd-title{
+      margin:6px 0 6px;
+      font-size:1.15rem;
+      font-weight:700;
+      color:#2c3a2c;
+    }
+    #pdBackdrop .pd-price{
+      font-size:1.7rem;
+      font-weight:900;
+      color:#8aa08d;
+      margin:2px 0 12px;
+    }
+
+    #pdBackdrop .pd-qtybar{
+      margin:6px 0 12px;
+    }
+    #pdBackdrop .pd-qtylabel{
+      font-weight:700;
+      margin-bottom:8px;
+      color:#2c3a2c;
+    }
+
+    #pdBackdrop .qty{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(0,0,0,.06);
+      width:max-content;
+      margin:0 auto;
+    }
+    #pdBackdrop .qty-btn{
+      width:40px;
+      height:40px;
+      border:none;
+      border-radius:999px;
+      background:rgba(255,255,255,.95);
+      cursor:pointer;
+      font-size:20px;
+      line-height:1;
+    }
+    #pdBackdrop .qty-input{
+      width:74px;
+      text-align:center;
+      border:1px solid rgba(0,0,0,.12);
+      border-radius:14px;
+      padding:10px 10px;
+      background:#fff;
+      font-size:1.05rem;
+    }
+
+    #pdBackdrop .pd-cta{
+      width:100%;
+      border:none;
+      border-radius:18px;
+      padding:14px 14px;
+      background:#8aa08d;
+      color:#fff;
+      font-weight:900;
+      font-size:1.08rem;
+      cursor:pointer;
+      margin-top:12px;
+    }
+
+    #pdBackdrop .pd-desc{
+      margin-top:14px;
+      text-align:left;
+      white-space:pre-wrap;
+      line-height:1.7;
+      color:rgba(47,58,44,.85);
+      font-size:.95rem;
+    }
+  </style>
 </head>
 
 <body>
@@ -42,14 +203,34 @@
   </div>
 </footer>
 
-<!-- ✅ 商品 Modal（只有商品，不含購物車抽屜） -->
-<div class="ui-backdrop" id="pdBackdrop" aria-hidden="true">
-  <div class="ui-panel" role="dialog" aria-modal="true">
-    <div class="ui-hd">
-      <div style="font-weight:900;">商品資訊</div>
-      <button class="ui-close" id="pdClose">×</button>
+<!-- ✅ 商品 Modal（獨立版：不使用 ui-backdrop / ui-panel / pd-wrap，避免與 include.js 衝突） -->
+<div id="pdBackdrop" aria-hidden="true">
+  <div class="pd-panel" role="dialog" aria-modal="true" aria-label="商品">
+    <button class="pd-close" id="pdClose" type="button" aria-label="關閉">×</button>
+
+    <div class="pd-body">
+      <div class="pd-media">
+        <img id="pdMainImg" src="" alt="">
+      </div>
+
+      <div class="pd-thumbs" id="pdThumbs"></div>
+
+      <h3 class="pd-title" id="pdTitle"></h3>
+      <div class="pd-price" id="pdPrice"></div>
+
+      <div class="pd-qtybar">
+        <div class="pd-qtylabel">數量</div>
+        <div class="qty">
+          <button class="qty-btn" id="pdQtyMinus" type="button">−</button>
+          <input class="qty-input" id="pdQty" type="number" value="1" min="1" step="1">
+          <button class="qty-btn" id="pdQtyPlus" type="button">+</button>
+        </div>
+      </div>
+
+      <button class="pd-cta" id="pdAddToCart" type="button">加入購物車</button>
+
+      <div class="pd-desc" id="pdDesc"></div>
     </div>
-    <div class="pd-wrap" id="pdWrap"></div>
   </div>
 </div>
 
@@ -62,11 +243,21 @@
 
   const grid = document.getElementById("productGrid");
   const chips = document.querySelectorAll("#subcats .chip");
+
   const pdBackdrop = document.getElementById("pdBackdrop");
-  const pdWrap = document.getElementById("pdWrap");
   const pdClose = document.getElementById("pdClose");
+  const pdMainImg = document.getElementById("pdMainImg");
+  const pdThumbs = document.getElementById("pdThumbs");
+  const pdTitle = document.getElementById("pdTitle");
+  const pdPrice = document.getElementById("pdPrice");
+  const pdDesc = document.getElementById("pdDesc");
+  const pdAddToCart = document.getElementById("pdAddToCart");
+  const pdQty = document.getElementById("pdQty");
+  const pdQtyMinus = document.getElementById("pdQtyMinus");
+  const pdQtyPlus = document.getElementById("pdQtyPlus");
 
   let ALL_PRODUCTS = [];
+  let CURRENT_PRODUCT = null;
 
   /* ---------- helpers ---------- */
   const getPid = p => String(p?.id ?? p?._id ?? "");
@@ -74,18 +265,28 @@
   function getImages(p){
     let arr = [];
     ["image","image2","image3","image4","image5","cover"].forEach(k=>{
-      if(p[k]) arr.push(p[k]);
+      if(p && p[k]) arr.push(p[k]);
     });
-    if(Array.isArray(p.images)) arr.push(...p.images);
+    if(Array.isArray(p?.images)) arr.push(...p.images);
     arr = [...new Set(arr)].filter(Boolean);
     return arr.length ? arr : ["assets/placeholder.png"];
+  }
+
+  function getDesc(p){
+    return (
+      p?.description ??
+      p?.desc ??
+      p?.content ??
+      p?.detail ??
+      ""
+    );
   }
 
   function addToCart(product, qty){
     qty = Math.max(1, Math.floor(qty || 1));
     const cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-const hit = cart.find(x => String(x.id) === String(product.id));
 
+    const hit = cart.find(x => String(x.id) === String(product.id));
     if(hit){
       hit.qty += qty;
     }else{
@@ -102,7 +303,7 @@ const hit = cart.find(x => String(x.id) === String(product.id));
       <a href="#" class="product-link js-open-product" data-id="${getPid(p)}">
         <div class="product">
           <div class="thumb">
-            <img src="${img}" loading="${i<2?'eager':'lazy'}">
+            <img src="${img}" loading="${i<2?'eager':'lazy'}" alt="">
           </div>
           <div class="body">
             <div>
@@ -139,50 +340,85 @@ const hit = cart.find(x => String(x.id) === String(product.id));
 
   /* ---------- modal ---------- */
   function openProduct(p){
+    if(!p) return;
+
+    CURRENT_PRODUCT = p;
+
     const imgs = getImages(p);
-    pdWrap.innerHTML = `
-      <div class="pd-grid">
-        <div class="pd-media">
-          <img id="pdMain" src="${imgs[0]}">
-          ${imgs.length>1?`
-          <div class="pd-thumbs">
-            ${imgs.map(s=>`<button data-src="${s}"><img src="${s}"></button>`).join("")}
-          </div>`:""}
-        </div>
-        <div class="pd-info">
-          <h2>${p.title}</h2>
-          <div class="pd-price">NT$ ${p.price}</div>
-          <p>${p.description||""}</p>
 
-          <div class="pd-actions">
-            <input id="qty" type="number" min="1" value="1">
-            <button id="add">加入購物車</button>
-          </div>
-        </div>
-      </div>
-    `;
+    // 主圖
+    pdMainImg.src = imgs[0] || "assets/placeholder.png";
 
-    pdWrap.querySelectorAll(".pd-thumbs button").forEach(b=>{
-      b.onclick=()=>pdWrap.querySelector("#pdMain").src=b.dataset.src;
-    });
+    // 縮圖
+    pdThumbs.innerHTML = "";
+    if(imgs.length > 1){
+      imgs.forEach((src, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        if(idx === 0) btn.classList.add("active");
+        btn.innerHTML = `<img src="${src}" alt="">`;
+        btn.addEventListener("click", () => {
+          pdMainImg.src = src;
+          [...pdThumbs.querySelectorAll("button")].forEach(b=>b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+        pdThumbs.appendChild(btn);
+      });
+    }
 
-    pdWrap.querySelector("#add").onclick=()=>{
-      addToCart({
-        id:getPid(p),
-        title:p.title,
-        price:p.price,
-        image:imgs[0]
-      }, Number(pdWrap.querySelector("#qty").value));
-    };
+    // 文案
+    pdTitle.textContent = p.title || "";
+    pdPrice.textContent = `NT$ ${Number(p.price || 0)}`;
+    pdDesc.textContent = getDesc(p);
 
+    // 數量
+    pdQty.value = 1;
+
+    // 開啟
     pdBackdrop.classList.add("open");
+    pdBackdrop.setAttribute("aria-hidden","false");
   }
 
-  pdClose.onclick=()=>pdBackdrop.classList.remove("open");
-  pdBackdrop.onclick=e=>{ if(e.target===pdBackdrop) pdBackdrop.classList.remove("open"); };
+  function closeProduct(){
+    pdBackdrop.classList.remove("open");
+    pdBackdrop.setAttribute("aria-hidden","true");
+    CURRENT_PRODUCT = null;
+  }
 
-  document.addEventListener("click",e=>{
-    const a=e.target.closest(".js-open-product");
+  pdClose.addEventListener("click", closeProduct);
+  pdBackdrop.addEventListener("click", (e) => {
+    if(e.target === pdBackdrop) closeProduct();
+  });
+  window.addEventListener("keydown", (e) => {
+    if(e.key === "Escape" && pdBackdrop.classList.contains("open")) closeProduct();
+  });
+
+  pdQtyMinus.addEventListener("click", () => {
+    pdQty.value = Math.max(1, Number(pdQty.value || 1) - 1);
+  });
+  pdQtyPlus.addEventListener("click", () => {
+    pdQty.value = Math.max(1, Number(pdQty.value || 1) + 1);
+  });
+
+  pdAddToCart.addEventListener("click", () => {
+    if(!CURRENT_PRODUCT) return;
+    const imgs = getImages(CURRENT_PRODUCT);
+    const qty = Math.max(1, Number(pdQty.value || 1));
+
+    addToCart({
+      id: getPid(CURRENT_PRODUCT),
+      title: CURRENT_PRODUCT.title,
+      price: Number(CURRENT_PRODUCT.price || 0),
+      image: imgs[0] || "",
+      category: CURRENT_PRODUCT.category || "",
+      series: CURRENT_PRODUCT.series || ""
+    }, qty);
+
+    closeProduct();
+  });
+
+  document.addEventListener("click", e=>{
+    const a = e.target.closest(".js-open-product");
     if(!a) return;
     e.preventDefault();
     openProduct(ALL_PRODUCTS.find(p=>getPid(p)===a.dataset.id));
@@ -192,13 +428,14 @@ const hit = cart.find(x => String(x.id) === String(product.id));
   fetch(`${API_BASE}/products`)
     .then(r=>r.json())
     .then(d=>{
-      ALL_PRODUCTS=d||[];
+      ALL_PRODUCTS = d || [];
       applyFilter("全部");
-    });
+    })
+    .catch(err => console.warn("load products failed", err));
 })();
 </script>
-  <script src="./include.js"></script>
+
+<!-- ✅ include.js 放最後（會插入 header + cart drawer） -->
+<script src="./include.js"></script>
 </body>
-
-
 </html>
