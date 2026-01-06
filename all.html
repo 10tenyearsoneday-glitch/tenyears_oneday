@@ -87,7 +87,8 @@
   function addToCart(product, qty){
     qty = Math.max(1, Math.floor(qty || 1));
     const cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-    const hit = cart.find(x => x.id === product.id);
+const hit = cart.find(x => String(x.id) === String(product.id));
+
     if(hit){
       hit.qty += qty;
     }else{
