@@ -5,10 +5,13 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/style.css?v=20260107">
 </head>
 
 <body>
+
+<!-- ✅ 先載入 include.js：它會插 header + drawer + checkout modal + TEN.addToCart -->
+<script src="./include.js"></script>
 
 <main>
   <div class="subcats" id="subcats">
@@ -55,7 +58,6 @@
 <script>
 (() => {
   const API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
-  const CART_KEY = "ten_cart";
 
   const grid = document.getElementById("productGrid");
   const chips = document.querySelectorAll("#subcats .chip");
@@ -69,47 +71,26 @@
   const getPid = (p) => String(p?.id ?? p?._id ?? "").trim();
 
   function parseImagesField(v){
-    // 支援：多行字串 / 逗號分隔 / 陣列
     if (Array.isArray(v)) return v.map(s => String(s).trim()).filter(Boolean);
     const s = String(v || "").trim();
     if (!s) return [];
-    return s
-      .split(/[\n,]+/g)
-      .map(x => x.trim())
-      .filter(Boolean);
+    return s.split(/[\n,]+/g).map(x => x.trim()).filter(Boolean);
   }
 
   function getImages(p){
     let arr = [];
 
-    // 單圖欄位（你現在有 image）
     ["image","image2","image3","image4","image5","cover"].forEach(k => {
       if (p && p[k]) arr.push(String(p[k]).trim());
     });
 
-    // 多圖欄位（你 Sheet/後台是 images：多行字串）
-    // 這裡同時兼容 p.images / p.Images / p["images"]
-    const multi =
-      (p && (p.images ?? p.Images ?? p["images"])) ?? "";
+    const multi = (p && (p.images ?? p.Images ?? p["images"])) ?? "";
     arr.push(...parseImagesField(multi));
 
-    // 也兼容你未來改成 images: [] 的情況
     if (Array.isArray(p?.images)) arr.push(...p.images);
 
     arr = [...new Set(arr)].filter(Boolean);
     return arr.length ? arr : ["assets/placeholder.png"];
-  }
-
-  function addToCart(product, qty){
-    qty = Math.max(1, Math.floor(qty || 1));
-    const cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-    const hit = cart.find(x => String(x.id) === String(product.id));
-
-    if(hit) hit.qty += qty;
-    else cart.push({ ...product, qty });
-
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    window.dispatchEvent(new Event("cart:changed"));
   }
 
   function money(n){
@@ -166,8 +147,6 @@
     const imgs = getImages(p);
     const title = p.title || "";
     const price = Number(p.price || 0);
-
-    // ✅ 內容欄位：你後台/Sheet 是 desc（不是 description）
     const desc = String(p.desc ?? p.description ?? "").trim();
 
     pdWrap.innerHTML = `
@@ -203,7 +182,6 @@
         </div>
 
         <button class="pd-add" id="pdAdd" type="button">加入購物車</button>
-
         <div class="pd-toast" id="pdToast" style="display:none;"></div>
       </div>
     `;
@@ -234,14 +212,22 @@
     inc.onclick = () => { qtyEl.value = String(normQty() + 1); };
     qtyEl.onchange = normQty;
 
-    // add to cart
+    // ✅ add to cart：改用 include.js 的 TEN.addToCart（唯一版本）
     pdWrap.querySelector("#pdAdd").onclick = () => {
       const qty = normQty();
-      addToCart({
+
+      if (!window.TEN || typeof window.TEN.addToCart !== "function") {
+        toast.style.display = "block";
+        toast.textContent = "加入失敗：TEN.addToCart 未載入";
+        setTimeout(()=> toast.style.display="none", 1600);
+        return;
+      }
+
+      window.TEN.addToCart({
         id: getPid(p),
-        title: title,
-        price: price,
-        image: imgs[0]
+        title,
+        price,
+        image: imgs[0],
       }, qty);
 
       toast.style.display = "block";
@@ -283,6 +269,5 @@
 })();
 </script>
 
-<script src="./include.js"></script>
 </body>
 </html>
