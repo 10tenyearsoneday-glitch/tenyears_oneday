@@ -1,38 +1,32 @@
-// include.js（方案 A：header + badge + cart drawer + coupon）
-// - 插入 header.html
-// - nav/icon active
-// - 右上角購物車 badge (#cartCount)
-// - 點購物車 icon 直接開抽屜（不用跳 cart.html）
-// - 抽屜內：商品列表/數量/刪除/小計/運費/免運差額/優惠碼/結帳（示意寫入 coupon_use）
-// - 避免重複宣告：全部掛在 window.TEN_* 上並做初始化鎖
+// include.js (Clean A)
+// - header.html 內含：header + nav + cart drawer/backdrop + checkout modal DOM
+// - include.js 只負責：插入 header、active 狀態、badge、抽屜互動、優惠碼/結帳（示意）
 
 (() => {
   if (window.TEN_INCLUDE_LOADED) return;
   window.TEN_INCLUDE_LOADED = true;
 
-  // ===== 全域設定（避免各頁 const 重複宣告爆掉）=====
+  // ===== 設定 / 常數 =====
   window.API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
 
   const CART_KEY = "ten_cart";
   const MEMBER_KEY = "ten_member_id";
 
-  // 你 cart.html 用的 GAS（沿用）
-  const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-  const ADMIN_KEY = "10years1day911321"; // ⚠️ 前端公開會曝光；先照你現況沿用
+  const GAS_URL =
+    "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+  const ADMIN_KEY = "10years1day911321"; // ⚠️ 前端會曝光；先照你現況沿用
 
-  // settings 預設（後台抓不到也不會壞）
   window.TEN_SETTINGS = window.TEN_SETTINGS || {
     shipping_enabled: true,
     shipping_fee: 60,
     free_shipping_threshold: 1000,
     first_purchase_discount: 0.9,
-    birthday_discount: 0.85
+    birthday_discount: 0.85,
   };
 
-  // 已套用優惠碼狀態
   window.TEN_APPLIED = window.TEN_APPLIED || { code: "", discount: 0, note: "" };
 
-  // ===== 共用工具 =====
+  // ===== 工具 =====
   function getMemberId() {
     let id = localStorage.getItem(MEMBER_KEY);
     if (!id) {
@@ -78,18 +72,19 @@
     return String(z).replace(/\.0$/, "");
   }
 
-  // ===== Header =====
+  // ===== Header 插入 + Active 狀態 =====
   async function loadHeader() {
     if (document.documentElement.dataset.headerLoaded === "1") return;
     document.documentElement.dataset.headerLoaded = "1";
 
     try {
       const res = await fetch("./header.html", { cache: "no-store" });
+      if (!res.ok) throw new Error(`header fetch ${res.status}`);
       const html = await res.text();
       document.body.insertAdjacentHTML("afterbegin", html);
 
       // nav active
-      const page = location.pathname.split("/").pop() || "index.html";
+      const page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
       const navKey = page.replace(".html", "");
       const navLink = document.querySelector(`.nav-row a[data-nav="${navKey}"]`);
       if (navLink) navLink.classList.add("active");
@@ -102,9 +97,11 @@
         if (icon) icon.classList.add("active");
       }
 
-      ensureCartBadgeNode();
-      ensureCartDrawerNode();
-      bindCartIconOpen();
+      ensureCartBadgeNode();     // 若 header.html 沒放 badge，補上
+      ensureDrawerEnhancements(); // 若 header.html 沒放 promo/coupon 區，補上
+      bindDrawerClose();         // 綁 close/backdrop/ESC
+      bindCartIconOpen();        // 綁 icon 開抽屜
+      bindDrawerActions();       // 綁抽屜內操作（委派）
 
     } catch (e) {
       console.warn("loadHeader failed:", e);
@@ -123,6 +120,94 @@
     cartA.appendChild(span);
   }
 
+  // ===== Drawer：以 header.html 的 DOM 為主（A 架構）=====
+  function openDrawer() {
+    const bd = document.getElementById("cartBackdrop");
+    const dr = document.getElementById("cartDrawer");
+    if (!bd || !dr) return;
+
+    bd.classList.add("open");
+    dr.classList.add("open");
+    document.body.style.overflow = "hidden";
+
+    // 同步輸入框（若存在）
+    const inp = document.getElementById("drawerCouponCode");
+    if (inp && window.TEN_APPLIED?.code) inp.value = window.TEN_APPLIED.code;
+
+    renderDrawer();
+  }
+
+  function closeDrawer() {
+    const bd = document.getElementById("cartBackdrop");
+    const dr = document.getElementById("cartDrawer");
+    if (!bd || !dr) return;
+
+    bd.classList.remove("open");
+    dr.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  function bindDrawerClose() {
+    // 防止重複綁定
+    if (window.TEN_DRAWER_CLOSE_BOUND) return;
+    window.TEN_DRAWER_CLOSE_BOUND = true;
+
+    document.getElementById("cartClose")?.addEventListener("click", closeDrawer);
+    document.getElementById("cartBackdrop")?.addEventListener("click", closeDrawer);
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeDrawer();
+    });
+  }
+
+  function bindCartIconOpen() {
+    if (window.TEN_CART_ICON_BOUND) return;
+    window.TEN_CART_ICON_BOUND = true;
+
+    const cartA = document.querySelector('.icon-row a[data-icon="cart"]');
+    if (!cartA) return;
+
+    cartA.addEventListener("click", (e) => {
+      e.preventDefault();
+      openDrawer();
+    });
+  }
+
+  // 若 header.html 沒有 promo tips / coupon 區塊，這裡補上（不影響原本抽屜）
+  function ensureDrawerEnhancements() {
+    const drawer = document.getElementById("cartDrawer");
+    if (!drawer) return;
+
+    // promo tips 放在抽屜 body 最上方
+    const bd = drawer.querySelector(".d-bd");
+    if (bd && !document.getElementById("cartPromoTips")) {
+      const tips = document.createElement("div");
+      tips.id = "cartPromoTips";
+      tips.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;";
+      bd.insertAdjacentElement("afterbegin", tips);
+    }
+
+    // coupon 區塊放在 footer（.d-ft）底部
+    const ft = drawer.querySelector(".d-ft");
+    if (ft && !document.getElementById("drawerCouponCode")) {
+      const wrap = document.createElement("div");
+      wrap.innerHTML = `
+        <div style="height:1px;background:rgba(0,0,0,.06);margin:10px 0;"></div>
+
+        <div class="coupon" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input id="drawerCouponCode" placeholder="輸入優惠碼（例如 HELLO）" autocomplete="off"
+            style="flex:1;min-width:180px;padding:10px 10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.85);outline:none;text-transform:uppercase">
+          <button id="drawerApplyCoupon" type="button"
+            style="flex:0 0 auto;padding:10px 12px;border-radius:999px;border:none;background:rgba(0,0,0,.08);cursor:pointer">
+            套用
+          </button>
+        </div>
+        <div id="drawerCouponToast" class="toast" style="margin-top:8px;font-size:.9rem;"></div>
+      `;
+      ft.appendChild(wrap);
+    }
+  }
+
+  // ===== badge =====
   function renderCartBadge() {
     const el = document.getElementById("cartCount");
     if (!el) return;
@@ -138,134 +223,7 @@
     }
   }
 
-  // ===== Drawer DOM =====
-  function ensureCartDrawerNode() {
-    if (document.getElementById("cartDrawer")) return;
-
-    document.body.insertAdjacentHTML("beforeend", `
-      <div class="drawer-backdrop" id="cartDrawerBackdrop" aria-hidden="true"></div>
-
-      <aside class="drawer" id="cartDrawer" aria-hidden="true">
-        <div class="d-hd">
-          <div class="d-title">購物車</div>
-          <button class="ui-close" id="cartDrawerClose" type="button" aria-label="關閉">×</button>
-        </div>
-
-        <div class="d-bd">
-          <div id="cartPromoTips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
-          <div class="d-items" id="cartItems"></div>
-
-          <div id="cartToast" class="pd-toast" style="display:none;margin-top:10px;">已更新 ✅</div>
-        </div>
-
-        <div class="d-ft">
-          <div class="d-sumrow"><span>小計</span><strong id="cartSumSubtotal">NT$ 0</strong></div>
-          <div class="d-sumrow"><span>折扣</span><strong id="cartSumDiscount">- NT$ 0</strong></div>
-          <div class="d-sumrow"><span>運費</span><strong id="cartSumShipping">NT$ 0</strong></div>
-          <div class="d-sumrow d-total"><span>合計</span><strong id="cartSumTotal">NT$ 0</strong></div>
-
-          <div style="height:1px;background:rgba(0,0,0,.06);margin:10px 0;"></div>
-
-          <div class="coupon" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <input id="drawerCouponCode" placeholder="輸入優惠碼（例如 HELLO）" autocomplete="off"
-              style="flex:1;min-width:180px;padding:10px 10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.85);outline:none;text-transform:uppercase">
-            <button class="d-actions secondary" id="drawerApplyCoupon" type="button"
-              style="flex:0 0 auto;padding:10px 12px;border-radius:999px;border:none;background:rgba(0,0,0,.08);cursor:pointer">
-              套用
-            </button>
-          </div>
-          <div id="drawerCouponToast" class="toast" style="margin-top:8px;font-size:.9rem;"></div>
-
-          <div class="d-actions" style="margin-top:10px;display:flex;gap:10px;">
-            <button class="secondary" id="drawerClearCart" type="button">清空</button>
-            <button class="primary" id="drawerCheckout" type="button">結帳</button>
-          </div>
-        </div>
-      </aside>
-    `);
-
-    // 綁關閉
-    document.getElementById("cartDrawerClose")?.addEventListener("click", closeDrawer);
-    document.getElementById("cartDrawerBackdrop")?.addEventListener("click", closeDrawer);
-
-    // 綁清空
-    document.getElementById("drawerClearCart")?.addEventListener("click", () => {
-      if (!confirm("確定要清空購物車嗎？")) return;
-      writeCart([]);
-      window.TEN_APPLIED = { code: "", discount: 0, note: "" };
-      const inp = document.getElementById("drawerCouponCode");
-      if (inp) inp.value = "";
-      renderDrawer();
-    });
-
-    // 綁套用優惠碼
-    document.getElementById("drawerApplyCoupon")?.addEventListener("click", applyCouponFromDrawer);
-    document.getElementById("drawerCouponCode")?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") applyCouponFromDrawer();
-    });
-
-    // 綁結帳（示意）
-    document.getElementById("drawerCheckout")?.addEventListener("click", checkoutFromDrawer);
-
-    // 事件委派：+/-/刪除/改 qty
-    document.getElementById("cartItems")?.addEventListener("click", (e) => {
-      const incBtn = e.target.closest("[data-inc]");
-      const decBtn = e.target.closest("[data-dec]");
-      const delBtn = e.target.closest("[data-del]");
-
-      if (incBtn) return changeQty(incBtn.getAttribute("data-inc"), +1);
-      if (decBtn) return changeQty(decBtn.getAttribute("data-dec"), -1);
-      if (delBtn) return removeItem(delBtn.getAttribute("data-del"));
-    });
-
-    document.getElementById("cartItems")?.addEventListener("change", (e) => {
-      const inp = e.target.closest("[data-qty]");
-      if (!inp) return;
-      setQty(inp.getAttribute("data-qty"), inp.value);
-    });
-  }
-
-  function openDrawer() {
-    const bd = document.getElementById("cartDrawerBackdrop");
-    const dr = document.getElementById("cartDrawer");
-    if (!bd || !dr) return;
-
-    bd.classList.add("open");
-    dr.classList.add("open");
-    bd.setAttribute("aria-hidden", "false");
-    dr.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-
-    // 同步輸入框顯示目前 code
-    const inp = document.getElementById("drawerCouponCode");
-    if (inp && window.TEN_APPLIED?.code) inp.value = window.TEN_APPLIED.code;
-
-    renderDrawer();
-  }
-
-  function closeDrawer() {
-    const bd = document.getElementById("cartDrawerBackdrop");
-    const dr = document.getElementById("cartDrawer");
-    if (!bd || !dr) return;
-
-    bd.classList.remove("open");
-    dr.classList.remove("open");
-    bd.setAttribute("aria-hidden", "true");
-    dr.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
-  }
-
-  function bindCartIconOpen() {
-    const cartA = document.querySelector('.icon-row a[data-icon="cart"]');
-    if (!cartA) return;
-
-    cartA.addEventListener("click", (e) => {
-      e.preventDefault();
-      openDrawer();
-    });
-  }
-
-  // ===== settings（讓免運/折扣跟著後台改）=====
+  // ===== settings（免運/折扣等）=====
   async function loadSettings() {
     const cacheKey = "tyod_settings_cache_v1";
     const cached = localStorage.getItem(cacheKey);
@@ -286,10 +244,14 @@
           ...window.TEN_SETTINGS,
           ...s,
           shipping_fee: Number(s.shipping_fee ?? window.TEN_SETTINGS.shipping_fee),
-          free_shipping_threshold: Number(s.free_shipping_threshold ?? window.TEN_SETTINGS.free_shipping_threshold),
-          first_purchase_discount: Number(s.first_purchase_discount ?? window.TEN_SETTINGS.first_purchase_discount),
+          free_shipping_threshold: Number(
+            s.free_shipping_threshold ?? window.TEN_SETTINGS.free_shipping_threshold
+          ),
+          first_purchase_discount: Number(
+            s.first_purchase_discount ?? window.TEN_SETTINGS.first_purchase_discount
+          ),
           birthday_discount: Number(s.birthday_discount ?? window.TEN_SETTINGS.birthday_discount),
-          shipping_enabled: !!s.shipping_enabled
+          shipping_enabled: !!s.shipping_enabled,
         };
         localStorage.setItem(cacheKey, JSON.stringify(window.TEN_SETTINGS));
       }
@@ -298,7 +260,7 @@
     }
   }
 
-  // ===== 金額計算（使用 cart items 自帶 price；你目前 addToCart 會寫 price）=====
+  // ===== 計算 =====
   function calcSubtotal(cart) {
     return cart.reduce((s, it) => s + Number(it.price || 0) * normalizeQty(it.qty), 0);
   }
@@ -338,14 +300,14 @@
     }
 
     const firstZhe = rateToZhe(S.first_purchase_discount);
-    const bdayZhe  = rateToZhe(S.birthday_discount);
+    const bdayZhe = rateToZhe(S.birthday_discount);
     if (firstZhe) chips.push(`首購 ${firstZhe} 折`);
     if (bdayZhe) chips.push(`生日月 ${bdayZhe} 折`);
 
-    el.innerHTML = chips.map(t => `<span class="pill">${t}</span>`).join("");
+    el.innerHTML = chips.map((t) => `<span class="pill">${t}</span>`).join("");
   }
 
-  // ===== Drawer Render =====
+  // ===== Drawer 渲染 =====
   function itemRowHtml(it) {
     const id = String(it.id);
     const title = it.title || id;
@@ -394,15 +356,16 @@
     const shipping = calcShipping(after);
     const total = after + shipping;
 
-    document.getElementById("cartSumSubtotal").textContent = money(subtotal);
-    document.getElementById("cartSumDiscount").textContent = `- ${money(discount)}`;
-    document.getElementById("cartSumShipping").textContent = money(shipping);
-    document.getElementById("cartSumTotal").textContent = money(total);
+    // ✅ 對上 header.html 的 id
+    document.getElementById("cartSubtotal")?.textContent = money(subtotal);
+    document.getElementById("cartDiscount")?.textContent = `- ${money(discount)}`;
+    document.getElementById("cartShipping")?.textContent = money(shipping);
+    document.getElementById("cartTotal")?.textContent = money(total);
 
     renderPromoTips(after);
 
-    const checkoutBtn = document.getElementById("drawerCheckout");
-    if (checkoutBtn) checkoutBtn.disabled = (subtotal <= 0);
+    const checkoutBtn = document.getElementById("cartGoCheckout");
+    if (checkoutBtn) checkoutBtn.disabled = subtotal <= 0;
   }
 
   function showDrawerToast(msg, ok = true) {
@@ -411,7 +374,9 @@
     el.textContent = msg;
     el.style.display = "block";
     el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
-    setTimeout(() => { el.style.display = "none"; }, 1200);
+    setTimeout(() => {
+      el.style.display = "none";
+    }, 1200);
   }
 
   function showCouponToast(msg, ok = true) {
@@ -419,13 +384,13 @@
     if (!el) return;
     el.textContent = msg;
     el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
-    if (msg) setTimeout(() => { el.textContent = ""; }, 2200);
+    if (msg) setTimeout(() => (el.textContent = ""), 2200);
   }
 
-  // ===== Cart operations =====
+  // ===== Cart 操作 =====
   function setQty(id, qty) {
     const cart = readCart();
-    const i = cart.findIndex(x => String(x.id) === String(id));
+    const i = cart.findIndex((x) => String(x.id) === String(id));
     if (i === -1) return;
     cart[i].qty = normalizeQty(qty);
     writeCart(cart);
@@ -435,7 +400,7 @@
 
   function changeQty(id, delta) {
     const cart = readCart();
-    const i = cart.findIndex(x => String(x.id) === String(id));
+    const i = cart.findIndex((x) => String(x.id) === String(id));
     if (i === -1) return;
     cart[i].qty = normalizeQty(Number(cart[i].qty || 1) + Number(delta || 1));
     writeCart(cart);
@@ -444,7 +409,7 @@
   }
 
   function removeItem(id) {
-    const cart = readCart().filter(x => String(x.id) !== String(id));
+    const cart = readCart().filter((x) => String(x.id) !== String(id));
     writeCart(cart);
     renderDrawer();
     maybeRevalidateCoupon(true);
@@ -453,10 +418,11 @@
   // ===== Coupon =====
   async function validateCoupon(code, subtotal) {
     const memberId = getMemberId();
-    const url = `${GAS_URL}?path=coupon_validate`
-      + `&code=${encodeURIComponent(code)}`
-      + `&memberId=${encodeURIComponent(memberId)}`
-      + `&subtotal=${encodeURIComponent(subtotal)}`;
+    const url =
+      `${GAS_URL}?path=coupon_validate` +
+      `&code=${encodeURIComponent(code)}` +
+      `&memberId=${encodeURIComponent(memberId)}` +
+      `&subtotal=${encodeURIComponent(subtotal)}`;
 
     const res = await fetch(url, { cache: "no-store" });
     const out = await res.json();
@@ -465,15 +431,15 @@
 
   function couponErrorText(err) {
     const m = {
-      "CODE_REQUIRED": "請輸入優惠碼",
-      "INVALID_CODE": "優惠碼不存在",
-      "DISABLED": "此優惠碼已停用",
-      "MIN_SPEND": "未達最低消費門檻",
-      "NOT_STARTED": "優惠尚未開始",
-      "EXPIRED": "優惠已過期",
-      "SOLD_OUT": "優惠已用完",
-      "ALREADY_USED": "你已使用過此優惠碼",
-      "SERVER_ERROR": "系統忙碌，請稍後再試"
+      CODE_REQUIRED: "請輸入優惠碼",
+      INVALID_CODE: "優惠碼不存在",
+      DISABLED: "此優惠碼已停用",
+      MIN_SPEND: "未達最低消費門檻",
+      NOT_STARTED: "優惠尚未開始",
+      EXPIRED: "優惠已過期",
+      SOLD_OUT: "優惠已用完",
+      ALREADY_USED: "你已使用過此優惠碼",
+      SERVER_ERROR: "系統忙碌，請稍後再試",
     };
     return m[String(err || "")] || `套用失敗（${err || "ERROR"}）`;
   }
@@ -501,12 +467,11 @@
       window.TEN_APPLIED = {
         code: out.code || code,
         discount: Math.max(0, Number(out.discount || 0)),
-        note: String(out.note || "")
+        note: String(out.note || ""),
       };
 
       renderDrawer();
       showCouponToast(`已套用 ${window.TEN_APPLIED.code} ✅ 折抵 ${money(window.TEN_APPLIED.discount)}`);
-
     } catch (e) {
       console.error(e);
       window.TEN_APPLIED = { code: "", discount: 0, note: "" };
@@ -515,7 +480,6 @@
     }
   }
 
-  // 套用後改數量：自動重新驗證（避免折扣不跟著變）
   let revalidateTimer = null;
   async function maybeRevalidateCoupon(clearIfEmpty = false) {
     if (!window.TEN_APPLIED?.code) return;
@@ -565,7 +529,6 @@
     const orderId = "O-" + Date.now();
 
     try {
-      // 有優惠碼才寫入 coupon_use
       if (window.TEN_APPLIED?.code) {
         showCouponToast("結帳中：寫入優惠碼使用紀錄…");
         const res = await fetch(`${GAS_URL}?path=coupon_use&key=${encodeURIComponent(ADMIN_KEY)}`, {
@@ -575,8 +538,8 @@
             code: window.TEN_APPLIED.code,
             memberId,
             subtotal,
-            orderId
-          })
+            orderId,
+          }),
         });
         const out = await res.json();
         if (!res.ok || !out?.ok) {
@@ -585,7 +548,6 @@
         showCouponToast(`✅ 優惠碼已使用：${out.code}（折抵 ${money(out.discount)}）`);
       }
 
-      // 清空購物車
       writeCart([]);
       window.TEN_APPLIED = { code: "", discount: 0, note: "" };
       const inp = document.getElementById("drawerCouponCode");
@@ -595,18 +557,61 @@
       renderCartBadge();
       showDrawerToast("結帳完成（示意）✅");
       closeDrawer();
-
     } catch (e) {
       console.error(e);
       showDrawerToast("結帳失敗，請稍後再試", false);
     }
   }
 
+  // ===== Drawer 事件綁定（對 header.html 的 id）=====
+  function bindDrawerActions() {
+    if (window.TEN_DRAWER_ACTIONS_BOUND) return;
+    window.TEN_DRAWER_ACTIONS_BOUND = true;
+
+    // 清空
+    document.getElementById("cartClear")?.addEventListener("click", () => {
+      if (!confirm("確定要清空購物車嗎？")) return;
+      writeCart([]);
+      window.TEN_APPLIED = { code: "", discount: 0, note: "" };
+      const inp = document.getElementById("drawerCouponCode");
+      if (inp) inp.value = "";
+      renderDrawer();
+      renderCartBadge();
+    });
+
+    // 套用優惠碼（如果 UI 被補上或你 header.html 本來就有）
+    document.getElementById("drawerApplyCoupon")?.addEventListener("click", applyCouponFromDrawer);
+    document.getElementById("drawerCouponCode")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") applyCouponFromDrawer();
+    });
+
+    // 結帳（用你 header.html 的 cartGoCheckout）
+    document.getElementById("cartGoCheckout")?.addEventListener("click", checkoutFromDrawer);
+
+    // 抽屜內操作：委派（+/-/刪除）
+    document.getElementById("cartItems")?.addEventListener("click", (e) => {
+      const incBtn = e.target.closest("[data-inc]");
+      const decBtn = e.target.closest("[data-dec]");
+      const delBtn = e.target.closest("[data-del]");
+      if (incBtn) return changeQty(incBtn.getAttribute("data-inc"), +1);
+      if (decBtn) return changeQty(decBtn.getAttribute("data-dec"), -1);
+      if (delBtn) return removeItem(delBtn.getAttribute("data-del"));
+    });
+
+    document.getElementById("cartItems")?.addEventListener("change", (e) => {
+      const inp = e.target.closest("[data-qty]");
+      if (!inp) return;
+      setQty(inp.getAttribute("data-qty"), inp.value);
+    });
+  }
+
   // ===== 同步監聽 =====
   function bindListeners() {
+    if (window.TEN_LISTENERS_BOUND) return;
+    window.TEN_LISTENERS_BOUND = true;
+
     window.addEventListener("cart:changed", () => {
       renderCartBadge();
-      // 抽屜開著就同步更新
       const dr = document.getElementById("cartDrawer");
       if (dr?.classList.contains("open")) renderDrawer();
       maybeRevalidateCoupon();
@@ -628,6 +633,4 @@
     renderCartBadge();
     bindListeners();
   });
-
 })();
-
