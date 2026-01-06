@@ -27,7 +27,9 @@
           <circle cx="17" cy="20" r="1"></circle>
           <path d="M3 4h2l2 10.5a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 2-1.6L21 8H6"></path>
         </svg>
-        <span id="cartCount" class="cart-badge" aria-live="polite" hidden></span>
+
+        <!-- ✅ 改：拿掉 hidden，改用 display:none -->
+        <span id="cartCount" class="cart-badge" aria-live="polite" style="display:none;"></span>
       </a>
 
       <a class="icon" data-icon="member" href="member.html" aria-label="會員" title="會員">
@@ -52,18 +54,18 @@
 </nav>
 
 <!-- ✅ Cart Drawer (共用) -->
-<div class="drawer-backdrop" id="cartBackdrop" hidden></div>
+<!-- ✅ 改：補 aria-hidden -->
+<div class="drawer-backdrop" id="cartBackdrop" aria-hidden="true" hidden></div>
 
-<aside class="drawer" id="cartDrawer" aria-label="購物車" aria-hidden="true">
+<!-- ✅ 改：加 hidden，避免初始擋點擊 -->
+<aside class="drawer" id="cartDrawer" aria-label="購物車" aria-hidden="true" hidden>
   <div class="d-hd">
     <div class="d-title">購物車</div>
     <button class="ui-close" id="cartClose" aria-label="關閉" type="button">×</button>
   </div>
 
-   <div class="d-bd">
-    <!-- ✅ 免運/折扣提示（由 include.js 填入） -->
+  <div class="d-bd">
     <div id="cartPromoTips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
-
     <div class="d-items" id="cartItems"></div>
     <div class="toast" id="cartToast" style="margin-top:10px;"></div>
   </div>
@@ -76,7 +78,6 @@
 
     <div style="height:1px;background:rgba(0,0,0,.06);margin:10px 0;"></div>
 
-    <!-- ✅ 優惠碼 -->
     <div class="coupon" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <input
         id="drawerCouponCode"
@@ -103,7 +104,6 @@
       * 結帳流程用跳出視窗顯示（與商品視窗一致）
     </div>
   </div>
-
 </aside>
 
 <!-- ✅ Checkout Modal -->
