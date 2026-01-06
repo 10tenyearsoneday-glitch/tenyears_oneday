@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <title>十年一日｜優惠後台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body{
+      font-family:'Noto Serif TC',serif;
+      background:#f6f6f4;
+      margin:0;
+      padding:24px;
+      color:#2f3a2c;
+    }
+    h1{margin:0 0 12px;font-size:1.6rem}
+    .wrap{max-width:1100px;margin:auto}
+    .toolbar{display:flex;gap:12px;margin-bottom:16px}
+    button{
+      border:none;
+      border-radius:999px;
+      padding:8px 14px;
+      cursor:pointer;
+      background:#2f3a2c;
+      color:#fff;
+      font-size:.9rem;
+    }
+    button.secondary{background:#bbb;color:#333}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      background:#fff;
+      border-radius:12px;
+      overflow:hidden;
+    }
+    th,td{
+      padding:10px;
+      border-bottom:1px solid #eee;
+      text-align:left;
+      font-size:.9rem;
+      vertical-align:middle;
+    }
+    th{background:#fafafa;font-weight:600}
+    tr:last-child td{border-bottom:none}
+    input,select{
+      width:100%;
+      padding:6px 8px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      font-family:inherit;
+    }
+    .switch{
+      appearance:none;
+      width:40px;height:22px;
+      border-radius:999px;
+      background:#ccc;
+      position:relative;
+      cursor:pointer;
+    }
+    .switch:checked{background:#2f3a2c}
+    .switch::after{
+      content:'';
+      width:18px;height:18px;
+      background:#fff;
+      border-radius:50%;
+      position:absolute;
+      top:2px;left:2px;
+      transition:.2s;
+    }
+    .switch:checked::after{left:20px}
+    .note{opacity:.6;font-size:.8rem;margin-top:8px}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <h1>優惠後台</h1>
+
+  <div class="toolbar">
+    <button id="addCoupon">＋ 新增優惠</button>
+    <button class="secondary" id="reload">重新載入</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>啟用</th>
+        <th>優惠碼</th>
+        <th>類型</th>
+        <th>折數 / 金額</th>
+        <th>最低消費</th>
+        <th>會員限一次</th>
+        <th>最大使用次數</th>
+        <th>備註</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <div class="note">
+    ✔ 直接寫入 Google Sheet「coupons」｜✔ 即時影響前台購物車
+  </div>
+</div>
+
+<script>
+(() => {
+  const GAS_URL =
+    "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+  const ADMIN_KEY = "10years1day911321";
+
+  const tbody = document.getElementById("rows");
+
+  function rowTpl(c){
+    return `
+      <tr data-code="${c.code}">
+        <td><input type="checkbox" class="switch" ${c.enabled?'checked':''}></td>
+        <td><input value="${c.code||''}"></td>
+        <td>
+          <select>
+            <option value="rate" ${c.type==='rate'?'selected':''}>折數</option>
+            <option value="amount" ${c.type==='amount'?'selected':''}>金額</option>
+          </select>
+        </td>
+        <td><input type="number" value="${c.type==='rate'?c.rate:c.amount||''}"></td>
+        <td><input type="number" value="${c.minSpend||0}"></td>
+        <td><input type="checkbox" ${c.oncePerMember?'checked':''}></td>
+        <td><input type="number" value="${c.maxUses||0}"></td>
+        <td><input value="${c.note||''}"></td>
+        <td><button data-del>刪除</button></td>
+      </tr>
+    `;
+  }
+
+  function load(){
+    fetch(`${GAS_URL}?path=coupons`)
+      .then(r=>r.json())
+      .then(list=>{
+        tbody.innerHTML = list.map(rowTpl).join("");
+      });
+  }
+
+  function collect(tr){
+    const tds = tr.querySelectorAll("td");
+    return {
+      enabled: tds[0].querySelector("input").checked,
+      code: tds[1].querySelector("input").value.trim().toUpperCase(),
+      type: tds[2].querySelector("select").value,
+      rate: Number(tds[3].querySelector("input").value),
+      amount: Number(tds[3].querySelector("input").value),
+      minSpend: Number(tds[4].querySelector("input").value),
+      oncePerMember: tds[5].querySelector("input").checked,
+      maxUses: Number(tds[6].querySelector("input").value),
+      note: tds[7].querySelector("input").value
+    };
+  }
+
+  tbody.addEventListener("change", e=>{
+    const tr = e.target.closest("tr");
+    if(!tr) return;
+    const data = collect(tr);
+
+    fetch(`${GAS_URL}?path=coupons&key=${ADMIN_KEY}`,{
+      method:"POST",
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data)
+    });
+  });
+
+  tbody.addEventListener("click", e=>{
+    if(!e.target.dataset.del) return;
+    const tr = e.target.closest("tr");
+    const code = tr.dataset.code;
+    if(!confirm(`刪除 ${code}？`)) return;
+
+    fetch(`${GAS_URL}?path=coupons&key=${ADMIN_KEY}&method=DELETE&code=${code}`,{method:"POST"})
+      .then(()=>tr.remove());
+  });
+
+  document.getElementById("addCoupon").onclick = ()=>{
+    tbody.insertAdjacentHTML("beforeend", rowTpl({
+      enabled:true,code:"",type:"rate",rate:0.9,minSpend:0,oncePerMember:false,maxUses:0,note:""
+    }));
+  };
+
+  document.getElementById("reload").onclick = load;
+
+  load();
+})();
+</script>
+</body>
+</html>
