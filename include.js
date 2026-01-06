@@ -630,3 +630,208 @@
   });
 
 })();
+// =========================
+// Cart Drawer: bind + render (最小可用版)
+// =========================
+(function () {
+  const CART_KEY = (typeof window.CART_KEY === "string" && window.CART_KEY) ? window.CART_KEY : "ten_cart";
+
+  function readCart() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+  function writeCart(items) {
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+    window.dispatchEvent(new Event("cart:changed")); // 讓 badge + 抽屜同步更新
+  }
+
+  function money(n) {
+    n = Math.round(Number(n || 0));
+    return `NT$ ${n}`;
+  }
+  function normalizeQty(n) {
+    n = Number(n || 1);
+    if (!Number.isFinite(n) || n < 1) n = 1;
+    return Math.floor(n);
+  }
+
+  function getEls() {
+    return {
+      cartA: document.querySelector('.icon-row a[data-icon="cart"]'),
+      backdrop: document.getElementById("cartBackdrop"),
+      drawer: document.getElementById("cartDrawer"),
+      closeBtn: document.getElementById("cartClose"),
+
+      itemsEl: document.getElementById("cartItems"),
+      subtotalEl: document.getElementById("cartSubtotal"),
+      discountEl: document.getElementById("cartDiscount"),
+      shippingEl: document.getElementById("cartShipping"),
+      totalEl: document.getElementById("cartTotal"),
+
+      clearBtn: document.getElementById("cartClear"),
+      checkoutBtn: document.getElementById("cartGoCheckout"),
+    };
+  }
+
+  function openCart() {
+    const { backdrop, drawer } = getEls();
+    if (!backdrop || !drawer) return;
+    backdrop.classList.add("open");
+    drawer.classList.add("open");
+    document.body.style.overflow = "hidden";
+    renderCart();
+  }
+
+  function closeCart() {
+    const { backdrop, drawer } = getEls();
+    if (!backdrop || !drawer) return;
+    backdrop.classList.remove("open");
+    drawer.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  function cartRow(it) {
+    const id = String(it.id);
+    const title = it.title || id;
+    const img = it.image || "assets/placeholder.png";
+    const price = Number(it.price || 0);
+    const qty = normalizeQty(it.qty);
+
+    return `
+      <div class="d-item">
+        <div class="d-thumb"><img src="${img}" alt=""></div>
+
+        <div class="d-info">
+          <div class="d-name">${title}</div>
+          <div class="d-meta">${money(price)} × ${qty}</div>
+        </div>
+
+        <div class="d-right">
+          <div class="d-price">${money(price * qty)}</div>
+
+          <div class="d-qty">
+            <button type="button" data-dec="${id}">-</button>
+            <input type="number" min="1" value="${qty}" data-qty="${id}">
+            <button type="button" data-inc="${id}">+</button>
+          </div>
+
+          <button class="d-del" type="button" data-del="${id}">刪除</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCart() {
+    const { itemsEl, subtotalEl, discountEl, shippingEl, totalEl, checkoutBtn } = getEls();
+    if (!itemsEl) return;
+
+    const cart = readCart();
+
+    if (!cart.length) {
+      itemsEl.innerHTML = `<div style="opacity:.75;">購物車目前是空的。</div>`;
+      if (subtotalEl) subtotalEl.textContent = money(0);
+      if (discountEl) discountEl.textContent = `- ${money(0)}`;
+      if (shippingEl) shippingEl.textContent = money(0);
+      if (totalEl) totalEl.textContent = money(0);
+      if (checkoutBtn) checkoutBtn.disabled = true;
+      return;
+    }
+
+    itemsEl.innerHTML = cart.map(cartRow).join("");
+
+    // 綁定事件
+    itemsEl.querySelectorAll("[data-inc]").forEach(btn => {
+      btn.addEventListener("click", () => changeQty(btn.getAttribute("data-inc"), +1));
+    });
+    itemsEl.querySelectorAll("[data-dec]").forEach(btn => {
+      btn.addEventListener("click", () => changeQty(btn.getAttribute("data-dec"), -1));
+    });
+    itemsEl.querySelectorAll("[data-del]").forEach(btn => {
+      btn.addEventListener("click", () => removeItem(btn.getAttribute("data-del")));
+    });
+    itemsEl.querySelectorAll("[data-qty]").forEach(inp => {
+      inp.addEventListener("change", () => setQty(inp.getAttribute("data-qty"), inp.value));
+    });
+
+    const subtotal = cart.reduce((s, it) => s + Number(it.price || 0) * normalizeQty(it.qty), 0);
+    const discount = 0; // 先保留 0（下一步再接優惠碼/折扣）
+    const shipping = 0; // 先保留 0（下一步接 settings 做免運判斷）
+    const total = Math.max(0, subtotal - discount) + shipping;
+
+    if (subtotalEl) subtotalEl.textContent = money(subtotal);
+    if (discountEl) discountEl.textContent = `- ${money(discount)}`;
+    if (shippingEl) shippingEl.textContent = money(shipping);
+    if (totalEl) totalEl.textContent = money(total);
+    const { checkoutBtn } = getEls();
+    if (checkoutBtn) checkoutBtn.disabled = false;
+  }
+
+  function setQty(id, qty) {
+    const cart = readCart();
+    const i = cart.findIndex(x => String(x.id) === String(id));
+    if (i === -1) return;
+    cart[i].qty = normalizeQty(qty);
+    writeCart(cart);
+    renderCart();
+  }
+
+  function changeQty(id, delta) {
+    const cart = readCart();
+    const i = cart.findIndex(x => String(x.id) === String(id));
+    if (i === -1) return;
+    cart[i].qty = normalizeQty(Number(cart[i].qty || 1) + Number(delta || 1));
+    writeCart(cart);
+    renderCart();
+  }
+
+  function removeItem(id) {
+    const cart = readCart().filter(x => String(x.id) !== String(id));
+    writeCart(cart);
+    renderCart();
+  }
+
+  function bindCartDrawer() {
+    const { cartA, backdrop, closeBtn, clearBtn } = getEls();
+    if (cartA) {
+      cartA.addEventListener("click", (e) => {
+        // 攔截原本跳 cart.html，改成開抽屜
+        e.preventDefault();
+        openCart();
+      });
+    }
+    if (closeBtn) closeBtn.addEventListener("click", closeCart);
+    if (backdrop) backdrop.addEventListener("click", closeCart);
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeCart();
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener("click", () => {
+        if (confirm("確定要清空購物車嗎？")) {
+          writeCart([]);
+          renderCart();
+        }
+      });
+    }
+
+    // 外部寫入購物車時（例如商品頁 addToCart 後）同步刷新抽屜
+    window.addEventListener("cart:changed", () => {
+      const { drawer } = getEls();
+      if (drawer && drawer.classList.contains("open")) renderCart();
+    });
+
+    // 首次畫一次（不開抽屜也能先算好）
+    renderCart();
+  }
+
+  // include.js 會插入 header.html，所以要等 DOM + header 插完再綁
+  window.addEventListener("DOMContentLoaded", () => {
+    // 延後一拍，確保 header.html 已 insertAdjacentHTML 完成
+    setTimeout(bindCartDrawer, 0);
+  });
+})();
