@@ -771,7 +771,7 @@ footer{
 
   /* ✅ 圖片不要撐爆：限制圖片區高度 */
   #pdBackdrop .pd-photo img{
-    aspect-ratio: 4 / 3;         /* ✅ 桌機改回比較不高的比例 */
+    aspect-ratio: 4 / 5;         /* ✅ 桌機改回比較不高的比例 */
     max-height: 360px;           /* ✅ 再保險一次 */
   }
 }
@@ -798,7 +798,7 @@ footer{
 
   /* ✅ 手機圖片區限制高度，視窗就不會太長 */
   #pdBackdrop .pd-photo img{
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 4 / 5;
     max-height: 50vh;
     border-radius: 16px;
   }
