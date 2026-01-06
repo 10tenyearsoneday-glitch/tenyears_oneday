@@ -1,6 +1,6 @@
-// include.js (FINAL Clean A++ Orders)
+// include.js (FINAL Checkout Order_Create)
 // - header.html 內含：header + nav + cart drawer/backdrop + checkout modal DOM
-// - include.js 負責：插入 header、active 狀態、badge、抽屜互動、優惠碼（驗證/重驗證）、結帳表單 + 寫入 orders（GAS order_create）
+// - include.js 負責：插入 header、active 狀態、badge、抽屜互動、優惠碼、結帳表單、寫入 GAS orders
 
 (() => {
   if (window.TEN_INCLUDE_LOADED) return;
@@ -16,7 +16,7 @@
     "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
   // ⚠️ 注意：放在前端一定會曝光（任何人都能看到）
-  // 目前先沿用你現況；正式上線金流前，務必改成「伺服器端呼叫 GAS」或改用 API server 代理。
+  // 目前先沿用你現況；正式上線金流前，建議改成「伺服器端代理」。
   const ADMIN_KEY = "10years1day911321";
 
   window.TEN_SETTINGS = window.TEN_SETTINGS || {
@@ -30,9 +30,8 @@
   // 已套用優惠碼狀態
   window.TEN_APPLIED = window.TEN_APPLIED || { code: "", discount: 0, note: "" };
 
-  // （可選）如果你想讓 drawer 在 cart item 只有 {id, qty} 的情況也能顯示正確價格/圖：
-  // 你可以在其他頁先把商品 index 放到 window.TEN_PRODUCTS_BY_ID
-  // window.TEN_PRODUCTS_BY_ID = { "O-D": {id,title,price,image...}, ... }
+  // 可選：若 cart 只存 {id, qty}，可用 window.TEN_PRODUCTS_BY_ID 補資料
+  // window.TEN_PRODUCTS_BY_ID = { "1": {id,title,price,image...}, ... }
 
   // ===== 小工具 =====
   function $(id) {
@@ -114,7 +113,7 @@
       bindDrawerClose();
       bindCartIconOpen();
       bindDrawerActions();
-      bindCheckoutModalClose(); // ✅ 新增：結帳 modal 關閉
+      bindCheckoutModalClose();
 
     } catch (e) {
       console.warn("loadHeader failed:", e);
@@ -122,15 +121,9 @@
   }
 
   function ensureCartBadgeNode() {
-    if ($("cartCount")) return;
-    const cartA = document.querySelector('.icon-row a[data-icon="cart"]');
-    if (!cartA) return;
-
-    const span = document.createElement("span");
-    span.id = "cartCount";
-    span.className = "cart-badge";
-    span.style.display = "none";
-    cartA.appendChild(span);
+    const badge = $("cartCount");
+    if (!badge) return; // 你 header.html 內已經有了就不用補
+    // 若你 header.html 沒有 badge（某些頁可能舊版），可自行加 ensure 邏輯
   }
 
   // ===== Drawer open/close（支援 hidden + aria-hidden + ESC）=====
@@ -150,7 +143,7 @@
 
     document.body.style.overflow = "hidden";
 
-    // 同步優惠碼輸入框（如果 header.html 有）
+    // 同步優惠碼輸入框
     const inp = $("drawerCouponCode");
     if (inp && window.TEN_APPLIED?.code) inp.value = window.TEN_APPLIED.code;
 
@@ -188,9 +181,8 @@
 
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        // 若結帳 modal 開著：先關 modal；不然關 drawer
-        const ck = $("ckBackdrop");
-        if (ck && !ck.hidden && ck.classList.contains("open")) closeCheckoutModal();
+        // ESC 先關 checkout modal，再關 drawer
+        if (isCheckoutOpen()) closeCheckoutModal();
         else closeDrawer();
       }
     });
@@ -217,13 +209,13 @@
     const n = cartCount();
     if (n > 0) {
       el.textContent = String(n);
+      el.hidden = false;
       el.style.display = "inline-flex";
       el.classList.add("cart-badge");
-      el.hidden = false;
     } else {
       el.textContent = "";
-      el.style.display = "none";
       el.hidden = true;
+      el.style.display = "none";
     }
   }
 
@@ -322,14 +314,6 @@
     };
   }
 
-  function cartHydrated() {
-    return readCart().map(hydrateCartItem);
-  }
-
-  function calcSubtotalFromHydrated(items) {
-    return items.reduce((s, it) => s + Number(it.price || 0) * normalizeQty(it.qty), 0);
-  }
-
   function itemRowHtml(raw) {
     const it = hydrateCartItem(raw);
 
@@ -355,6 +339,12 @@
     `;
   }
 
+  function getHydratedCartAndSubtotal() {
+    const cart = readCart().map(hydrateCartItem);
+    const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
+    return { cart, subtotal };
+  }
+
   function renderDrawer() {
     const cart = readCart();
     const itemsEl = $("cartItems");
@@ -363,8 +353,7 @@
     if (!cart.length) itemsEl.innerHTML = `<div class="muted">購物車是空的。</div>`;
     else itemsEl.innerHTML = cart.map(itemRowHtml).join("");
 
-    const hydrated = cartHydrated();
-    const subtotal = calcSubtotalFromHydrated(hydrated);
+    const { cart: hydrated, subtotal } = getHydratedCartAndSubtotal();
 
     const applied = window.TEN_APPLIED || { discount: 0 };
     const discount = Math.min(subtotal, Math.max(0, Number(applied.discount || 0)));
@@ -460,8 +449,6 @@
       EXPIRED: "優惠已過期",
       SOLD_OUT: "優惠已用完",
       ALREADY_USED: "你已使用過此優惠碼",
-      MEMBER_REQUIRED: "會員資料不足",
-      SUBTOTAL_REQUIRED: "小計不足以套用",
       SERVER_ERROR: "系統忙碌，請稍後再試",
       UNAUTHORIZED: "沒有權限（ADMIN_KEY）",
     };
@@ -469,8 +456,7 @@
   }
 
   async function applyCouponFromDrawer() {
-    const cart = cartHydrated();
-    const subtotal = calcSubtotalFromHydrated(cart);
+    const { cart, subtotal } = getHydratedCartAndSubtotal();
 
     const inp = $("drawerCouponCode");
     const code = String(inp ? inp.value : "").trim().toUpperCase();
@@ -510,8 +496,7 @@
   function maybeRevalidateCoupon(clearIfEmpty = false) {
     if (!window.TEN_APPLIED?.code) return;
 
-    const cart = cartHydrated();
-    const subtotal = calcSubtotalFromHydrated(cart);
+    const { subtotal } = getHydratedCartAndSubtotal();
 
     if (subtotal <= 0) {
       if (clearIfEmpty) {
@@ -545,14 +530,56 @@
     }, 350);
   }
 
-  // =========================
-  // ✅ Checkout Modal + Orders
-  // =========================
-  const CHECKOUT_FORM_KEY = "ten_checkout_form_v1";
+  // ==========================================================
+  // ✅ Checkout Modal（表單 + 寫入 orders：GAS path=order_create）
+  // ==========================================================
+
+  function isCheckoutOpen() {
+    const bd = $("ckBackdrop");
+    return !!bd && bd.hidden === false && bd.getAttribute("aria-hidden") === "false";
+  }
+
+  function openCheckoutModal() {
+    const bd = $("ckBackdrop");
+    const wrap = $("ckWrap");
+    if (!bd || !wrap) return;
+
+    // 先渲染表單
+    wrap.innerHTML = buildCheckoutFormHtml();
+
+    // 顯示 modal
+    bd.hidden = false;
+    bd.classList.add("open"); // 如果你 CSS 沒用到也沒關係
+    bd.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    // 綁定事件
+    bindCheckoutFormEvents();
+
+    // 初始刷新一次金額
+    refreshCheckoutSummary();
+  }
+
+  function closeCheckoutModal() {
+    const bd = $("ckBackdrop");
+    const wrap = $("ckWrap");
+    if (!bd) return;
+
+    bd.setAttribute("aria-hidden", "true");
+    bd.classList.remove("open");
+    bd.hidden = true;
+
+    // 如果 drawer 還開著，就不要把 overflow 清掉（避免背景可滾）
+    const dr = $("cartDrawer");
+    const drawerOpen = !!dr && dr.classList.contains("open") && dr.hidden === false;
+    if (!drawerOpen) document.body.style.overflow = "";
+
+    if (wrap) wrap.innerHTML = "";
+  }
 
   function bindCheckoutModalClose() {
-    if (window.TEN_CHECKOUT_CLOSE_BOUND) return;
-    window.TEN_CHECKOUT_CLOSE_BOUND = true;
+    if (window.TEN_CK_CLOSE_BOUND) return;
+    window.TEN_CK_CLOSE_BOUND = true;
 
     const closeBtn = $("ckClose");
     if (closeBtn) closeBtn.addEventListener("click", closeCheckoutModal);
@@ -560,311 +587,262 @@
     const bd = $("ckBackdrop");
     if (bd) {
       bd.addEventListener("click", (e) => {
+        // 點 backdrop 才關（點 panel 不關）
         if (e.target === bd) closeCheckoutModal();
       });
     }
   }
 
-  function openCheckoutModal() {
-    const bd = $("ckBackdrop");
-    const wrap = $("ckWrap");
-    if (!bd || !wrap) {
-      showDrawerToast("找不到結帳視窗 DOM（ckBackdrop/ckWrap）", false);
-      return;
-    }
-
-    bd.hidden = false;
-    bd.classList.add("open");
-    bd.setAttribute("aria-hidden", "false");
-
-    // 保持鎖定捲動（如果 drawer 開著也同樣鎖）
-    document.body.style.overflow = "hidden";
-
-    renderCheckoutForm();
-  }
-
-  function closeCheckoutModal() {
-    const bd = $("ckBackdrop");
-    if (!bd) return;
-
-    bd.classList.remove("open");
-    bd.setAttribute("aria-hidden", "true");
-
-    // 如果 drawer 還開著，body 仍要鎖；否則解除
-    const dr = $("cartDrawer");
-    const drawerOpen = dr && dr.classList.contains("open");
-    document.body.style.overflow = drawerOpen ? "hidden" : "";
-
-    setTimeout(() => {
-      bd.hidden = true;
-    }, 220);
-  }
-
-  function loadCheckoutDraft() {
-    try {
-      return JSON.parse(localStorage.getItem(CHECKOUT_FORM_KEY) || "{}");
-    } catch {
-      return {};
-    }
-  }
-
-  function saveCheckoutDraft(obj) {
-    try {
-      localStorage.setItem(CHECKOUT_FORM_KEY, JSON.stringify(obj || {}));
-    } catch {}
-  }
-
-  function renderCheckoutForm() {
-    const wrap = $("ckWrap");
-    if (!wrap) return;
-
-    const cart = cartHydrated();
-    const subtotal = calcSubtotalFromHydrated(cart);
-    if (subtotal <= 0) {
-      wrap.innerHTML = `<div class="muted">購物車是空的。</div>`;
-      return;
-    }
-
-    const applied = window.TEN_APPLIED || { code: "", discount: 0 };
-    const discount = Math.min(subtotal, Math.max(0, Number(applied.discount || 0)));
-    const after = Math.max(0, subtotal - discount);
-    const shippingFee = calcShipping(after);
-    const total = after + shippingFee;
-
-    const draft = loadCheckoutDraft();
-
-    // shipping_method：宅配 / 7-11 / 全家（你可自行改字）
-    const shippingMethod = String(draft.shipping_method || "宅配");
-
-    wrap.innerHTML = `
-      <div style="display:grid;gap:12px; padding: 6px;">
-        <div style="background:rgba(255,255,255,.70);border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:12px;">
-          <div style="font-weight:900;letter-spacing:.04em;margin-bottom:10px;">收件資料</div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div style="grid-column:1/-1;">
-              <div style="font-size:.82rem;opacity:.75;margin:2px 0 6px;">姓名 *</div>
-              <input id="ck_name" value="${escapeHtml_(draft.name || "")}"
-                style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);outline:none;">
-            </div>
-
-            <div>
-              <div style="font-size:.82rem;opacity:.75;margin:2px 0 6px;">手機 *</div>
-              <input id="ck_phone" value="${escapeHtml_(draft.phone || "")}" inputmode="tel"
-                style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);outline:none;">
-            </div>
-
-            <div>
-              <div style="font-size:.82rem;opacity:.75;margin:2px 0 6px;">Email</div>
-              <input id="ck_email" value="${escapeHtml_(draft.email || "")}" inputmode="email"
-                style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);outline:none;">
-            </div>
-
-            <div style="grid-column:1/-1;">
-              <div style="font-size:.82rem;opacity:.75;margin:2px 0 6px;">配送方式 *</div>
-              <select id="ck_shipping_method"
-                style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);outline:none;">
-                <option value="宅配" ${shippingMethod === "宅配" ? "selected" : ""}>宅配</option>
-                <option value="7-11" ${shippingMethod === "7-11" ? "selected" : ""}>7-11（門市）</option>
-                <option value="全家" ${shippingMethod === "全家" ? "selected" : ""}>全家（門市）</option>
-              </select>
-            </div>
-
-            <div style="grid-column:1/-1;">
-              <div style="font-size:.82rem;opacity:.75;margin:2px 0 6px;">地址 / 門市 *</div>
-              <input id="ck_address" value="${escapeHtml_(draft.address_or_store || "")}"
-                placeholder="宅配：完整地址｜超商：門市名稱/店號"
-                style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);outline:none;">
-            </div>
-
-            <div style="grid-column:1/-1;">
-              <div style="font-size:.82rem;opacity:.75;margin:2px 0 6px;">備註</div>
-              <textarea id="ck_note"
-                style="width:100%;min-height:86px;padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);outline:none;resize:vertical;">${escapeHtml_(draft.note || "")}</textarea>
-            </div>
-          </div>
-        </div>
-
-        <div style="background:rgba(255,255,255,.70);border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:12px;">
-          <div style="font-weight:900;letter-spacing:.04em;margin-bottom:10px;">訂單摘要</div>
-          <div style="display:flex;justify-content:space-between;margin:6px 0;"><span>小計</span><strong>${money(subtotal)}</strong></div>
-          <div style="display:flex;justify-content:space-between;margin:6px 0;"><span>折扣</span><strong>- ${money(discount)}</strong></div>
-          <div style="display:flex;justify-content:space-between;margin:6px 0;"><span>運費</span><strong>${money(shippingFee)}</strong></div>
-          <div style="height:1px;background:rgba(0,0,0,.06);margin:10px 0;"></div>
-          <div style="display:flex;justify-content:space-between;margin:6px 0;font-size:1.05rem;"><span>合計</span><strong>${money(total)}</strong></div>
-
-          <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
-            <button id="ck_submit" type="button"
-              style="flex:1;border:none;border-radius:16px;padding:14px 12px;cursor:pointer;background:#5d6b59;color:#fff;font-weight:900;letter-spacing:.08em;">
-              送出訂單
-            </button>
-            <button id="ck_cancel" type="button"
-              style="flex:0 0 auto;border:none;border-radius:16px;padding:14px 12px;cursor:pointer;background:rgba(0,0,0,.08);color:rgba(47,58,44,.9);font-weight:800;">
-              取消
-            </button>
+  function buildCheckoutFormHtml() {
+    // 用你現有的視覺（pd-wrap）做簡潔卡片
+    return `
+      <div style="padding:6px 4px;">
+        <div style="
+          background:rgba(255,255,255,.85);
+          border:1px solid rgba(0,0,0,.06);
+          border-radius:18px;
+          padding:14px;
+        ">
+          <div style="font-weight:900;letter-spacing:.06em;font-size:1.05rem;margin-bottom:10px;">
+            訂購資料
           </div>
 
-          <div id="ck_toast" style="margin-top:10px;font-size:.9rem;opacity:.9;"></div>
+          <form id="ckForm" autocomplete="on">
+            <div style="display:grid;gap:10px;">
+              <label style="display:grid;gap:6px;">
+                <span style="font-size:.9rem;opacity:.85;">姓名 *</span>
+                <input id="ckName" required
+                  style="padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);outline:none;">
+              </label>
+
+              <label style="display:grid;gap:6px;">
+                <span style="font-size:.9rem;opacity:.85;">手機 *</span>
+                <input id="ckPhone" required inputmode="tel"
+                  style="padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);outline:none;">
+              </label>
+
+              <label style="display:grid;gap:6px;">
+                <span style="font-size:.9rem;opacity:.85;">Email（選填）</span>
+                <input id="ckEmail" type="email" inputmode="email"
+                  style="padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);outline:none;">
+              </label>
+
+              <label style="display:grid;gap:6px;">
+                <span style="font-size:.9rem;opacity:.85;">配送方式 *</span>
+                <select id="ckShipMethod" required
+                  style="padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.92);outline:none;">
+                  <option value="宅配">宅配</option>
+                  <option value="超商取貨">超商取貨（先手動填門市）</option>
+                </select>
+              </label>
+
+              <label style="display:grid;gap:6px;">
+                <span id="ckAddrLabel" style="font-size:.9rem;opacity:.85;">地址 *</span>
+                <input id="ckAddr" required
+                  placeholder="例如：台北市中山區…"
+                  style="padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);outline:none;">
+                <div id="ckAddrHint" style="font-size:.82rem;opacity:.7;line-height:1.5;">
+                  宅配：填收件地址｜超商：先手動填「門市名稱/店號」
+                </div>
+              </label>
+
+              <label style="display:grid;gap:6px;">
+                <span style="font-size:.9rem;opacity:.85;">備註（選填）</span>
+                <textarea id="ckNote" rows="3"
+                  style="padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);outline:none;resize:vertical;"></textarea>
+              </label>
+
+              <div style="height:1px;background:rgba(0,0,0,.06);margin:6px 0;"></div>
+
+              <div style="display:grid;gap:8px;">
+                <div style="font-weight:900;letter-spacing:.06em;">金額摘要</div>
+                <div style="display:flex;justify-content:space-between;"><span>小計</span><strong id="ckSumSubtotal">NT$ 0</strong></div>
+                <div style="display:flex;justify-content:space-between;"><span>折扣</span><strong id="ckSumDiscount">- NT$ 0</strong></div>
+                <div style="display:flex;justify-content:space-between;"><span>運費</span><strong id="ckSumShipping">NT$ 0</strong></div>
+                <div style="height:1px;background:rgba(0,0,0,.06);margin:6px 0;"></div>
+                <div style="display:flex;justify-content:space-between;font-size:1.05rem;">
+                  <span>合計</span><strong id="ckSumTotal">NT$ 0</strong>
+                </div>
+
+                <div id="ckHint" style="margin-top:6px;font-size:.88rem;opacity:.78;line-height:1.6;">
+                  送出後會寫入 Google Sheet 的 orders。
+                </div>
+
+                <div id="ckToast" style="margin-top:6px;font-size:.9rem;"></div>
+
+                <button id="ckSubmit" type="submit"
+                  style="
+                    margin-top:8px;
+                    width:100%;
+                    border:none;
+                    border-radius:18px;
+                    padding:16px 14px;
+                    font-size:1.05rem;
+                    letter-spacing:.12em;
+                    font-weight:900;
+                    cursor:pointer;
+                    background:#5d6b59;
+                    color:#fff;
+                  ">
+                  送出訂單
+                </button>
+
+                <button id="ckCancel" type="button"
+                  style="
+                    width:100%;
+                    border:none;
+                    border-radius:999px;
+                    padding:12px 14px;
+                    font-size:.95rem;
+                    cursor:pointer;
+                    background:rgba(0,0,0,.08);
+                    color:rgba(47,58,44,.9);
+                  ">
+                  返回
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
     `;
-
-    // bind
-    const cancelBtn = $("ck_cancel");
-    if (cancelBtn) cancelBtn.addEventListener("click", closeCheckoutModal);
-
-    const submitBtn = $("ck_submit");
-    if (submitBtn) submitBtn.addEventListener("click", submitOrderFromModal);
   }
 
-  function setCheckoutToast(msg, ok = true) {
-    const el = $("ck_toast");
+  function ckToast(msg, ok = true) {
+    const el = $("ckToast");
     if (!el) return;
     el.textContent = msg;
-    el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
+    el.style.color = ok ? "rgba(47,58,44,.88)" : "#8a3b3b";
   }
 
-  function escapeHtml_(s) {
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
+  function bindCheckoutFormEvents() {
+    const method = $("ckShipMethod");
+    const addrLabel = $("ckAddrLabel");
+    const addr = $("ckAddr");
+    const cancel = $("ckCancel");
+    const form = $("ckForm");
+
+    if (method) {
+      method.addEventListener("change", () => {
+        const v = String(method.value || "");
+        if (addrLabel) addrLabel.textContent = (v === "超商取貨") ? "門市（先手動填）*" : "地址 *";
+        if (addr) addr.placeholder = (v === "超商取貨")
+          ? "例如：全家 台北中山店（店號12345）"
+          : "例如：台北市中山區…";
+      });
+    }
+
+    if (cancel) cancel.addEventListener("click", () => closeCheckoutModal());
+
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await submitOrderToGAS();
+      });
+    }
   }
 
-  function buildOrderPayload_() {
-    const cart = cartHydrated();
-    const subtotal = calcSubtotalFromHydrated(cart);
+  function refreshCheckoutSummary() {
+    const { cart, subtotal } = getHydratedCartAndSubtotal();
 
-    const applied = window.TEN_APPLIED || { code: "", discount: 0 };
-    const discount = Math.min(subtotal, Math.max(0, Number(applied.discount || 0)));
+    const discount = Math.min(subtotal, Math.max(0, Number(window.TEN_APPLIED?.discount || 0)));
     const after = Math.max(0, subtotal - discount);
     const shippingFee = calcShipping(after);
     const total = after + shippingFee;
 
+    const a = $("ckSumSubtotal");
+    if (a) a.textContent = money(subtotal);
+    const b = $("ckSumDiscount");
+    if (b) b.textContent = `- ${money(discount)}`;
+    const c = $("ckSumShipping");
+    if (c) c.textContent = money(shippingFee);
+    const d = $("ckSumTotal");
+    if (d) d.textContent = money(total);
+  }
+
+  async function submitOrderToGAS() {
+    const { cart, subtotal } = getHydratedCartAndSubtotal();
+    if (subtotal <= 0) return ckToast("購物車是空的", false);
+
     const memberId = getMemberId();
-
-    const name = String($("ck_name")?.value || "").trim();
-    const phone = String($("ck_phone")?.value || "").trim();
-    const email = String($("ck_email")?.value || "").trim();
-    const shippingMethod = String($("ck_shipping_method")?.value || "宅配").trim();
-    const addressOrStore = String($("ck_address")?.value || "").trim();
-    const note = String($("ck_note")?.value || "").trim();
-
-    // 存草稿（下次開還在）
-    saveCheckoutDraft({
-      name,
-      phone,
-      email,
-      shipping_method: shippingMethod,
-      address_or_store: addressOrStore,
-      note,
-    });
-
-    // ⚠️ 注意：你的 GAS order_create 支援 items 是 array 或 string
-    // 我們傳 array（GAS 會 JSON.stringify）
     const orderId = "O-" + Date.now();
 
-    return {
-      orderId,
-      memberId,
-      name,
-      phone,
-      email,
-      shippingMethod,
-      addressOrStore,
-      note,
-      items: cart,              // array
-      subtotal,
-      shippingFee,
-      couponCode: String(applied.code || "").trim().toUpperCase(),
-      // discount/total 不由前端決定（後端會重算），但我們仍可送過去做對帳（後端目前不吃也沒關係）
-      discount,
-      total,
-    };
-  }
+    const name = String($("ckName")?.value || "").trim();
+    const phone = String($("ckPhone")?.value || "").trim();
+    const email = String($("ckEmail")?.value || "").trim();
+    const shippingMethod = String($("ckShipMethod")?.value || "宅配").trim();
+    const addressOrStore = String($("ckAddr")?.value || "").trim();
+    const note = String($("ckNote")?.value || "").trim();
 
-  function orderErrorText(err) {
-    const m = {
-      MEMBER_REQUIRED: "會員資料不足",
-      NAME_REQUIRED: "請填姓名",
-      PHONE_REQUIRED: "請填手機",
-      ADDRESS_REQUIRED: "請填地址 / 門市",
-      SUBTOTAL_REQUIRED: "小計不足",
-      BAD_ORDERS_HEADERS: "orders 表欄位不正確",
-      UNAUTHORIZED: "沒有權限（ADMIN_KEY）",
-      SERVER_ERROR: "系統忙碌，請稍後再試",
-      EMPTY_CART: "購物車是空的",
-      TOTAL_REQUIRED: "總金額錯誤",
-      INVALID_CODE: "優惠碼不存在或不可用",
-      ALREADY_USED: "你已使用過此優惠碼",
-      SOLD_OUT: "優惠已用完",
-      EXPIRED: "優惠已過期",
-    };
-    return m[String(err || "")] || `下單失敗（${err || "ERROR"}）`;
-  }
+    if (!name) return ckToast("請填姓名", false);
+    if (!phone) return ckToast("請填手機", false);
+    if (!addressOrStore) return ckToast(shippingMethod === "超商取貨" ? "請填門市資訊" : "請填地址", false);
 
-  async function submitOrderFromModal() {
-    const btn = $("ck_submit");
+    // 折扣：由後端再驗證；這邊只用來算「免運門檻」與預覽
+    const discountPreview = Math.min(subtotal, Math.max(0, Number(window.TEN_APPLIED?.discount || 0)));
+    const after = Math.max(0, subtotal - discountPreview);
+    const shippingFee = calcShipping(after);
+
+    const couponCode = String(window.TEN_APPLIED?.code || "").trim().toUpperCase();
+
+    const btn = $("ckSubmit");
     if (btn) btn.disabled = true;
+    ckToast("送出中…");
 
     try {
-      const payload = buildOrderPayload_();
-
-      // 前端先做必填檢查（少打一次 API）
-      if (!payload.name) return setCheckoutToast("請填姓名", false);
-      if (!payload.phone) return setCheckoutToast("請填手機", false);
-      if (!payload.addressOrStore) return setCheckoutToast("請填地址 / 門市", false);
-      if (!(payload.subtotal > 0)) return setCheckoutToast("購物車是空的", false);
-
-      setCheckoutToast("送出中…");
-
       const res = await fetch(`${GAS_URL}?path=order_create&key=${encodeURIComponent(ADMIN_KEY)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          orderId,
+          memberId,
+          name,
+          phone,
+          email,
+          shippingMethod,
+          addressOrStore,
+          note,
+          items: cart,        // 直接寫入 items（GAS 會轉成 items_json）
+          subtotal,
+          shippingFee,
+          couponCode
+        }),
       });
 
-      const out = await res.json().catch(() => null);
+      const out = await res.json().catch(() => ({}));
 
-      if (!res.ok || !out || out.ok !== true) {
-        setCheckoutToast(orderErrorText(out?.error || "SERVER_ERROR"), false);
+      if (!res.ok || !out?.ok) {
+        ckToast(couponErrorText(out?.error || "SERVER_ERROR"), false);
         if (btn) btn.disabled = false;
         return;
       }
 
-      // ✅ 成功：清空購物車 + 清掉優惠碼
+      // ✅ 成功：清空購物車 + 清除優惠碼
       writeCart([]);
       window.TEN_APPLIED = { code: "", discount: 0, note: "" };
       const inp = $("drawerCouponCode");
       if (inp) inp.value = "";
 
-      renderDrawer();
       renderCartBadge();
+      renderDrawer();
 
-      setCheckoutToast(`✅ 訂單已建立：${out.orderId || payload.orderId}`);
+      ckToast(`✅ 已建立訂單：${out.orderId}`, true);
+
       // 關閉 modal + drawer
       setTimeout(() => {
         closeCheckoutModal();
         closeDrawer();
+        showDrawerToast(`訂單已送出 ✅ ${out.orderId}`, true);
       }, 650);
 
     } catch (e) {
       console.error(e);
-      setCheckoutToast("系統忙碌，請稍後再試", false);
+      ckToast("送出失敗，請稍後再試", false);
+      if (btn) btn.disabled = false;
+      return;
     } finally {
       if (btn) btn.disabled = false;
     }
-  }
-
-  // ===== Checkout（改為打開表單 modal）=====
-  function checkoutFromDrawer() {
-    const cart = cartHydrated();
-    const subtotal = calcSubtotalFromHydrated(cart);
-    if (subtotal <= 0) return showDrawerToast("購物車是空的", false);
-
-    openCheckoutModal();
   }
 
   // ===== Drawer 事件綁定 =====
@@ -895,8 +873,15 @@
       });
     }
 
+    // ✅ 改成：開啟結帳 modal（不是示意清空）
     const checkoutBtn = $("cartGoCheckout");
-    if (checkoutBtn) checkoutBtn.addEventListener("click", checkoutFromDrawer);
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener("click", () => {
+        const { subtotal } = getHydratedCartAndSubtotal();
+        if (subtotal <= 0) return showDrawerToast("購物車是空的", false);
+        openCheckoutModal();
+      });
+    }
 
     const items = $("cartItems");
     if (items) {
@@ -924,8 +909,13 @@
 
     window.addEventListener("cart:changed", () => {
       renderCartBadge();
+
       const dr = $("cartDrawer");
-      if (dr && dr.classList.contains("open")) renderDrawer();
+      if (dr && dr.classList.contains("open") && dr.hidden === false) renderDrawer();
+
+      // 如果 checkout modal 開著，也刷新摘要
+      if (isCheckoutOpen()) refreshCheckoutSummary();
+
       maybeRevalidateCoupon();
     });
 
@@ -933,7 +923,8 @@
       if (e.key === CART_KEY) {
         renderCartBadge();
         const dr = $("cartDrawer");
-        if (dr && dr.classList.contains("open")) renderDrawer();
+        if (dr && dr.classList.contains("open") && dr.hidden === false) renderDrawer();
+        if (isCheckoutOpen()) refreshCheckoutSummary();
       }
     });
   }
