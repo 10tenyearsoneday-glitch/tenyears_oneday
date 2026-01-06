@@ -1,4 +1,4 @@
-// include.js (FINAL Clean A)
+// include.js (FINAL Clean A+)
 // - header.html 內含：header + nav + cart drawer/backdrop + checkout modal DOM
 // - include.js 負責：插入 header、active 狀態、badge、抽屜互動、優惠碼/結帳（示意）
 
@@ -14,7 +14,10 @@
 
   const GAS_URL =
     "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-  const ADMIN_KEY = "10years1day911321"; // ⚠️ 前端可見；先沿用你現況
+
+  // ⚠️ 注意：放在前端一定會曝光（任何人都能看到）
+  // 目前先沿用你現況；之後上線正式金流前，務必改成「伺服器端呼叫 GAS」或改用你 API server 代理。
+  const ADMIN_KEY = "10years1day911321";
 
   window.TEN_SETTINGS = window.TEN_SETTINGS || {
     shipping_enabled: true,
@@ -27,7 +30,33 @@
   // 已套用優惠碼狀態
   window.TEN_APPLIED = window.TEN_APPLIED || { code: "", discount: 0, note: "" };
 
-  // ===== 工具 =====
+  // （可選）如果你想讓 drawer 在 cart item 只有 {id, qty} 的情況也能顯示正確價格/圖：
+  // 你可以在其他頁先把商品 index 放到 window.TEN_PRODUCTS_BY_ID
+  // window.TEN_PRODUCTS_BY_ID = { "O-D": {id,title,price,image...}, ... }
+
+  // ===== 小工具 =====
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function normalizeQty(n) {
+    n = Number(n || 1);
+    if (!Number.isFinite(n) || n < 1) n = 1;
+    return Math.floor(n);
+  }
+
+  function money(n) {
+    n = Math.round(Number(n || 0));
+    return `NT$ ${n}`;
+  }
+
+  function rateToZhe(rate) {
+    rate = Number(rate || 1);
+    if (rate >= 1 || rate <= 0) return null;
+    const z = Math.round(rate * 100) / 10;
+    return String(z).replace(/\.0$/, "");
+  }
+
   function getMemberId() {
     let id = localStorage.getItem(MEMBER_KEY);
     if (!id) {
@@ -52,29 +81,7 @@
   }
 
   function cartCount() {
-    return readCart().reduce((s, it) => s + Math.max(0, Number(it.qty || 0)), 0);
-  }
-
-  function money(n) {
-    n = Math.round(Number(n || 0));
-    return `NT$ ${n}`;
-  }
-
-  function normalizeQty(n) {
-    n = Number(n || 1);
-    if (!Number.isFinite(n) || n < 1) n = 1;
-    return Math.floor(n);
-  }
-
-  function rateToZhe(rate) {
-    rate = Number(rate || 1);
-    if (rate >= 1 || rate <= 0) return null;
-    const z = Math.round(rate * 100) / 10;
-    return String(z).replace(/\.0$/, "");
-  }
-
-  function $(id) {
-    return document.getElementById(id);
+    return readCart().reduce((s, it) => s + normalizeQty(it.qty), 0);
   }
 
   // ===== Header 插入 + Active 狀態 =====
@@ -86,6 +93,7 @@
       const res = await fetch("./header.html", { cache: "no-store" });
       if (!res.ok) throw new Error(`header fetch ${res.status}`);
       const html = await res.text();
+
       document.body.insertAdjacentHTML("afterbegin", html);
 
       // nav active
@@ -164,9 +172,8 @@
     // 讓 transition 跑完再 hidden
     setTimeout(() => {
       bd.hidden = true;
-      // drawer 要不要 hidden 取決於你的 CSS；為了穩定與不擋點擊，這裡一起藏
       dr.hidden = true;
-    }, 180);
+    }, 220);
   }
 
   function bindDrawerClose() {
@@ -299,30 +306,40 @@
   }
 
   // ===== Drawer render =====
-  function itemRowHtml(it) {
-    const id = String(it.id);
-    const title = it.title || id;
-    const img = (it.image || "").trim() || "assets/placeholder.png";
-    const price = Number(it.price || 0);
-    const qty = normalizeQty(it.qty);
+  function hydrateCartItem(it) {
+    // 若 cart 裡只有 {id, qty}，嘗試用 window.TEN_PRODUCTS_BY_ID 補 title/price/image
+    const id = String(it?.id ?? "");
+    const base = (window.TEN_PRODUCTS_BY_ID && window.TEN_PRODUCTS_BY_ID[id]) || null;
+
+    return {
+      id,
+      qty: normalizeQty(it?.qty),
+      title: it?.title ?? base?.title ?? id,
+      price: Number(it?.price ?? base?.price ?? 0),
+      image: it?.image ?? base?.image ?? "assets/placeholder.png",
+    };
+  }
+
+  function itemRowHtml(raw) {
+    const it = hydrateCartItem(raw);
 
     return `
       <div class="d-item">
-        <div class="d-thumb"><img src="${img}" alt=""></div>
+        <div class="d-thumb"><img src="${it.image}" alt=""></div>
 
         <div class="d-info">
-          <div class="d-name">${title}</div>
-          <div class="d-meta">${money(price)}</div>
+          <div class="d-name">${it.title}</div>
+          <div class="d-meta">${money(it.price)}</div>
         </div>
 
         <div class="d-right">
-          <div class="d-price">${money(price * qty)}</div>
+          <div class="d-price">${money(it.price * it.qty)}</div>
           <div class="d-qty">
-            <button type="button" data-dec="${id}" aria-label="減少">-</button>
-            <input type="number" min="1" step="1" value="${qty}" data-qty="${id}">
-            <button type="button" data-inc="${id}" aria-label="增加">+</button>
+            <button type="button" data-dec="${it.id}" aria-label="減少">-</button>
+            <input type="number" min="1" step="1" value="${it.qty}" data-qty="${it.id}">
+            <button type="button" data-inc="${it.id}" aria-label="增加">+</button>
           </div>
-          <button class="d-del" type="button" data-del="${id}">刪除</button>
+          <button class="d-del" type="button" data-del="${it.id}">刪除</button>
         </div>
       </div>
     `;
@@ -336,7 +353,10 @@
     if (!cart.length) itemsEl.innerHTML = `<div class="muted">購物車是空的。</div>`;
     else itemsEl.innerHTML = cart.map(itemRowHtml).join("");
 
-    const subtotal = calcSubtotal(cart);
+    // 用 hydrate 後的價格算（更準）
+    const hydrated = cart.map(hydrateCartItem);
+    const subtotal = hydrated.reduce((s, it) => s + it.price * it.qty, 0);
+
     const applied = window.TEN_APPLIED || { discount: 0 };
     const discount = Math.min(subtotal, Math.max(0, Number(applied.discount || 0)));
 
@@ -344,7 +364,6 @@
     const shipping = calcShipping(after);
     const total = after + shipping;
 
-    // ✅ 不使用 ?.textContent =（避免你遇到的 SyntaxError）
     const subEl = $("cartSubtotal");
     if (subEl) subEl.textContent = money(subtotal);
 
@@ -438,8 +457,8 @@
   }
 
   async function applyCouponFromDrawer() {
-    const cart = readCart();
-    const subtotal = calcSubtotal(cart);
+    const cart = readCart().map(hydrateCartItem);
+    const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
 
     const inp = $("drawerCouponCode");
     const code = String(inp ? inp.value : "").trim().toUpperCase();
@@ -464,7 +483,9 @@
       };
 
       renderDrawer();
-      showCouponToast(`已套用 ${window.TEN_APPLIED.code} ✅ 折抵 ${money(window.TEN_APPLIED.discount)}`);
+      showCouponToast(
+        `已套用 ${window.TEN_APPLIED.code} ✅ 折抵 ${money(window.TEN_APPLIED.discount)}`
+      );
     } catch (e) {
       console.error(e);
       window.TEN_APPLIED = { code: "", discount: 0, note: "" };
@@ -477,8 +498,8 @@
   function maybeRevalidateCoupon(clearIfEmpty = false) {
     if (!window.TEN_APPLIED?.code) return;
 
-    const cart = readCart();
-    const subtotal = calcSubtotal(cart);
+    const cart = readCart().map(hydrateCartItem);
+    const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
 
     if (subtotal <= 0) {
       if (clearIfEmpty) {
@@ -514,8 +535,9 @@
 
   // ===== Checkout（示意）=====
   async function checkoutFromDrawer() {
-    const cart = readCart();
-    const subtotal = calcSubtotal(cart);
+    const cart = readCart().map(hydrateCartItem);
+    const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
+
     if (subtotal <= 0) return showDrawerToast("購物車是空的", false);
 
     const memberId = getMemberId();
@@ -524,6 +546,7 @@
     try {
       if (window.TEN_APPLIED?.code) {
         showCouponToast("結帳中：寫入優惠碼使用紀錄…");
+
         const res = await fetch(`${GAS_URL}?path=coupon_use&key=${encodeURIComponent(ADMIN_KEY)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -534,6 +557,7 @@
             orderId,
           }),
         });
+
         const out = await res.json();
         if (!res.ok || !out?.ok) {
           return showCouponToast(couponErrorText(out?.error), false);
