@@ -7,41 +7,57 @@
 
     <div class="icon-row">
       <a class="icon" data-icon="search" href="search.html" aria-label="搜尋" title="搜尋">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="16.65" y1="16.65" x2="21" y2="21"></line></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+        </svg>
       </a>
 
       <a class="icon icon-img" href="https://www.instagram.com/tenyears_oneday" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
-        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg" alt="IG">
+        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg" alt="Instagram">
       </a>
 
       <a class="icon icon-img" href="https://line.me/R/ti/p/@396kwrga" target="_blank" rel="noopener" aria-label="LINE" title="LINE">
         <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/line.svg" alt="LINE">
       </a>
 
-<a class="icon" data-icon="cart" href="cart.html" aria-label="購物車" title="購物車">
-  <svg viewBox="0 0 24 24">
-    <circle cx="9" cy="20" r="1"></circle>
-    <circle cx="17" cy="20" r="1"></circle>
-    <path d="M3 4h2l2 10.5a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 2-1.6L21 8H6"></path>
-  </svg>
-  <span id="cartCount" class="cart-badge"></span>
-</a>
-
-
+      <a class="icon" data-icon="cart" href="cart.html" aria-label="購物車" title="購物車">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="9" cy="20" r="1"></circle>
+          <circle cx="17" cy="20" r="1"></circle>
+          <path d="M3 4h2l2 10.5a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 2-1.6L21 8H6"></path>
+        </svg>
+        <span id="cartCount" class="cart-badge" aria-live="polite" hidden></span>
+      </a>
 
       <a class="icon" data-icon="member" href="member.html" aria-label="會員" title="會員">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"></circle><path d="M4 20c1.8-4 13.2-4 16 0"></path></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="8" r="3"></circle>
+          <path d="M4 20c1.8-4 13.2-4 16 0"></path>
+        </svg>
       </a>
     </div>
   </div>
 </header>
-<!-- ✅ Cart Drawer (共用) -->
-<div class="drawer-backdrop" id="cartBackdrop"></div>
 
-<aside class="drawer" id="cartDrawer" aria-label="購物車">
+<nav>
+  <div class="nav-row">
+    <a data-nav="index" href="index.html">關於我們</a>
+    <a data-nav="all" href="all.html">全系列🌸</a>
+    <a data-nav="silver" href="silver.html">純銀飾品✨</a>
+    <a data-nav="promo" href="promo.html">優惠活動🎁</a>
+    <a data-nav="knowledge" href="knowledge.html">飾品小知識💡</a>
+    <a data-nav="faq" href="faq.html">相關問題❗️</a>
+  </div>
+</nav>
+
+<!-- ✅ Cart Drawer (共用) -->
+<div class="drawer-backdrop" id="cartBackdrop" hidden></div>
+
+<aside class="drawer" id="cartDrawer" aria-label="購物車" aria-hidden="true">
   <div class="d-hd">
     <div class="d-title">購物車</div>
-    <button class="ui-close" id="cartClose" aria-label="關閉">×</button>
+    <button class="ui-close" id="cartClose" aria-label="關閉" type="button">×</button>
   </div>
 
   <div class="d-bd">
@@ -67,11 +83,11 @@
 </aside>
 
 <!-- ✅ Checkout Modal -->
-<div class="ui-backdrop" id="ckBackdrop" aria-hidden="true">
+<div class="ui-backdrop" id="ckBackdrop" aria-hidden="true" hidden>
   <div class="ui-panel" role="dialog" aria-modal="true" aria-label="結帳">
     <div class="ui-hd">
       <div style="font-weight:900;">結帳</div>
-      <button class="ui-close" id="ckClose" aria-label="關閉">×</button>
+      <button class="ui-close" id="ckClose" aria-label="關閉" type="button">×</button>
     </div>
 
     <div class="pd-wrap" id="ckWrap">
@@ -79,14 +95,3 @@
     </div>
   </div>
 </div>
-
-<nav>
-  <div class="nav-row">
-    <a data-nav="index" href="index.html">關於我們</a>
-    <a data-nav="all" href="all.html">全系列🌸</a>
-    <a data-nav="silver" href="silver.html">純銀飾品✨</a>
-    <a data-nav="promo" href="promo.html">優惠活動🎁</a>
-    <a data-nav="knowledge" href="knowledge.html">飾品小知識💡</a>
-    <a data-nav="faq" href="faq.html">相關問題❗️</a>
-  </div>
-</nav>
