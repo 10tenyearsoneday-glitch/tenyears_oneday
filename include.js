@@ -84,7 +84,7 @@
     document.documentElement.dataset.headerLoaded = "1";
 
     try {
-      const res = await fetch("header.html", { cache: "no-store" });
+      const res = await fetch("./header.html", { cache: "no-store" });
       const html = await res.text();
       document.body.insertAdjacentHTML("afterbegin", html);
 
