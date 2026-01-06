@@ -10,9 +10,6 @@
 
 <body>
 
-<!-- ✅ header / nav / cart badge / cart drawer 全部由 include.js 處理 -->
-<script src="include.js"></script>
-
 <main>
   <div class="subcats" id="subcats">
     <button class="chip active" data-filter="全部">全部</button>
@@ -200,6 +197,9 @@ const hit = cart.find(x => String(x.id) === String(product.id));
     });
 })();
 </script>
+  <script src="./include.js"></script>
+<script src="./assets/js/cart.js"></script>
 </body>
+
 
 </html>
