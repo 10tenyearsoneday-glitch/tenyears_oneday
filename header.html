@@ -60,7 +60,10 @@
     <button class="ui-close" id="cartClose" aria-label="關閉" type="button">×</button>
   </div>
 
-  <div class="d-bd">
+   <div class="d-bd">
+    <!-- ✅ 免運/折扣提示（由 include.js 填入） -->
+    <div id="cartPromoTips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
+
     <div class="d-items" id="cartItems"></div>
     <div class="toast" id="cartToast" style="margin-top:10px;"></div>
   </div>
@@ -71,7 +74,27 @@
     <div class="d-sumrow"><span>運費</span><strong id="cartShipping">NT$ 0</strong></div>
     <div class="d-sumrow d-total"><span>合計</span><strong id="cartTotal">NT$ 0</strong></div>
 
-    <div class="d-actions">
+    <div style="height:1px;background:rgba(0,0,0,.06);margin:10px 0;"></div>
+
+    <!-- ✅ 優惠碼 -->
+    <div class="coupon" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input
+        id="drawerCouponCode"
+        placeholder="輸入優惠碼（例如 HELLO）"
+        autocomplete="off"
+        style="flex:1;min-width:180px;padding:10px 10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.85);outline:none;text-transform:uppercase"
+      >
+      <button
+        id="drawerApplyCoupon"
+        type="button"
+        style="flex:0 0 auto;padding:10px 12px;border-radius:999px;border:none;background:rgba(0,0,0,.08);cursor:pointer"
+      >
+        套用
+      </button>
+    </div>
+    <div id="drawerCouponToast" class="toast" style="margin-top:8px;font-size:.9rem;"></div>
+
+    <div class="d-actions" style="margin-top:10px;">
       <button class="secondary" id="cartClear" type="button">清空</button>
       <button class="primary" id="cartGoCheckout" type="button">結帳</button>
     </div>
@@ -80,6 +103,7 @@
       * 結帳流程用跳出視窗顯示（與商品視窗一致）
     </div>
   </div>
+
 </aside>
 
 <!-- ✅ Checkout Modal -->
