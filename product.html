@@ -15,15 +15,15 @@
       <div class="detail-grid">
         <div class="detail-media">
           <img id="pImg" alt="商品圖" loading="lazy">
-          <div id="thumbs" class="thumbs"></div>
+          <div id="thumbs" class="thumbs" style="display:none;"></div>
         </div>
 
         <div class="detail-info">
-          <h2 id="pName">商品名稱</h2>
-          <div class="detail-meta" id="pMeta">分類</div>
-          <div class="detail-price" id="pPrice">NT$ 0</div>
+          <h2 id="pName">載入中…</h2>
+          <div class="detail-meta" id="pMeta"></div>
+          <div class="detail-price" id="pPrice"></div>
 
-          <div class="detail-desc" id="pDesc">這裡是商品介紹。</div>
+          <div class="detail-desc" id="pDesc"></div>
 
           <div class="detail-actions">
             <button class="btn" id="btnAddCart" type="button" disabled>載入中...</button>
@@ -34,8 +34,14 @@
     </div>
   </main>
 
+  <!-- ✅ 先載入 include.js，讓 header / drawer 在這頁也能用 -->
+  <script src="./include.js"></script>
 
   <script>
+  (() => {
+    const API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
+    const CART_KEY = "ten_cart";
+
     const id = new URLSearchParams(location.search).get("id");
 
     const pImg   = document.getElementById("pImg");
@@ -48,19 +54,16 @@
     const btnAddCart = document.getElementById("btnAddCart");
     const cartToast  = document.getElementById("cartToast");
 
-    // ✅ 跟 include.js 同一把 key
-    const CART_KEY = "ten_cart";
-
     let CURRENT_PRODUCT = null;
 
     function toast(msg, ok=true){
       if(!cartToast) return;
       cartToast.textContent = msg;
       cartToast.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
-      setTimeout(()=>{ cartToast.textContent = ""; }, 1800);
+      if(msg) setTimeout(()=>{ cartToast.textContent = ""; }, 1800);
     }
 
-    // ====== Cart (ten_cart) ======
+    // ===== Cart (ten_cart) =====
     function readCart(){
       try{
         const raw = localStorage.getItem(CART_KEY);
@@ -73,41 +76,56 @@
 
     function writeCart(arr){
       localStorage.setItem(CART_KEY, JSON.stringify(arr));
-      // ✅ 通知 header 更新數量
       window.dispatchEvent(new Event("cart:changed"));
     }
 
+    // ✅ 寫入完整欄位（跟 drawer 顯示一致）
     function addToCart(product, qty=1){
-      const pid = String(product?.id || "").trim();
+      const pid = String(product?.id || product?._id || "").trim();
       if(!pid) return { ok:false, error:"NO_ID" };
+
+      qty = Math.max(1, Math.floor(Number(qty || 1)));
+
+      const item = {
+        id: pid,
+        title: product.title || "",
+        price: Number(product.price || 0),
+        image: product.image || "assets/placeholder.png",
+        qty
+      };
 
       const cart = readCart();
       const i = cart.findIndex(x => String(x.id) === pid);
 
       if(i === -1){
-        cart.push({ id: pid, qty: Math.max(1, Number(qty || 1)) });
+        cart.push(item);
       }else{
-        cart[i].qty = Math.max(1, Number(cart[i].qty || 1) + Number(qty || 1));
+        cart[i].qty = Math.max(1, Number(cart[i].qty || 1) + qty);
+        // 補齊資料（避免舊資料只有 id/qty）
+        cart[i].title = cart[i].title || item.title;
+        cart[i].price = Number(cart[i].price || item.price || 0);
+        cart[i].image = cart[i].image || item.image;
       }
 
       writeCart(cart);
       return { ok:true };
     }
 
-    // ====== Thumbs ======
-    function buildThumbs(mainImage, imagesField){
-      let list = [];
-
+    // ===== Images / Thumbs =====
+    function parseImagesField(imagesField){
+      // 支援：array 或多行字串
       if (Array.isArray(imagesField)) {
-        list = imagesField;
-      } else {
-        list = String(imagesField || "")
-          .split("\n")
-          .map(s => s.trim())
-          .filter(Boolean);
+        return imagesField.map(s => String(s||"").trim()).filter(Boolean);
       }
+      return String(imagesField || "")
+        .split("\n")
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
 
-      // 主圖放第一張（去重）
+    function buildThumbs(mainImage, imagesField){
+      const list = parseImagesField(imagesField);
+
       const all = [mainImage, ...list].filter(Boolean);
       const uniq = [];
       const seen = new Set();
@@ -145,35 +163,68 @@
       });
     }
 
+    function setLoadingState(msg="載入中…"){
+      pName.textContent = msg;
+      pMeta.textContent = "";
+      pPrice.textContent = "";
+      pDesc.textContent = "";
+      pImg.src = "assets/placeholder.png";
+      thumbs.style.display = "none";
+      thumbs.innerHTML = "";
+
+      if(btnAddCart){
+        btnAddCart.disabled = true;
+        btnAddCart.textContent = "載入中...";
+      }
+    }
+
+    function setErrorState(msg="載入失敗，請稍後再試"){
+      pName.textContent = msg;
+      pMeta.textContent = "";
+      pPrice.textContent = "";
+      pDesc.textContent = "";
+      pImg.src = "assets/placeholder.png";
+      thumbs.style.display = "none";
+      thumbs.innerHTML = "";
+
+      if(btnAddCart){
+        btnAddCart.disabled = true;
+        btnAddCart.textContent = "無法加入購物車";
+      }
+    }
+
     async function loadOne(){
       if(!id){
-        pName.textContent = "找不到商品";
-        if(btnAddCart){
-          btnAddCart.disabled = true;
-          btnAddCart.textContent = "無法加入購物車";
-        }
+        setErrorState("找不到商品（缺少 id）");
         return;
       }
 
+      setLoadingState();
+
       try{
-        // ✅ 用單一商品 API
-        const res = await fetch(`${window.API_BASE}/products/${encodeURIComponent(id)}`, { cache: "no-store" });
+        const res = await fetch(`${API_BASE}/products/${encodeURIComponent(id)}`, { cache: "no-store" });
         if(!res.ok) throw new Error("API error " + res.status);
+
         const p = await res.json();
         CURRENT_PRODUCT = p;
 
-        document.title = `${p.title || "商品"}｜十年一日`;
-
+        const pid = String(p?.id ?? p?._id ?? id);
+        const title = p.title || "（未命名）";
         const cat = p.category || "其他";
         const series = p.series || "全系列";
         const price = (typeof p.price === "number") ? p.price : Number(p.price || 0);
 
-        pName.textContent = p.title || "（未命名）";
-        pMeta.textContent = `${series}｜${cat}`;
-        pPrice.textContent = `NT$ ${price}`;
-        pDesc.textContent = p.desc || "（商品介紹待補）";
+        // desc 兼容：desc / description
+        const desc = p.desc ?? p.description ?? "";
 
-        const main = p.image || "assets/placeholder.png";
+        document.title = `${title}｜十年一日`;
+
+        pName.textContent = title;
+        pMeta.textContent = `${series}｜${cat}｜ID：${pid}`;
+        pPrice.textContent = `NT$ ${Math.round(price)}`;
+        pDesc.textContent = desc ? String(desc) : "（商品介紹待補）";
+
+        const main = (p.image || "").trim() || "assets/placeholder.png";
         pImg.src = main;
 
         buildThumbs(main, p.images);
@@ -184,15 +235,10 @@
         }
       }catch(err){
         console.error(err);
-        pName.textContent = "載入失敗，請稍後再試";
-        if(btnAddCart){
-          btnAddCart.disabled = true;
-          btnAddCart.textContent = "無法加入購物車";
-        }
+        setErrorState("載入失敗，請稍後再試");
       }
     }
 
-    // ✅ 不跳轉：只加入購物車 + toast + header 更新數量
     btnAddCart?.addEventListener("click", () => {
       if(!CURRENT_PRODUCT){
         toast("商品尚未載入完成", false);
@@ -207,9 +253,8 @@
     });
 
     loadOne();
+  })();
   </script>
-<script src="./include.js"></script>
 
 </body>
-
 </html>
