@@ -799,7 +799,7 @@ footer{
   /* ✅ 手機圖片區限制高度，視窗就不會太長 */
   #pdBackdrop .pd-photo img{
     aspect-ratio: 4 / 3;
-    max-height: 46vh;
+    max-height: 50vh;
     border-radius: 16px;
   }
 
