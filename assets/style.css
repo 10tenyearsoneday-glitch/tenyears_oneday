@@ -63,7 +63,7 @@ header{
   background:rgba(255,255,255,.95);
   display:grid;
   place-items:center;
-  color:rgba(47,58,44,.82); /* 用 color 控制 SVG 顏色 */
+  color:rgba(47,58,44,.82);
   text-decoration:none;
   position:relative;
   transition: background-color .18s ease, border-color .18s ease, transform .18s ease, color .18s ease;
@@ -89,7 +89,6 @@ header{
   opacity:.92;
 }
 
-/* 按下/目前頁面狀態（深綠底白圖示） */
 .icon.active,
 .icon:active{
   background:#2c3a2c;
@@ -102,7 +101,7 @@ header{
   opacity:1;
 }
 
-/* Nav：橫向可滑動、置頂在 header 下方（但不造成空白） */
+/* Nav */
 nav{
   background:rgba(255,255,255,.78);
   padding:10px 0 12px;
@@ -176,7 +175,7 @@ main{
 }
 
 /* =========================
-   Subcats（子分類橫向一排）
+   Subcats
 ========================= */
 .subcats{
   display:flex;
@@ -210,7 +209,6 @@ main{
 
 /* =========================
    Product grid + card
-   （點商品 → 由 JS 開商品 Modal）
 ========================= */
 .grid{
   display:grid;
@@ -352,6 +350,27 @@ footer{
   display:block;
 }
 
+/* Footer links */
+.footer-links{
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-size: .95rem;
+  letter-spacing: .04em;
+}
+.footer-links a,
+.footer-links span{
+  color: #cfe0cb;
+  text-decoration: none;
+  opacity: .9;
+}
+.footer-links a:hover{
+  opacity: 1;
+  text-decoration: underline;
+}
+
 /* =========================
    Back to Top
 ========================= */
@@ -374,7 +393,7 @@ footer{
 
 /* =========================
    Product Modal（商品跳出框框）
-   你要的「點商品 → 跳出框框」
+   ✅ 改回置中，視覺更漂亮
 ========================= */
 .ui-backdrop{
   position:fixed;
@@ -382,7 +401,7 @@ footer{
   background:rgba(0,0,0,.35);
   display:none;
   z-index:10000;
-  align-items:flex-start;
+  align-items:center;         /* ✅ 原本 flex-start 會讓視窗貼頂，看起來變醜 */
   justify-content:center;
   padding:18px;
   overflow:auto;
@@ -482,8 +501,37 @@ footer{
 .pd-btn.secondary{ background:rgba(0,0,0,.08); color:rgba(47,58,44,.9); }
 .pd-toast{ margin-top:10px; font-size:.9rem; opacity:.85; }
 
+/* ===== Qty selector ===== */
+.qty{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px;
+  border-radius:999px;
+  background: rgba(0,0,0,.06);
+}
+.qty-btn{
+  width:36px;
+  height:36px;
+  border:none;
+  border-radius:999px;
+  background: rgba(255,255,255,.9);
+  cursor:pointer;
+  font-size:18px;
+  line-height:1;
+}
+.qty-input{
+  width:64px;
+  text-align:center;
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:12px;
+  padding:8px 10px;
+  background: rgba(255,255,255,.95);
+  font-size:1rem;
+}
+
 /* =========================
-   Cart Drawer（購物車跳出框框/側抽屜）
+   Cart Drawer（購物車側抽屜）
 ========================= */
 .drawer-backdrop{
   position:fixed;
@@ -526,6 +574,7 @@ footer{
   overflow:auto;
   flex:1;
 }
+
 .d-items{ display:flex; flex-direction:column; gap:10px; }
 .d-item{
   display:flex;
@@ -595,12 +644,28 @@ footer{
 }
 .d-actions .primary{ background:#5d6b59; color:#fff; }
 .d-actions .secondary{ background:rgba(0,0,0,.08); color:rgba(47,58,44,.9); }
-/* 購物車數量 badge：預設不顯示 */
-#cartCount{
-  display:none;
+
+/* ✅ 只在購物車抽屜內強制顯示優惠碼（避免污染商品 Modal） */
+#cartDrawer .coupon{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+  visibility: visible;
+  opacity: 1;
+  position: relative;
+  z-index: 1;
 }
 
-/* 有 class 才顯示 */
+/* ✅ 只影響購物車抽屜內的 toast（商品 Modal 用 pd-toast，不會被弄醜） */
+#cartDrawer .toast{
+  margin-top:8px;
+  font-size:.9rem;
+  opacity:.9;
+}
+
+/* 購物車數量 badge */
+#cartCount{ display:none; }
 #cartCount.cart-badge{
   position:absolute;
   top:-6px;
@@ -621,7 +686,6 @@ footer{
   pointer-events:none;
 }
 
-
 /* =========================
    Mobile tweaks
 ========================= */
@@ -633,89 +697,22 @@ footer{
   .icon{ width:34px; height:34px; min-width:34px; min-height:34px; }
   .icon svg, .icon.icon-img img{ width:16px; height:16px; }
 }
-/* ===== Footer 文字連結（IG / LINE）===== */
-.footer-links{
-  margin-top: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  font-size: .95rem;
-  letter-spacing: .04em;
-}
 
-/* 顏色與尾業標題一致 */
-.footer-links a,
-.footer-links span{
-  color: #cfe0cb; /* 與 .footer-brand 相同色系 */
-  text-decoration: none;
-  opacity: .9;
-}
-
-/* hover 微亮即可，不要太跳 */
-.footer-links a:hover{
-  opacity: 1;
-  text-decoration: underline;
-}
-/* ===== Qty selector ===== */
-.qty{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:6px;
-  border-radius:999px;
-  background: rgba(0,0,0,.06);
-}
-
-.qty-btn{
-  width:36px;
-  height:36px;
-  border:none;
-  border-radius:999px;
-  background: rgba(255,255,255,.9);
-  cursor:pointer;
-  font-size:18px;
-  line-height:1;
-}
-
-.qty-input{
-  width:64px;
-  text-align:center;
-  border:1px solid rgba(0,0,0,.12);
-  border-radius:12px;
-  padding:8px 10px;
-  background: rgba(255,255,255,.95);
-  font-size:1rem;
-}
-/* 強制顯示優惠碼區塊 */
-.coupon{
-  display:flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  position: relative;
-  z-index: 1;
-}
 /* =========================
-   Mobile 修正：購物車優惠碼不被吃掉
-   （只影響手機）
+   Mobile 修正：只修購物車抽屜優惠碼（不影響商品 Modal）
 ========================= */
 @media (max-width: 860px){
-  /* 卡片內容不要被裁切 */
-  .card{
-    overflow: visible !important;
-  }
+  .card{ overflow: visible; }
 
-  /* 優惠碼區塊強制顯示 */
-  .coupon{
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+  #cartDrawer .coupon{
+    display:flex;
+    visibility: visible;
+    opacity: 1;
     position: relative;
     z-index: 5;
   }
 
-  /* 確保 input 不會被擠扁 */
-  .coupon input{
+  #cartDrawer .coupon input{
     min-height: 44px;
   }
 }
