@@ -2,483 +2,673 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>後台管理｜十年一日</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>後台｜十年一日</title>
   <link rel="stylesheet" href="assets/style.css">
   <style>
-    .admin-wrap{max-width:980px;margin:auto;padding:18px;}
-    .admin-top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:10px 0 14px;}
-    .admin-title{font-size:1.15rem;letter-spacing:.08em;color:rgba(47,58,44,.85)}
-    .admin-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .admin-wrap{max-width:1100px;margin:auto;padding:18px;}
+    .admin-title{font-size:1.15rem;letter-spacing:.08em;color:rgba(47,58,44,.85);margin:10px 0 14px;}
+    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px;}
+    .tab{border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.65);padding:8px 14px;border-radius:999px;cursor:pointer}
+    .tab.active{background:#2c3a2c;color:#fff;border-color:#2c3a2c}
+    .panel{display:none}
+    .panel.active{display:block}
+    .card{background:rgba(255,255,255,.78);border:1px solid rgba(0,0,0,.06);box-shadow:0 10px 30px rgba(0,0,0,.06);border-radius:16px;overflow:hidden}
+    .hd{padding:14px 14px 10px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .bd{padding:14px}
     .btn2{border:none;border-radius:999px;padding:10px 14px;background:#5d6b59;color:#fff;cursor:pointer}
     .btn2.secondary{background:rgba(0,0,0,.08);color:rgba(47,58,44,.9)}
     .btn2.danger{background:#8a3b3b}
-    .hint{font-size:.85rem;opacity:.7}
-    .table{width:100%;border-collapse:separate;border-spacing:0 10px;}
-    .row{background:rgba(255,255,255,.70);border:1px solid rgba(0,0,0,.06);box-shadow:0 10px 30px rgba(0,0,0,.06);border-radius:14px;overflow:hidden}
-    .row td{padding:12px 12px;vertical-align:middle}
-    .mini{font-size:.85rem;opacity:.75}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.06);font-size:.82rem;white-space:nowrap}
-    .pill.on{background:rgba(93,107,89,.18);color:rgba(47,58,44,.9)}
-    .pill.off{background:rgba(138,59,59,.12);color:#8a3b3b}
-    .thumb-sm{width:56px;height:42px;border-radius:10px;overflow:hidden;background:rgba(0,0,0,.06)}
-    .thumb-sm img{width:100%;height:100%;object-fit:cover;display:block}
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.35);
-  display:none;
-  align-items:flex-start;        /* 不硬置中，避免上面被切 */
-  justify-content:center;
-  padding:18px;
-  overflow:auto;                 /* 超出就可以捲 */
-  z-index:9999;
-}
-.modal.open{display:flex}
-
-.panel{
-  width:min(720px,100%);
-  background:rgba(255,255,255,.92);
-  backdrop-filter:blur(10px);
-  border-radius:18px;
-  padding:16px 16px 14px;
-  border:1px solid rgba(0,0,0,.08);
-
-  max-height: calc(100vh - 36px); /* 不超出視窗 */
-  overflow:auto;                  /* 內容超過就捲 */
-}
-
-.panel-actions{
-  position: sticky;               /* ✅ 按鈕永遠黏在底部 */
-  bottom: 0;
-  background: rgba(255,255,255,.92);
-  padding: 12px 0 4px;
-  display:flex;
-  gap:10px;
-  justify-content:flex-end;
-  flex-wrap:wrap;
-  border-top: 1px solid rgba(0,0,0,.06);
-}
-    .form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.form .full{grid-column:1/-1}
-label{display:block;font-size:.82rem;opacity:.75;margin:2px 0 6px}
-input, select, textarea{
-  width:100%;
-  padding:10px 10px;
-  border-radius:12px;
-  border:1px solid rgba(0,0,0,.12);
-  background:rgba(255,255,255,.85);
-  outline:none;
-}
-textarea{min-height:110px;resize:vertical}
-
-
+    .muted{opacity:.75}
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    th{font-size:.85rem;opacity:.8;text-align:left;padding:0 8px}
+    td{background:rgba(255,255,255,.62);border:1px solid rgba(0,0,0,.06);padding:10px 8px;vertical-align:top}
+    tr td:first-child{border-radius:12px 0 0 12px}
+    tr td:last-child{border-radius:0 12px 12px 0}
+    .row-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    @media(max-width:860px){.field-grid{grid-template-columns:1fr}}
+    .f label{display:block;font-size:.85rem;opacity:.8;margin-bottom:6px}
+    .f input,.f select,.f textarea{
+      width:100%;padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);
+      background:rgba(255,255,255,.85);outline:none
+    }
+    .f textarea{min-height:92px;resize:vertical}
     .toast{margin-top:10px;font-size:.9rem}
-    .rowline{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
-    .btn-mini{border:none;border-radius:999px;padding:8px 12px;background:rgba(0,0,0,.08);cursor:pointer}
-    .label{font-size:.82rem;opacity:.75;margin:2px 0 6px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.06);font-size:.85rem;white-space:nowrap}
+    .ok{color:#2c3a2c}
+    .bad{color:#8a3b3b}
+    .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:9999;align-items:center;justify-content:center;padding:16px}
+    .modal-back.open{display:flex}
+    .modal{width:min(820px,100%);background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.10);border-radius:18px;box-shadow:0 18px 55px rgba(0,0,0,.18);overflow:hidden}
+    .modal .m-hd{padding:12px 14px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between}
+    .modal .m-bd{padding:14px}
+    .x{width:40px;height:40px;border:none;border-radius:999px;background:rgba(0,0,0,.10);cursor:pointer;font-size:22px;line-height:40px;color:rgba(47,58,44,.85)}
   </style>
 </head>
 <body>
-
-  <script src="include.js"></script>
-
   <main class="admin-wrap">
-    <div class="admin-top">
-      <div>
-        <div class="admin-title">後台管理（商品）</div>
-        <div class="hint">這版直接寫入 Google Sheet（需要 ADMIN_KEY）。</div>
-      </div>
-      <div class="admin-actions">
-        <button class="btn2 secondary" id="btnReload" type="button">重新載入</button>
-        <button class="btn2" id="btnAdd" type="button">新增商品</button>
-      </div>
+    <div class="admin-title">後台管理</div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="p">商品</button>
+      <button class="tab" data-tab="c">優惠碼</button>
+      <button class="tab" data-tab="s">設定（運費/折扣）</button>
     </div>
 
-    <table class="table" id="tbl"></table>
-    <div class="toast" id="toast"></div>
+    <!-- 商品 -->
+    <section class="panel active" id="panel-p">
+      <div class="card">
+        <div class="hd">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <strong>商品列表</strong>
+            <span class="pill" id="pCount">載入中…</span>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn2 secondary" id="pReload" type="button">重新整理</button>
+            <button class="btn2" id="pAdd" type="button">新增商品</button>
+          </div>
+        </div>
+        <div class="bd">
+          <div class="toast" id="pToast"></div>
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>id</th><th>名稱</th><th>價格</th><th>分類</th><th>狀態</th><th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="pTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 優惠碼 -->
+    <section class="panel" id="panel-c">
+      <div class="card">
+        <div class="hd">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <strong>優惠碼（coupons）</strong>
+            <span class="pill" id="cCount">載入中…</span>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn2 secondary" id="cReload" type="button">重新整理</button>
+            <button class="btn2" id="cAdd" type="button">新增優惠碼</button>
+          </div>
+        </div>
+        <div class="bd">
+          <div class="toast" id="cToast"></div>
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>code</th><th>啟用</th><th>type</th><th>rate/amount</th><th>門檻</th><th>期間</th><th>一次/限量</th><th>note</th><th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="cTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 設定 -->
+    <section class="panel" id="panel-s">
+      <div class="card">
+        <div class="hd">
+          <strong>設定（settings）</strong>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn2 secondary" id="sReload" type="button">讀取</button>
+            <button class="btn2" id="sSave" type="button">儲存</button>
+          </div>
+        </div>
+        <div class="bd">
+          <div class="toast" id="sToast"></div>
+          <div class="field-grid">
+            <div class="f">
+              <label>運費開關 shipping_enabled</label>
+              <select id="shipping_enabled">
+                <option value="true">true（要收運費/滿額免運）</option>
+                <option value="false">false（全站免運）</option>
+              </select>
+            </div>
+            <div class="f">
+              <label>運費 shipping_fee</label>
+              <input id="shipping_fee" type="number" step="1" value="60">
+            </div>
+            <div class="f">
+              <label>滿額免運門檻 free_shipping_threshold</label>
+              <input id="free_shipping_threshold" type="number" step="1" value="1000">
+            </div>
+            <div class="f">
+              <label>首購折扣 first_purchase_discount（例：0.9 = 9折）</label>
+              <input id="first_purchase_discount" type="number" step="0.01" value="0.9">
+            </div>
+            <div class="f">
+              <label>生日月折扣 birthday_discount（例：0.85 = 8.5折）</label>
+              <input id="birthday_discount" type="number" step="0.01" value="0.85">
+            </div>
+          </div>
+
+          <div style="margin-top:10px" class="muted">
+            ※ 這裡會寫入你的 settings sheet（A:key / B:value），前台讀 settings 會立刻生效（若前台有快取，刷新頁面即可）。
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <!-- modal -->
-  <div class="modal" id="modal">
-    <div class="panel">
-      <h3 id="modalTitle">編輯商品</h3>
-
-      <div class="form">
-        <div>
-          <label>商品編號（id）</label>
-          <input id="fId" placeholder="例如：O-D">
-        </div>
-        <div>
-          <label>狀態</label>
-          <select id="fStatus">
-            <option value="上架">上架</option>
-            <option value="下架">下架</option>
-          </select>
-        </div>
-
-        <div class="full">
-          <label>商品名稱</label>
-          <input id="fTitle" placeholder="例如：吊飾 D">
-        </div>
-
-        <div>
-          <label>分類</label>
-          <select id="fCategory">
-            <option value="項鍊">項鍊</option>
-            <option value="手鏈">手鏈</option>
-            <option value="耳環">耳環</option>
-            <option value="戒指">戒指</option>
-            <option value="其他">其他</option>
-          </select>
-        </div>
-        <div>
-          <label>系列</label>
-          <select id="fSeries">
-            <option value="全系列">全系列</option>
-            <option value="純銀飾品">純銀飾品</option>
-          </select>
-        </div>
-
-        <div>
-          <label>金額（NT$）</label>
-          <input id="fPrice" type="number" min="0" step="1" placeholder="例如：420">
-        </div>
-
-        <div class="full">
-          <div class="label">商品圖（上傳到 assets/products/）</div>
-          <input id="imgFile" type="file" accept="image/*">
-
-          <div class="hint">選檔後會產生「建議檔名」與「圖片網址」。你把檔案丟到 GitHub assets/products/ 即可。</div>
-
-          <div class="rowline">
-            <input id="imgSlug" type="text" placeholder="建議檔名（例如 O-D.jpg）">
-            <button id="copySlug" type="button" class="btn-mini">複製檔名</button>
-          </div>
-
-          <div class="rowline">
-            <input id="imgUrl" type="text" placeholder="圖片網址（會自動填）">
-            <button id="copyUrl" type="button" class="btn-mini">複製網址</button>
-          </div>
-
-          <img id="imgPreview" alt="預覽" style="max-width:220px;border-radius:12px;display:none;margin-top:10px;">
-        </div>
-
-        <div class="full">
-          <label>圖片網址（image）</label>
-          <input id="fImage" placeholder="https://...jpg">
-        </div>
-<div class="full">
-  <label>多圖網址（images）</label>
-  <textarea id="fImages" placeholder="一行一個網址&#10;https://.../O-D-1.jpg&#10;https://.../O-D-2.jpg"></textarea>
-  <div class="hint">一行一個網址；前台之後可做縮圖輪播</div>
-</div>
-
-        <div class="full">
-          <label>商品說明（desc）</label>
-          <textarea id="fDesc" placeholder="例如：極簡風吊飾，日常百搭。"></textarea>
-        </div>
+  <!-- Modal（商品/優惠碼共用） -->
+  <div class="modal-back" id="modalBack" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="m-hd">
+        <strong id="mTitle">編輯</strong>
+        <button class="x" id="mClose" type="button" aria-label="關閉">×</button>
       </div>
-
-      <div class="panel-actions">
-        <button class="btn2 secondary" id="btnCancel" type="button">取消</button>
-        <button class="btn2 danger" id="btnDelete" type="button" style="display:none;">刪除</button>
-        <button class="btn2" id="btnSave" type="button">儲存</button>
-      </div>
-
-      <div class="hint" id="modalHint" style="margin-top:10px;"></div>
+      <div class="m-bd" id="mBody"></div>
     </div>
   </div>
 
 <script>
-  // ✅ 改這兩個
+(() => {
+  // ===== 你自己的 GAS WebApp URL / ADMIN_KEY =====
   const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
   const ADMIN_KEY = "10years1day911321";
 
-  const PLACEHOLDER = "assets/placeholder.png";
-  const IMG_BASE = "https://10tenyearsoneday-glitch.github.io/tenyears_oneday/assets/products/";
+  // ===== DOM =====
+  const $ = (id)=>document.getElementById(id);
+  const tabs = document.querySelectorAll(".tab");
+  const panels = { p: $("panel-p"), c: $("panel-c"), s: $("panel-s") };
 
-  const tbl = document.getElementById("tbl");
-  const toast = document.getElementById("toast");
+  const modalBack = $("modalBack");
+  const mClose = $("mClose");
+  const mTitle = $("mTitle");
+  const mBody = $("mBody");
 
-  const modal = document.getElementById("modal");
-  const modalTitle = document.getElementById("modalTitle");
-  const modalHint = document.getElementById("modalHint");
+  // Products
+  const pReload = $("pReload"), pAdd = $("pAdd"), pTbody = $("pTbody"), pToast = $("pToast"), pCount = $("pCount");
+  // Coupons
+  const cReload = $("cReload"), cAdd = $("cAdd"), cTbody = $("cTbody"), cToast = $("cToast"), cCount = $("cCount");
+  // Settings
+  const sReload = $("sReload"), sSave = $("sSave"), sToast = $("sToast");
 
-  const fId = document.getElementById("fId");
-  const fStatus = document.getElementById("fStatus");
-  const fTitle = document.getElementById("fTitle");
-  const fCategory = document.getElementById("fCategory");
-  const fSeries = document.getElementById("fSeries");
-  const fPrice = document.getElementById("fPrice");
-  const fImage = document.getElementById("fImage");
-  const fDesc = document.getElementById("fDesc");
-  const fImages = document.getElementById("fImages");
+  const showToast = (el, msg, ok=true)=>{
+    el.textContent = msg;
+    el.className = "toast " + (ok ? "ok" : "bad");
+    if (msg) setTimeout(()=>{ el.textContent=""; }, 2200);
+  };
 
-  const imgFile = document.getElementById("imgFile");
-  const imgSlug = document.getElementById("imgSlug");
-  const imgUrl  = document.getElementById("imgUrl");
-  const imgPreview = document.getElementById("imgPreview");
-  const copySlug = document.getElementById("copySlug");
-  const copyUrl  = document.getElementById("copyUrl");
-
-  const btnReload = document.getElementById("btnReload");
-  const btnAdd = document.getElementById("btnAdd");
-  const btnCancel = document.getElementById("btnCancel");
-  const btnDelete = document.getElementById("btnDelete");
-  const btnSave = document.getElementById("btnSave");
-
-  let PRODUCTS = [];
-  let editingId = null;
-
-  function showToast(msg, ok=true){
-    toast.textContent = msg;
-    toast.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
-  }
-
-  function safeFileName(name){
-    return String(name).trim().replace(/[^\w.\-]+/g, "-");
-  }
-
-  function updateImageUrlFromSlug(){
-    const fileName = safeFileName(imgSlug.value || "");
-    const full = fileName ? (IMG_BASE + encodeURIComponent(fileName)) : "";
-    imgUrl.value = full;
-    fImage.value = full;
-  }
-
-  imgFile?.addEventListener("change", () => {
-    const f = imgFile.files?.[0];
-    if(!f) return;
-
-    const id = (fId.value || "").trim();
-    const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
-    const fileName = safeFileName((id ? id : f.name.replace(/\.[^.]+$/, "")) + "." + ext);
-
-    imgSlug.value = fileName;
-    updateImageUrlFromSlug();
-
-    const url = URL.createObjectURL(f);
-    imgPreview.src = url;
-    imgPreview.style.display = "block";
+  // ===== tabs =====
+  tabs.forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      tabs.forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      const key = btn.dataset.tab;
+      Object.keys(panels).forEach(k=>panels[k].classList.toggle("active", k===key));
+    });
   });
 
-  imgSlug?.addEventListener("input", updateImageUrlFromSlug);
-  imgUrl?.addEventListener("input", () => { fImage.value = imgUrl.value.trim(); });
+  // ===== modal =====
+  function openModal(title, html){
+    mTitle.textContent = title;
+    mBody.innerHTML = html;
+    modalBack.classList.add("open");
+    modalBack.setAttribute("aria-hidden","false");
+    document.body.style.overflow="hidden";
+  }
+  function closeModal(){
+    modalBack.classList.remove("open");
+    modalBack.setAttribute("aria-hidden","true");
+    document.body.style.overflow="";
+  }
+  mClose.addEventListener("click", closeModal);
+  modalBack.addEventListener("click", (e)=>{ if(e.target===modalBack) closeModal(); });
 
-  copySlug?.addEventListener("click", async () => {
-    if(!imgSlug.value) return;
-    await navigator.clipboard.writeText(imgSlug.value);
-    showToast("已複製檔名");
-  });
+  // ===== GAS helpers =====
+  async function gasGet(path){
+    const res = await fetch(`${GAS_URL}?path=${encodeURIComponent(path)}`, { cache:"no-store" });
+    return await res.json();
+  }
 
-  copyUrl?.addEventListener("click", async () => {
-    if(!imgUrl.value) return;
-    await navigator.clipboard.writeText(imgUrl.value);
-    showToast("已複製圖片網址");
-  });
+  async function gasWrite(path, method, payload, id=""){
+    const url =
+      `${GAS_URL}?path=${encodeURIComponent(path)}` +
+      `&key=${encodeURIComponent(ADMIN_KEY)}` +
+      `&method=${encodeURIComponent(method)}` +
+      (id ? `&id=${encodeURIComponent(id)}` : "");
 
-  function openModal(mode, item){
-    modal.classList.add("open");
-
-    if(mode === "add"){
-      editingId = null;
-      modalTitle.textContent = "新增商品";
-      btnDelete.style.display = "none";
-      modalHint.textContent = "新增時 id 不可重複。";
-      fId.disabled = false;
-
-      fId.value = "";
-      fStatus.value = "上架";
-      fTitle.value = "";
-      fCategory.value = "其他";
-      fSeries.value = "全系列";
-      fPrice.value = 0;
-      fImage.value = "";
-      fDesc.value = "";
-      imgSlug.value = "";
-      imgUrl.value = "";
-      imgPreview.style.display = "none";
-      fImages.value = "";
-
-    }else{
-      editingId = item.id;
-      modalTitle.textContent = `編輯商品：${item.id}`;
-      btnDelete.style.display = "inline-block";
-      modalHint.textContent = "編輯時 id 不建議改（如需改 id，建議新增一筆再刪除舊的）。";
-      fId.disabled = true;
-
-      fId.value = item.id || "";
-      fStatus.value = item.status || "上架";
-      fTitle.value = item.title || "";
-      fCategory.value = item.category || "其他";
-      fSeries.value = item.series || "全系列";
-      fPrice.value = (typeof item.price === "number") ? item.price : Number(item.price || 0);
-      fImage.value = item.image || "";
-      fDesc.value = item.desc || "";
-      // images 可能是字串（GAS/Sheet）或陣列（你未來可能改）→ 都轉成多行字串顯示
-if (Array.isArray(item.images)) {
-  fImages.value = item.images.join("\n");
-} else {
-  fImages.value = String(item.images || "").trim();
-}
-
-
-      imgUrl.value = item.image || "";
-      imgSlug.value = (item.image || "").split("/").pop() || "";
-      if(item.image){
-        imgPreview.src = item.image;
-        imgPreview.style.display = "block";
-      }else{
-        imgPreview.style.display = "none";
-      }
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify(payload || {})
+    });
+    const out = await res.json();
+    if(!res.ok || out?.ok === false || out?.error) {
+      const err = out?.error || ("HTTP_"+res.status);
+      throw new Error(err);
     }
+    return out;
   }
 
-  function closeModal(){ modal.classList.remove("open"); }
-
-  function rowHtml(p){
-    const img = p.image || PLACEHOLDER;
-    const st = p.status || "上架";
-    const stClass = (st === "上架") ? "pill on" : "pill off";
+  // =========================
+  // 產品
+  // =========================
+  let PRODUCTS = [];
+  function productRow(p){
+    const id = String(p.id ?? "");
     return `
-      <tr class="row">
-        <td style="width:76px;">
-          <div class="thumb-sm"><img src="${img}" alt="" loading="lazy"></div>
-        </td>
+      <tr>
+        <td>${id}</td>
+        <td>${escapeHtml(p.title ?? "")}</td>
+        <td>NT$ ${Number(p.price||0)}</td>
+        <td>${escapeHtml(p.category ?? "")}</td>
+        <td>${escapeHtml(p.status ?? "上架")}</td>
         <td>
-          <div style="font-weight:600;letter-spacing:.03em;">${p.title || "（未命名）"}</div>
-          <div class="mini">${p.series || "全系列"}｜${p.category || "其他"}｜<span class="${stClass}">${st}</span></div>
-          <div class="mini">ID：${p.id}</div>
-        </td>
-        <td style="width:120px;text-align:right;font-weight:700;color:#6c7f67;">
-          NT$ ${typeof p.price === "number" ? p.price : Number(p.price || 0)}
-        </td>
-        <td style="width:90px;text-align:right;">
-          <button class="btn2 secondary" data-edit="${p.id}" type="button">編輯</button>
+          <div class="row-actions">
+            <button class="btn2 secondary" data-pedit="${id}">編輯</button>
+            <button class="btn2 danger" data-pdel="${id}">刪除</button>
+          </div>
         </td>
       </tr>
     `;
   }
 
-  function render(){
-    tbl.innerHTML = PRODUCTS.map(rowHtml).join("");
-    tbl.querySelectorAll("[data-edit]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-edit");
-        const item = PRODUCTS.find(x => String(x.id) === String(id));
-        if(item) openModal("edit", item);
-      });
-    });
-  }
-
   async function loadProducts(){
-    showToast("載入商品中...");
     try{
-      const res = await fetch(`${GAS_URL}?path=products`, { cache: "no-store" });
-      const data = await res.json();
-      PRODUCTS = Array.isArray(data) ? data : [];
-      render();
-      showToast(`載入完成：${PRODUCTS.length} 件商品`);
+      pCount.textContent = "載入中…";
+      PRODUCTS = await gasGet("products");
+      if(!Array.isArray(PRODUCTS)) PRODUCTS = [];
+      pTbody.innerHTML = PRODUCTS.map(productRow).join("");
+      pCount.textContent = `共 ${PRODUCTS.length} 筆`;
     }catch(e){
       console.error(e);
-      showToast("載入失敗，請確認 GAS 是否正常", false);
+      showToast(pToast, "讀取商品失敗（請看 Console / 確認 GAS URL）", false);
+      pCount.textContent = "讀取失敗";
     }
   }
 
- function buildPayload(){
-  return {
-    id: fId.value.trim(),
-    status: fStatus.value,
-    title: fTitle.value.trim(),
-    category: fCategory.value,
-    series: fSeries.value,
-    price: Number(fPrice.value || 0),
-    image: fImage.value.trim(),
-    images: (fImages.value || "").trim(), // ✅ 多圖：先以「多行字串」存到 Sheet
-    desc: fDesc.value.trim()
-  };
-}
+  function productForm(p, mode){
+    const isAdd = mode==="add";
+    const id = String(p?.id ?? "");
+    return `
+      <div class="field-grid">
+        <div class="f">
+          <label>id（新增必填）</label>
+          <input id="pf_id" value="${escapeAttr(id)}" ${isAdd?"":"disabled"}>
+        </div>
+        <div class="f">
+          <label>status</label>
+          <select id="pf_status">
+            ${["上架","下架"].map(x=>`<option ${String(p?.status||"上架")===x?"selected":""}>${x}</option>`).join("")}
+          </select>
+        </div>
 
-async function gasWrite(method, payload, id = "") {
-  const url =
-    `${GAS_URL}?path=products` +
-    (id ? `&id=${encodeURIComponent(id)}` : "") +
-    `&key=${encodeURIComponent(ADMIN_KEY)}` +
-    `&method=${encodeURIComponent(method)}`;
+        <div class="f">
+          <label>title</label>
+          <input id="pf_title" value="${escapeAttr(p?.title||"")}">
+        </div>
+        <div class="f">
+          <label>price</label>
+          <input id="pf_price" type="number" step="1" value="${Number(p?.price||0)}">
+        </div>
 
-  // ✅ 用 text/plain 避免觸發 CORS preflight (OPTIONS)
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload || {})
+        <div class="f">
+          <label>category</label>
+          <input id="pf_category" value="${escapeAttr(p?.category||"")}">
+        </div>
+        <div class="f">
+          <label>series</label>
+          <input id="pf_series" value="${escapeAttr(p?.series||"")}">
+        </div>
+
+        <div class="f" style="grid-column:1/-1">
+          <label>image（主圖）</label>
+          <input id="pf_image" value="${escapeAttr(p?.image||"")}">
+        </div>
+
+        <div class="f" style="grid-column:1/-1">
+          <label>images（多圖：可用換行或逗號）</label>
+          <textarea id="pf_images">${escapeHtml(p?.images||"")}</textarea>
+        </div>
+
+        <div class="f" style="grid-column:1/-1">
+          <label>desc</label>
+          <textarea id="pf_desc">${escapeHtml(p?.desc||"")}</textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn2" id="pf_save" type="button">${isAdd?"新增":"儲存"}</button>
+        <button class="btn2 secondary" id="pf_cancel" type="button">取消</button>
+      </div>
+    `;
+  }
+
+  async function saveProduct(mode, oldId){
+    const isAdd = mode==="add";
+    const id = String($("pf_id").value||"").trim();
+    const payload = {
+      id,
+      status: $("pf_status").value,
+      title: $("pf_title").value.trim(),
+      price: Number($("pf_price").value||0),
+      category: $("pf_category").value.trim(),
+      series: $("pf_series").value.trim(),
+      image: $("pf_image").value.trim(),
+      images: $("pf_images").value.trim(),
+      desc: $("pf_desc").value.trim(),
+    };
+
+    if(!payload.title) return showToast(pToast, "請填商品名稱", false);
+    if(isAdd && !payload.id) return showToast(pToast, "新增商品必須填 id", false);
+
+    try{
+      if(isAdd){
+        await gasWrite("products", "POST", payload, "");
+        showToast(pToast, "新增成功 ✅");
+      }else{
+        await gasWrite("products", "PUT", payload, String(oldId||id));
+        showToast(pToast, "儲存成功 ✅");
+      }
+      closeModal();
+      await loadProducts();
+    }catch(e){
+      console.error(e);
+      showToast(pToast, "寫入失敗（請看 Console / 檢查 ADMIN_KEY / GAS 權限）", false);
+    }
+  }
+
+  async function deleteProduct(id){
+    if(!confirm(`確定刪除商品 ${id} ?`)) return;
+    try{
+      await gasWrite("products", "DELETE", {}, String(id));
+      showToast(pToast, "刪除成功 ✅");
+      await loadProducts();
+    }catch(e){
+      console.error(e);
+      showToast(pToast, "刪除失敗（請看 Console / 檢查 ADMIN_KEY / GAS 權限）", false);
+    }
+  }
+
+  // =========================
+  // 優惠碼
+  // =========================
+  let COUPONS = [];
+  function couponRow(c){
+    const code = String(c.code||"").toUpperCase();
+    const enabled = !!c.enabled;
+    const type = String(c.type||"");
+    const rate = Number(c.rate||0);
+    const amount = Number(c.amount||0);
+    const minSpend = Number(c.minSpend||0);
+    const startAt = c.startAt ? String(c.startAt) : "";
+    const endAt = c.endAt ? String(c.endAt) : "";
+    const once = !!c.oncePerMember;
+    const maxUses = Number(c.maxUses||0);
+    const note = String(c.note||"");
+
+    const val = type==="rate" ? `rate=${rate}` : `amount=${amount}`;
+    const period = `${escapeHtml(startAt||"-")} ~ ${escapeHtml(endAt||"-")}`;
+    const lim = `${once ? "一次" : "可重複"} / ${maxUses>0 ? ("限量"+maxUses) : "不限量"}`;
+
+    return `
+      <tr>
+        <td>${escapeHtml(code)}</td>
+        <td>${enabled ? "✅" : "❌"}</td>
+        <td>${escapeHtml(type)}</td>
+        <td>${escapeHtml(val)}</td>
+        <td>${minSpend>0 ? ("NT$"+minSpend) : "-"}</td>
+        <td>${period}</td>
+        <td>${escapeHtml(lim)}</td>
+        <td>${escapeHtml(note)}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn2 secondary" data-cedit="${escapeAttr(code)}">編輯</button>
+            <button class="btn2 danger" data-cdel="${escapeAttr(code)}">刪除</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  async function loadCoupons(){
+    try{
+      cCount.textContent = "載入中…";
+      COUPONS = await gasGet("coupons");
+      if(!Array.isArray(COUPONS)) COUPONS = [];
+      cTbody.innerHTML = COUPONS.map(couponRow).join("");
+      cCount.textContent = `共 ${COUPONS.length} 筆`;
+    }catch(e){
+      console.error(e);
+      showToast(cToast, "讀取優惠碼失敗（請看 Console / 確認 coupons sheet）", false);
+      cCount.textContent = "讀取失敗";
+    }
+  }
+
+  function couponForm(c, mode){
+    const isAdd = mode==="add";
+    const code = String(c?.code||"").toUpperCase();
+    return `
+      <div class="field-grid">
+        <div class="f">
+          <label>code（新增必填）</label>
+          <input id="cf_code" value="${escapeAttr(code)}" ${isAdd?"":"disabled"}>
+        </div>
+
+        <div class="f">
+          <label>enabled</label>
+          <select id="cf_enabled">
+            <option value="true" ${String(!!c?.enabled)==="true"?"selected":""}>true</option>
+            <option value="false" ${String(!!c?.enabled)==="false"?"selected":""}>false</option>
+          </select>
+        </div>
+
+        <div class="f">
+          <label>type</label>
+          <select id="cf_type">
+            <option value="rate" ${String(c?.type||"rate")==="rate"?"selected":""}>rate</option>
+            <option value="amount" ${String(c?.type||"rate")==="amount"?"selected":""}>amount</option>
+          </select>
+        </div>
+
+        <div class="f">
+          <label>rate（0.9=9折；type=rate 時用）</label>
+          <input id="cf_rate" type="number" step="0.01" value="${Number(c?.rate||0.9)}">
+        </div>
+
+        <div class="f">
+          <label>amount（折抵金額；type=amount 時用）</label>
+          <input id="cf_amount" type="number" step="1" value="${Number(c?.amount||100)}">
+        </div>
+
+        <div class="f">
+          <label>minSpend（最低門檻，可 0）</label>
+          <input id="cf_minSpend" type="number" step="1" value="${Number(c?.minSpend||0)}">
+        </div>
+
+        <div class="f">
+          <label>startAt（可空）</label>
+          <input id="cf_startAt" value="${escapeAttr(c?.startAt||"")}">
+        </div>
+
+        <div class="f">
+          <label>endAt（可空）</label>
+          <input id="cf_endAt" value="${escapeAttr(c?.endAt||"")}">
+        </div>
+
+        <div class="f">
+          <label>oncePerMember</label>
+          <select id="cf_once">
+            <option value="true" ${String(!!c?.oncePerMember)==="true"?"selected":""}>true</option>
+            <option value="false" ${String(!!c?.oncePerMember)==="false"?"selected":""}>false</option>
+          </select>
+        </div>
+
+        <div class="f">
+          <label>maxUses（全站用量，0=不限）</label>
+          <input id="cf_maxUses" type="number" step="1" value="${Number(c?.maxUses||0)}">
+        </div>
+
+        <div class="f" style="grid-column:1/-1">
+          <label>note</label>
+          <input id="cf_note" value="${escapeAttr(c?.note||"")}">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn2" id="cf_save" type="button">${isAdd?"新增":"儲存"}</button>
+        <button class="btn2 secondary" id="cf_cancel" type="button">取消</button>
+      </div>
+    `;
+  }
+
+  async function saveCoupon(mode, oldCode){
+    const isAdd = mode==="add";
+    const code = String($("cf_code").value||"").trim().toUpperCase();
+    if(isAdd && !code) return showToast(cToast, "請填 code", false);
+
+    const payload = {
+      code,
+      enabled: $("cf_enabled").value === "true",
+      type: $("cf_type").value,
+      rate: Number($("cf_rate").value||0),
+      amount: Number($("cf_amount").value||0),
+      minSpend: Number($("cf_minSpend").value||0),
+      startAt: $("cf_startAt").value.trim(),
+      endAt: $("cf_endAt").value.trim(),
+      oncePerMember: $("cf_once").value === "true",
+      maxUses: Number($("cf_maxUses").value||0),
+      note: $("cf_note").value.trim(),
+    };
+
+    try{
+      if(isAdd){
+        await gasWrite("coupons", "POST", payload, "");
+        showToast(cToast, "新增成功 ✅");
+      }else{
+        await gasWrite("coupons", "PUT", payload, String(oldCode||code));
+        showToast(cToast, "儲存成功 ✅");
+      }
+      closeModal();
+      await loadCoupons();
+    }catch(e){
+      console.error(e);
+      showToast(cToast, "寫入失敗（請看 Console / 檢查 coupons 欄位是否齊全）", false);
+    }
+  }
+
+  async function deleteCoupon(code){
+    if(!confirm(`確定刪除優惠碼 ${code} ?`)) return;
+    try{
+      await gasWrite("coupons", "DELETE", {}, String(code).toUpperCase());
+      showToast(cToast, "刪除成功 ✅");
+      await loadCoupons();
+    }catch(e){
+      console.error(e);
+      showToast(cToast, "刪除失敗（請看 Console）", false);
+    }
+  }
+
+  // =========================
+  // Settings
+  // =========================
+  async function loadSettings(){
+    try{
+      const s = await gasGet("settings");
+      // 兼容 sheet 回來是字串/數字
+      $("shipping_enabled").value = String(!!(s?.shipping_enabled === true || String(s?.shipping_enabled)==="true"));
+      $("shipping_fee").value = Number(s?.shipping_fee ?? 60);
+      $("free_shipping_threshold").value = Number(s?.free_shipping_threshold ?? 1000);
+      $("first_purchase_discount").value = Number(s?.first_purchase_discount ?? 0.9);
+      $("birthday_discount").value = Number(s?.birthday_discount ?? 0.85);
+      showToast(sToast, "已讀取 ✅");
+    }catch(e){
+      console.error(e);
+      showToast(sToast, "讀取失敗（請看 Console / 確認 settings sheet）", false);
+    }
+  }
+
+  async function saveSettings(){
+    const payload = {
+      shipping_enabled: $("shipping_enabled").value === "true",
+      shipping_fee: Number($("shipping_fee").value||0),
+      free_shipping_threshold: Number($("free_shipping_threshold").value||0),
+      first_purchase_discount: Number($("first_purchase_discount").value||0),
+      birthday_discount: Number($("birthday_discount").value||0),
+    };
+
+    try{
+      await gasWrite("settings_update", "POST", payload, "");
+      showToast(sToast, "已儲存 ✅（前台刷新頁面生效）");
+    }catch(e){
+      console.error(e);
+      showToast(sToast, "儲存失敗（請看 Console）", false);
+    }
+  }
+
+  // ===== utils =====
+  function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g, (m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+  function escapeAttr(s){ return escapeHtml(s).replace(/"/g,"&quot;"); }
+
+  // =========================
+  // events 綁定（這次全部會動）
+  // =========================
+  pReload.addEventListener("click", loadProducts);
+  pAdd.addEventListener("click", ()=>{
+    openModal("新增商品", productForm({}, "add"));
+    $("pf_cancel").addEventListener("click", closeModal);
+    $("pf_save").addEventListener("click", ()=>saveProduct("add", ""));
+  });
+  pTbody.addEventListener("click", (e)=>{
+    const edit = e.target.closest("[data-pedit]");
+    const del  = e.target.closest("[data-pdel]");
+    if(edit){
+      const id = edit.getAttribute("data-pedit");
+      const p = PRODUCTS.find(x=>String(x.id)===String(id)) || {};
+      openModal("編輯商品", productForm(p, "edit"));
+      $("pf_cancel").addEventListener("click", closeModal);
+      $("pf_save").addEventListener("click", ()=>saveProduct("edit", id));
+    }
+    if(del){
+      deleteProduct(del.getAttribute("data-pdel"));
+    }
   });
 
-  // GAS 有時候就算失敗也可能是 200，把 error 放 body，所以要一起判斷
-  const out = await res.json().catch(() => ({}));
-  if (!res.ok || out?.error) throw new Error(out?.error || "GAS_WRITE_FAILED");
-  return out;
-}
-async function saveProduct(){
-  const payload = buildPayload();
-
-  if(!payload.title){
-    showToast("請填商品名稱", false);
-    return;
-  }
-  if(editingId === null && !payload.id){
-    showToast("新增商品必須填 id", false);
-    return;
-  }
-
-  try{
-    if(editingId === null){
-      // ✅ 新增
-      await gasWrite("POST", payload, "");
-      closeModal();
-      await loadProducts();
-      showToast("新增成功");
-    }else{
-      // ✅ 修改
-      await gasWrite("PUT", payload, editingId);
-      closeModal();
-      await loadProducts();
-      showToast("儲存成功");
+  cReload.addEventListener("click", loadCoupons);
+  cAdd.addEventListener("click", ()=>{
+    openModal("新增優惠碼", couponForm({ enabled:true, type:"rate", rate:0.9, amount:100, minSpend:0, oncePerMember:true, maxUses:0 }, "add"));
+    $("cf_cancel").addEventListener("click", closeModal);
+    $("cf_save").addEventListener("click", ()=>saveCoupon("add", ""));
+  });
+  cTbody.addEventListener("click", (e)=>{
+    const edit = e.target.closest("[data-cedit]");
+    const del  = e.target.closest("[data-cdel]");
+    if(edit){
+      const code = edit.getAttribute("data-cedit");
+      const c = COUPONS.find(x=>String(x.code||"").toUpperCase()===String(code).toUpperCase()) || {};
+      openModal("編輯優惠碼", couponForm(c, "edit"));
+      $("cf_cancel").addEventListener("click", closeModal);
+      $("cf_save").addEventListener("click", ()=>saveCoupon("edit", code));
     }
-  }catch(e){
-    console.error(e);
-    showToast("儲存失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
-  }
-}
+    if(del){
+      deleteCoupon(del.getAttribute("data-cdel"));
+    }
+  });
 
-async function deleteProduct(){
-  if(!editingId) return;
-  const ok = confirm(`確定刪除商品 ${editingId} 嗎？`);
-  if(!ok) return;
+  sReload.addEventListener("click", loadSettings);
+  sSave.addEventListener("click", saveSettings);
 
-  try{
-    await gasWrite("DELETE", {}, editingId);
-    closeModal();
+  // init
+  (async ()=>{
     await loadProducts();
-    showToast("刪除成功");
-  }catch(e){
-    console.error(e);
-    showToast("刪除失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
-  }
-}
-
-
-  // events
-  btnReload.addEventListener("click", loadProducts);
-  btnAdd.addEventListener("click", () => openModal("add", null));
-  btnCancel.addEventListener("click", closeModal);
-  btnSave.addEventListener("click", saveProduct);
-  btnDelete.addEventListener("click", deleteProduct);
-
-  modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
-
-  loadProducts();
+    await loadCoupons();
+    await loadSettings();
+  })();
+})();
 </script>
 
+<script src="./include.js"></script>
 </body>
 </html>
