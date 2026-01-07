@@ -2,85 +2,68 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<title>會員資料｜十年一日</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="assets/style.css">
+<title>會員資料｜十年一日</title>
+<style>
+body{font-family:"Noto Serif TC",serif;background:#f6f8f4;margin:0}
+.box{max-width:720px;margin:40px auto;background:#fff;border-radius:16px;padding:24px}
+button{padding:8px 14px;border:none;border-radius:8px;background:#8fa38f;color:#fff}
+</style>
 </head>
 <body>
 
-<h2>
-會員資料 <span id="cake" style="display:none">🎂</span>
-</h2>
-
-<div>姓名：<span id="name"></span></div>
-<div>手機：<span id="phone"></span></div>
-<div>生日：<span id="birth"></span>（鎖定）</div>
-
-<input id="addr">
-<button onclick="save()">儲存資料</button>
-<button onclick="logout()">登出</button>
-
-<h3>優惠</h3>
-<div id="discount"></div>
+<div class="box">
+<h2 id="title"></h2>
+<p id="info"></p>
 
 <h3>我的訂單</h3>
-<div id="orders"></div>
+<ul id="orders"></ul>
+
+<button onclick="logout()">登出</button>
+</div>
+
+<iframe id="gasBridge" style="display:none"></iframe>
 
 <script>
-const GAS_URL="https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+const GAS_URL="請換成你的 GAS /exec URL";
 const token=localStorage.getItem("memberToken");
 if(!token) location.href="member.html";
 
-function gasCall(path, body){
-  return new Promise((resolve)=>{
-    const rid="RID"+Date.now();
-    const iframe=document.createElement("iframe");
-    iframe.style.display="none";
-    iframe.src=GAS_URL+"?path="+path+"&postMessage=1&rid="+rid;
-    document.body.appendChild(iframe);
-    window.addEventListener("message",function h(e){
-      if(e.data?.rid!==rid) return;
-      window.removeEventListener("message",h);
-      iframe.remove();
-      resolve(e.data);
-    });
-    iframe.onload=()=>iframe.contentWindow.postMessage({body},"*");
-  });
+/* bridge */
+let ready=false,waiters={};
+const f=document.getElementById("gasBridge");
+f.src=GAS_URL+"?path=bridge";
+window.addEventListener("message",e=>{
+ const m=e.data||{};
+ if(m.type==="GAS_BRIDGE_READY"){ready=true;load();return;}
+ if(m.type==="GAS_BRIDGE_RES"&&waiters[m.id]){
+   waiters[m.id](m);delete waiters[m.id];
+ }
+});
+function call(path,method,body){
+ return new Promise((res,rej)=>{
+  const id=Math.random().toString(36).slice(2);
+  waiters[id]=r=>r.error?rej(r.error):res(r.data);
+  f.contentWindow.postMessage({type:"GAS_BRIDGE_REQ",id,path,method,body},"*");
+ });
 }
 
-(async()=>{
-  const me=await gasCall("member_me",{token});
-  if(!me.ok) return location.href="member.html";
+async function load(){
+ const me=await call("member_me","GET",{token});
+ const m=me.member;
+ const isBirthday=(new Date().getMonth()+1)==m.birth_m;
+ title.textContent=m.name+(isBirthday?" 🎂":"");
+ info.textContent=`手機：${m.phone}｜地址：${m.address}`;
 
-  const m=me.member;
-  name.textContent=m.name;
-  phone.textContent=m.phone;
-  birth.textContent=`${m.birth_y}-${m.birth_m}-${m.birth_d}`;
-  addr.value=m.address;
-
-  if(new Date().getMonth()+1==m.birth_m) cake.style.display="inline";
-
-  const settings=await gasCall("settings",{});
-  discount.textContent=
-    `首購折扣：${settings.first_purchase_discount||0}%｜生日折扣：${settings.birthday_discount||0}%`;
-
-  const ordersRes=await gasCall("member_orders",{token});
-  orders.innerHTML=ordersRes.orders.map(o=>`
-    <div>
-      <b>${o.order_id}</b> NT$${o.total}<br>
-      ${o.address_or_store}
-    </div>
-  `).join("");
-})();
-
-async function save(){
-  const r=await gasCall("member_update",{token,address:addr.value});
-  if(r.ok) alert("已更新");
+ const o=await call("member_orders","GET",{token});
+ orders.innerHTML=o.orders.map(x=>
+  `<li>${x.order_id}｜${x.total}</li>`
+ ).join("");
 }
-async function logout(){
-  await gasCall("member_logout",{token});
-  localStorage.removeItem("memberToken");
-  location.href="member.html";
+
+function logout(){
+ localStorage.removeItem("memberToken");
+ location.href="member.html";
 }
 </script>
 </body>
