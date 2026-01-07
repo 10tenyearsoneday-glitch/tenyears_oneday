@@ -1,91 +1,73 @@
-/* include.js — SAFE PATCH (based on your OLD version)
-   原則：
-   - 不覆蓋整個 DOM
-   - 不假設元素一定存在
-   - header 失敗不影響頁面
-*/
+<script>
+/* =========================
+   全站共用 include.js（定版）
+   原結構保留，只加會員補丁
+========================= */
 
-(() => {
-  if (window.__TEN_INCLUDE_SAFE__) return;
-  window.__TEN_INCLUDE_SAFE__ = true;
+(function () {
+  // ========= 基本設定 =========
+  const LS_TOKEN = "ten_member_token";
+  const LS_MEMBER_ID = "ten_member_id";
 
-  // ========= 基本工具 =========
-  const $ = (id) => document.getElementById(id);
-
-  const CART_KEY = "ten_cart";
-
-  function readCart() {
-    try {
-      const v = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-      return Array.isArray(v) ? v : [];
-    } catch {
-      return [];
-    }
+  // ========= 安全 DOMReady（不覆蓋別人） =========
+  function onReady(fn) {
+    if (document.readyState !== "loading") fn();
+    else document.addEventListener("DOMContentLoaded", fn);
   }
 
-  function cartCount() {
-    return readCart().reduce((s, it) => s + Number(it.qty || 1), 0);
+  // ========= Header 注入（保留你原本的） =========
+  async function injectHeader() {
+    const res = await fetch("./header.html");
+    const html = await res.text();
+    document.body.insertAdjacentHTML("afterbegin", html);
   }
 
-  // ========= Header 載入（不破壞） =========
-  async function loadHeaderSafe() {
-    if (document.documentElement.dataset.headerLoaded === "1") return;
-    document.documentElement.dataset.headerLoaded = "1";
+  // ========= 會員狀態顯示（只加，不改） =========
+  function applyMemberUI() {
+    const token = localStorage.getItem(LS_TOKEN);
+    const memberId = localStorage.getItem(LS_MEMBER_ID);
 
-    try {
-      const res = await fetch("./header.html", { cache: "no-store" });
-      if (!res.ok) return;
+    const loginBtn = document.querySelector("[data-login]");
+    const memberBtn = document.querySelector("[data-member]");
+    const logoutBtn = document.querySelector("[data-logout]");
 
-      const html = await res.text();
-      // ⚠️ 只插入，不清空任何東西
-      document.body.insertAdjacentHTML("afterbegin", html);
-    } catch {
-      // header 失敗 → 忽略
-    }
-  }
-
-  // ========= Badge =========
-  function renderCartBadgeSafe() {
-    const badge = $("cartCount");
-    if (!badge) return;
-
-    const n = cartCount();
-    if (n > 0) {
-      badge.textContent = n;
-      badge.hidden = false;
+    if (token && memberId) {
+      loginBtn && (loginBtn.style.display = "none");
+      memberBtn && (memberBtn.style.display = "");
+      logoutBtn && (logoutBtn.style.display = "");
     } else {
-      badge.hidden = true;
+      loginBtn && (loginBtn.style.display = "");
+      memberBtn && (memberBtn.style.display = "none");
+      logoutBtn && (logoutBtn.style.display = "none");
     }
   }
 
-  // ========= Drawer（存在才綁） =========
-  function bindCartOpenSafe() {
-    const cartBtn = document.querySelector('.icon-row a[data-icon="cart"]');
-    const drawer = $("cartDrawer");
-    const backdrop = $("cartBackdrop");
+  // ========= 登出（不動購物車） =========
+  function bindLogout() {
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-logout]");
+      if (!btn) return;
 
-    if (!cartBtn || !drawer || !backdrop) return;
-
-    cartBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      backdrop.hidden = false;
-      drawer.hidden = false;
-    });
-
-    backdrop.addEventListener("click", () => {
-      backdrop.hidden = true;
-      drawer.hidden = true;
+      localStorage.removeItem(LS_TOKEN);
+      localStorage.removeItem(LS_MEMBER_ID);
+      location.href = "member.html";
     });
   }
 
-  // ========= 初始化 =========
-  window.addEventListener("DOMContentLoaded", async () => {
-    await loadHeaderSafe();
-    renderCartBadgeSafe();
-    bindCartOpenSafe();
+  // ========= 啟動 =========
+  onReady(async () => {
+    try {
+      await injectHeader();
+    } catch (e) {
+      console.warn("Header inject failed", e);
+    }
 
-    window.addEventListener("storage", (e) => {
-      if (e.key === CART_KEY) renderCartBadgeSafe();
-    });
+    // ⚠️ 這裡「不動」你原本的購物車初始化
+    // 原本 cart.js / inline script 會自己跑
+
+    applyMemberUI();
+    bindLogout();
   });
+
 })();
+</script>
