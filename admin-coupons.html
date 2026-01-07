@@ -1,194 +1,267 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8"/>
-  <title>十年一日｜優惠後台</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <title>後台｜優惠碼與全站設定</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
     body{
-      font-family:'Noto Serif TC',serif;
-      background:#f6f6f4;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
       margin:0;
-      padding:24px;
-      color:#2f3a2c;
+      background:#f7f8f6;
+      color:#2c3a2c;
     }
-    h1{margin:0 0 12px;font-size:1.6rem}
-    .wrap{max-width:1100px;margin:auto}
-    .toolbar{display:flex;gap:12px;margin-bottom:16px}
-    button{
-      border:none;
-      border-radius:999px;
-      padding:8px 14px;
-      cursor:pointer;
-      background:#2f3a2c;
+    header{
+      padding:14px 18px;
+      background:#2c3a2c;
       color:#fff;
-      font-size:.9rem;
+      font-weight:700;
+      letter-spacing:.08em;
     }
-    button.secondary{background:#bbb;color:#333}
+    main{
+      max-width:1100px;
+      margin:auto;
+      padding:18px;
+    }
+    h2{
+      margin:28px 0 12px;
+      font-size:1.2rem;
+    }
+    .card{
+      background:#fff;
+      border-radius:14px;
+      border:1px solid rgba(0,0,0,.08);
+      padding:14px;
+      margin-bottom:20px;
+    }
     table{
       width:100%;
       border-collapse:collapse;
-      background:#fff;
-      border-radius:12px;
-      overflow:hidden;
+      font-size:.9rem;
     }
     th,td{
-      padding:10px;
-      border-bottom:1px solid #eee;
+      border-bottom:1px solid rgba(0,0,0,.08);
+      padding:8px 6px;
       text-align:left;
-      font-size:.9rem;
-      vertical-align:middle;
+      white-space:nowrap;
     }
-    th{background:#fafafa;font-weight:600}
-    tr:last-child td{border-bottom:none}
+    th{
+      background:#f1f3ef;
+      font-weight:700;
+    }
     input,select{
-      width:100%;
       padding:6px 8px;
       border-radius:8px;
-      border:1px solid #ccc;
-      font-family:inherit;
+      border:1px solid rgba(0,0,0,.2);
+      font-size:.9rem;
     }
-    .switch{
-      appearance:none;
-      width:40px;height:22px;
+    button{
+      padding:6px 12px;
       border-radius:999px;
-      background:#ccc;
-      position:relative;
+      border:none;
       cursor:pointer;
+      background:#2c3a2c;
+      color:#fff;
+      font-size:.85rem;
     }
-    .switch:checked{background:#2f3a2c}
-    .switch::after{
-      content:'';
-      width:18px;height:18px;
-      background:#fff;
-      border-radius:50%;
-      position:absolute;
-      top:2px;left:2px;
-      transition:.2s;
+    button.sub{
+      background:#e6ebe3;
+      color:#2c3a2c;
     }
-    .switch:checked::after{left:20px}
-    .note{opacity:.6;font-size:.8rem;margin-top:8px}
+    .row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+    .row label{
+      font-size:.85rem;
+      opacity:.85;
+    }
+    .danger{
+      background:#8a3b3b;
+      color:#fff;
+    }
+    .muted{
+      opacity:.6;
+      font-size:.85rem;
+    }
   </style>
 </head>
 
 <body>
-<div class="wrap">
-  <h1>優惠後台</h1>
+<header>後台管理｜優惠碼 & 全站設定</header>
 
-  <div class="toolbar">
-    <button id="addCoupon">＋ 新增優惠</button>
-    <button class="secondary" id="reload">重新載入</button>
+<main>
+
+  <!-- ===== 全站設定 ===== -->
+  <h2>全站設定</h2>
+  <div class="card">
+    <div class="row">
+      <label>是否啟用運費</label>
+      <select id="shipping_enabled">
+        <option value="true">是</option>
+        <option value="false">否</option>
+      </select>
+
+      <label>運費</label>
+      <input id="shipping_fee" type="number" value="60">
+
+      <label>免運門檻</label>
+      <input id="free_shipping_threshold" type="number" value="1000">
+
+      <label>首購折扣（0.9 = 9折）</label>
+      <input id="first_purchase_discount" type="number" step="0.01" value="0.9">
+
+      <label>生日折扣</label>
+      <input id="birthday_discount" type="number" step="0.01" value="0.85">
+
+      <button onclick="saveSettings()">儲存設定</button>
+    </div>
+    <div id="settingsMsg" class="muted"></div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>啟用</th>
-        <th>優惠碼</th>
-        <th>類型</th>
-        <th>折數 / 金額</th>
-        <th>最低消費</th>
-        <th>會員限一次</th>
-        <th>最大使用次數</th>
-        <th>備註</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
-
-  <div class="note">
-    ✔ 直接寫入 Google Sheet「coupons」｜✔ 即時影響前台購物車
+  <!-- ===== 優惠碼 ===== -->
+  <h2>優惠碼</h2>
+  <div class="card">
+    <div class="row">
+      <input id="c_code" placeholder="CODE">
+      <select id="c_type">
+        <option value="amount">金額折抵</option>
+        <option value="rate">折數</option>
+      </select>
+      <input id="c_amount" placeholder="金額" type="number">
+      <input id="c_rate" placeholder="折數 0.9" type="number" step="0.01">
+      <input id="c_min" placeholder="最低消費" type="number">
+      <input id="c_max" placeholder="總使用次數" type="number">
+      <select id="c_once">
+        <option value="false">不限會員次數</option>
+        <option value="true">每會員限一次</option>
+      </select>
+      <select id="c_enabled">
+        <option value="true">啟用</option>
+        <option value="false">停用</option>
+      </select>
+      <button onclick="addCoupon()">新增 / 更新</button>
+    </div>
   </div>
-</div>
+
+  <div class="card">
+    <table id="couponTable">
+      <thead>
+        <tr>
+          <th>CODE</th>
+          <th>類型</th>
+          <th>折扣</th>
+          <th>最低消費</th>
+          <th>會員限一次</th>
+          <th>啟用</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+</main>
 
 <script>
-(() => {
-  const GAS_URL =
-    "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-  const ADMIN_KEY = "10years1day911321";
+const GAS_URL = "請貼上你的 GAS /exec URL";
+const ADMIN_KEY = "10years1day911321";
 
-  const tbody = document.getElementById("rows");
+async function apiGet(path){
+  const r = await fetch(`${GAS_URL}?path=${path}`);
+  return r.json();
+}
+async function apiPost(path, body, method="POST", id=""){
+  const url =
+    `${GAS_URL}?path=${path}&key=${ADMIN_KEY}` +
+    (method!=="POST" ? `&method=${method}&id=${encodeURIComponent(id)}` : "");
+  const r = await fetch(url,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(body||{})
+  });
+  return r.json();
+}
 
-  function rowTpl(c){
-    return `
-      <tr data-code="${c.code}">
-        <td><input type="checkbox" class="switch" ${c.enabled?'checked':''}></td>
-        <td><input value="${c.code||''}"></td>
-        <td>
-          <select>
-            <option value="rate" ${c.type==='rate'?'selected':''}>折數</option>
-            <option value="amount" ${c.type==='amount'?'selected':''}>金額</option>
-          </select>
-        </td>
-        <td><input type="number" value="${c.type==='rate'?c.rate:c.amount||''}"></td>
-        <td><input type="number" value="${c.minSpend||0}"></td>
-        <td><input type="checkbox" ${c.oncePerMember?'checked':''}></td>
-        <td><input type="number" value="${c.maxUses||0}"></td>
-        <td><input value="${c.note||''}"></td>
-        <td><button data-del>刪除</button></td>
-      </tr>
+/* ===== settings ===== */
+async function loadSettings(){
+  const s = await apiGet("settings");
+  if(!s) return;
+  shipping_enabled.value = String(s.shipping_enabled);
+  shipping_fee.value = s.shipping_fee;
+  free_shipping_threshold.value = s.free_shipping_threshold;
+  first_purchase_discount.value = s.first_purchase_discount;
+  birthday_discount.value = s.birthday_discount;
+}
+async function saveSettings(){
+  await apiPost("settings_update",{
+    shipping_enabled: shipping_enabled.value==="true",
+    shipping_fee: Number(shipping_fee.value),
+    free_shipping_threshold: Number(free_shipping_threshold.value),
+    first_purchase_discount: Number(first_purchase_discount.value),
+    birthday_discount: Number(birthday_discount.value)
+  });
+  settingsMsg.textContent = "已儲存";
+}
+
+/* ===== coupons ===== */
+async function loadCoupons(){
+  const list = await apiGet("coupons");
+  const tb = document.querySelector("#couponTable tbody");
+  tb.innerHTML = "";
+  (list||[]).forEach(c=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${c.code}</td>
+      <td>${c.type}</td>
+      <td>${c.type==="rate"?c.rate:c.amount}</td>
+      <td>${c.minSpend||0}</td>
+      <td>${c.oncePerMember}</td>
+      <td>${c.enabled}</td>
+      <td>
+        <button class="sub" onclick='editCoupon(${JSON.stringify(c)})'>編輯</button>
+        <button class="danger" onclick='delCoupon("${c.code}")'>刪除</button>
+      </td>
     `;
-  }
-
-  function load(){
-    fetch(`${GAS_URL}?path=coupons`)
-      .then(r=>r.json())
-      .then(list=>{
-        tbody.innerHTML = list.map(rowTpl).join("");
-      });
-  }
-
-  function collect(tr){
-    const tds = tr.querySelectorAll("td");
-    return {
-      enabled: tds[0].querySelector("input").checked,
-      code: tds[1].querySelector("input").value.trim().toUpperCase(),
-      type: tds[2].querySelector("select").value,
-      rate: Number(tds[3].querySelector("input").value),
-      amount: Number(tds[3].querySelector("input").value),
-      minSpend: Number(tds[4].querySelector("input").value),
-      oncePerMember: tds[5].querySelector("input").checked,
-      maxUses: Number(tds[6].querySelector("input").value),
-      note: tds[7].querySelector("input").value
-    };
-  }
-
-  tbody.addEventListener("change", e=>{
-    const tr = e.target.closest("tr");
-    if(!tr) return;
-    const data = collect(tr);
-
-    fetch(`${GAS_URL}?path=coupons&key=${ADMIN_KEY}`,{
-      method:"POST",
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(data)
-    });
+    tb.appendChild(tr);
   });
-
-  tbody.addEventListener("click", e=>{
-    if(!e.target.dataset.del) return;
-    const tr = e.target.closest("tr");
-    const code = tr.dataset.code;
-    if(!confirm(`刪除 ${code}？`)) return;
-
-    fetch(`${GAS_URL}?path=coupons&key=${ADMIN_KEY}&method=DELETE&code=${code}`,{method:"POST"})
-      .then(()=>tr.remove());
+}
+function editCoupon(c){
+  c_code.value = c.code;
+  c_type.value = c.type;
+  c_amount.value = c.amount||"";
+  c_rate.value = c.rate||"";
+  c_min.value = c.minSpend||"";
+  c_max.value = c.maxUses||"";
+  c_once.value = String(!!c.oncePerMember);
+  c_enabled.value = String(!!c.enabled);
+}
+async function addCoupon(){
+  const code = c_code.value.trim().toUpperCase();
+  if(!code) return;
+  await apiPost("coupons",{
+    code,
+    type: c_type.value,
+    amount: Number(c_amount.value||0),
+    rate: Number(c_rate.value||0),
+    minSpend: Number(c_min.value||0),
+    maxUses: Number(c_max.value||0),
+    oncePerMember: c_once.value==="true",
+    enabled: c_enabled.value==="true"
   });
+  loadCoupons();
+}
+async function delCoupon(code){
+  if(!confirm("確定刪除 "+code+" ?")) return;
+  await apiPost("coupons",null,"DELETE",code);
+  loadCoupons();
+}
 
-  document.getElementById("addCoupon").onclick = ()=>{
-    tbody.insertAdjacentHTML("beforeend", rowTpl({
-      enabled:true,code:"",type:"rate",rate:0.9,minSpend:0,oncePerMember:false,maxUses:0,note:""
-    }));
-  };
-
-  document.getElementById("reload").onclick = load;
-
-  load();
-})();
+loadSettings();
+loadCoupons();
 </script>
 </body>
 </html>
