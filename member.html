@@ -1,6 +1,141 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
+  <title>十年一日｜會員</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<main style="max-width:820px;margin:0 auto;padding:18px;">
+  <h2 style="margin:6px 0 10px;">會員資料</h2>
+
+  <div class="card" style="padding:14px;border-radius:18px;background:rgba(255,255,255,.9);border:1px solid rgba(0,0,0,.08);box-shadow:0 10px 30px rgba(0,0,0,.06);">
+    <div style="font-size:.9rem;opacity:.75;margin-bottom:10px;">
+      會員編號：<span id="mid" style="font-weight:800;"></span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <label>姓名</label>
+        <input id="m_name" class="input" placeholder="你的名字" />
+      </div>
+      <div>
+        <label>手機</label>
+        <input id="m_phone" class="input" placeholder="09xx..." inputmode="tel" />
+      </div>
+      <div>
+        <label>Email</label>
+        <input id="m_email" class="input" placeholder="name@email.com" inputmode="email" />
+      </div>
+      <div>
+        <label>生日（YYYY-MM-DD）</label>
+        <input id="m_bday" class="input" placeholder="1997-03-21" />
+      </div>
+      <div style="grid-column:1/-1;">
+        <label>備註</label>
+        <input id="m_note" class="input" placeholder="（可空）" />
+      </div>
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button id="btnLoad" class="btn" type="button">讀取</button>
+      <button id="btnSave" class="btn primary" type="button">儲存</button>
+      <div id="toast" style="font-size:.92rem;"></div>
+    </div>
+  </div>
+</main>
+
+<script src="./include.js"></script>
+<script>
+(() => {
+  const MEMBER_KEY = "ten_member_id";
+
+  // ✅ 用你的 include.js 同一套
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+  const ADMIN_KEY = "10years1day911321";
+
+  const $ = (id) => document.getElementById(id);
+
+  function getMemberId(){
+    let id = localStorage.getItem(MEMBER_KEY);
+    if(!id){
+      id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
+      localStorage.setItem(MEMBER_KEY, id);
+    }
+    return id;
+  }
+
+  function toast(msg, ok=true){
+    const el = $("toast");
+    el.textContent = msg || "";
+    el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
+    if(msg) setTimeout(()=> el.textContent="", 2200);
+  }
+
+  async function loadMember(){
+    const memberId = getMemberId();
+    $("mid").textContent = memberId;
+
+    const url = `${GAS_URL}?path=members_get&memberId=${encodeURIComponent(memberId)}`;
+    const res = await fetch(url, { cache:"no-store" });
+    const out = await res.json().catch(()=> ({}));
+    if(!res.ok || out?.ok !== true) throw new Error(out?.error || "讀取失敗");
+
+    const m = out.member || {};
+    $("m_name").value = m.name || "";
+    $("m_phone").value = m.phone || "";
+    $("m_email").value = m.email || "";
+    $("m_bday").value = m.birthday || "";
+    $("m_note").value = m.note || "";
+  }
+
+  async function saveMember(){
+    const memberId = getMemberId();
+    $("mid").textContent = memberId;
+
+    const body = {
+      memberId,
+      name: $("m_name").value,
+      phone: $("m_phone").value,
+      email: $("m_email").value,
+      birthday: $("m_bday").value,
+      note: $("m_note").value
+    };
+
+    const url = `${GAS_URL}?path=members_upsert&key=${encodeURIComponent(ADMIN_KEY)}`;
+    const res = await fetch(url, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+    const out = await res.json().catch(()=> ({}));
+    if(!res.ok || out?.ok !== true) throw new Error(out?.error || "儲存失敗");
+  }
+
+  $("btnLoad").addEventListener("click", async ()=>{
+    try{ await loadMember(); toast("已讀取 ✅"); }
+    catch(e){ toast(String(e.message||e), false); }
+  });
+
+  $("btnSave").addEventListener("click", async ()=>{
+    try{ await saveMember(); toast("已儲存 ✅"); }
+    catch(e){ toast(String(e.message||e), false); }
+  });
+
+  // 頁面一進來先讀一次
+  window.addEventListener("DOMContentLoaded", ()=> {
+    loadMember().catch(()=>{ /* 不吵 */ });
+  });
+})();
+</script>
+</body>
+</html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
 <title>十年一日｜會員</title>
 
 <meta charset="utf-8"/>
