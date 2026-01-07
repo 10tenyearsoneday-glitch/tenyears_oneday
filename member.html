@@ -1,617 +1,79 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>十年一日｜會員</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css">
-
+  <meta charset="utf-8">
+  <title>會員登入 / 註冊｜十年一日</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="./include.js"></script>
   <style>
-    /* 不動你原本配色，這裡只做布局與可讀性 */
-    :root { --card: rgba(255,255,255,.82); --bd: rgba(0,0,0,.10); }
-    main{ max-width: 980px; margin: 0 auto; padding: 18px 14px 28px; }
-    .m-card{
-      background: var(--card);
-      border: 1px solid var(--bd);
-      border-radius: 18px;
-      padding: 14px;
-      box-shadow: 0 10px 26px rgba(0,0,0,.06);
-    }
-    .m-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
-    .m-title{ font-weight: 900; letter-spacing: .5px; }
-    .m-sub{ opacity:.7; font-size:.92rem; }
-    .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-top: 12px; }
-    .tab{
-      border:1px solid var(--bd);
-      background: rgba(255,255,255,.7);
-      border-radius: 999px;
-      padding: 8px 12px;
-      cursor:pointer;
-      font-weight: 800;
-      font-size:.95rem;
-    }
-    .tab.active{ background: rgba(0,0,0,.07); }
-    .pane{ display:none; margin-top: 12px; }
-    .pane.active{ display:block; }
-
-    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    @media(max-width:760px){ .grid2{ grid-template-columns: 1fr; } }
-
-    .row{ display:grid; gap:6px; }
-    label{ font-size:.92rem; opacity:.78; }
-    input, select, textarea{
-      width:100%;
-      padding: 11px 12px;
-      border-radius: 14px;
-      border:1px solid var(--bd);
-      background: rgba(255,255,255,.92);
-      outline:none;
-      font-family: inherit;
-    }
-    textarea{ min-height: 90px; resize: vertical; }
-
-    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
-    .btn{
-      border: none;
-      border-radius: 999px;
-      padding: 10px 14px;
-      cursor:pointer;
-      font-weight: 900;
-      background: rgba(0,0,0,.08);
-    }
-    .btn.primary{ background: rgba(47,58,44,.18); }
-    .btn.danger{ background: rgba(170,70,70,.18); }
-    .hint{ font-size:.88rem; opacity:.72; margin-top: 8px; line-height: 1.45; }
-    .toast{ margin-top: 10px; font-size:.92rem; }
-    .toast.ok{ color: rgba(47,58,44,.9); }
-    .toast.bad{ color: #8a3b3b; }
-
-    .orders{ display:grid; gap:10px; }
-    .order{
-      border:1px solid var(--bd);
-      background: rgba(255,255,255,.75);
-      border-radius: 16px;
-      padding: 12px;
-    }
-    .order-hd{
-      display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
-      flex-wrap:wrap;
-      margin-bottom: 8px;
-    }
-    .order-id{ font-weight: 900; }
-    .order-meta{ opacity:.75; font-size:.9rem; }
-    .order-lines{ margin-top:8px; display:grid; gap:6px; }
-    .line{
-      display:flex; justify-content:space-between; gap:10px;
-      font-size:.95rem;
-    }
-    .line strong{ font-weight: 900; }
-    .items{ margin-top: 10px; border-top: 1px dashed rgba(0,0,0,.12); padding-top: 10px; display:grid; gap:6px; }
-    .item{ display:flex; justify-content:space-between; gap:10px; font-size:.95rem; }
-    .muted{ opacity:.7; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    body{font-family:"Noto Serif TC",serif;padding:20px}
+    .card{max-width:420px;margin:auto}
+    input,button{width:100%;padding:12px;margin:6px 0}
+    button{background:#8ea08e;color:#fff;border:0}
   </style>
 </head>
-
 <body>
 
-<main>
-  <div class="m-card">
-    <div class="m-head">
-      <div>
-        <div class="m-title">會員中心</div>
-        <div class="m-sub" id="subText">登入後可查看個人資料與訂單</div>
-      </div>
-      <div class="m-sub mono" id="sessionText"></div>
-    </div>
+<div class="card">
+  <h2>會員註冊</h2>
+  <input id="r_name" placeholder="姓名">
+  <input id="r_phone" placeholder="手機 09xxxxxxxx">
+  <input id="r_pw" type="password" placeholder="密碼（至少6碼）">
+  <input id="r_addr" placeholder="地址">
+  <input id="r_y" placeholder="生日 年">
+  <input id="r_m" placeholder="月">
+  <input id="r_d" placeholder="日">
+  <button onclick="doRegister()">註冊</button>
 
-    <div class="tabs" role="tablist" aria-label="會員功能">
-      <button class="tab" id="tabLogin" type="button" data-pane="paneLogin">登入</button>
-      <button class="tab" id="tabRegister" type="button" data-pane="paneRegister">註冊</button>
-      <button class="tab" id="tabProfile" type="button" data-pane="paneProfile">我的資料</button>
-      <button class="tab" id="tabOrders" type="button" data-pane="paneOrders">我的訂單</button>
-    </div>
+  <hr>
 
-    <!-- 登入 -->
-    <section class="pane" id="paneLogin" aria-label="登入">
-      <div class="grid2">
-        <div class="row">
-          <label>手機號碼</label>
-          <input id="lgPhone" inputmode="numeric" placeholder="09xxxxxxxx" autocomplete="tel">
-        </div>
-        <div class="row">
-          <label>密碼</label>
-          <input id="lgPw" type="password" placeholder="至少 6 碼" autocomplete="current-password">
-        </div>
-      </div>
-      <div class="actions">
-        <button class="btn primary" id="btnLogin" type="button">登入</button>
-        <button class="btn" id="btnGoRegister" type="button">我還沒有帳號 → 去註冊</button>
-      </div>
-      <div class="toast" id="toastLogin"></div>
-    </section>
+  <h2>會員登入</h2>
+  <input id="l_phone" placeholder="手機">
+  <input id="l_pw" type="password" placeholder="密碼">
+  <button onclick="doLogin()">登入</button>
 
-    <!-- 註冊 -->
-    <section class="pane" id="paneRegister" aria-label="註冊">
-      <div class="grid2">
-        <div class="row">
-          <label>姓名（首次填寫）</label>
-          <input id="rgName" placeholder="請輸入姓名" autocomplete="name">
-        </div>
-        <div class="row">
-          <label>手機號碼（作為帳號）</label>
-          <input id="rgPhone" inputmode="numeric" placeholder="09xxxxxxxx" autocomplete="tel">
-        </div>
-
-        <div class="row">
-          <label>密碼（至少 6 碼）</label>
-          <input id="rgPw" type="password" placeholder="至少 6 碼" autocomplete="new-password">
-        </div>
-        <div class="row">
-          <label>再次輸入密碼</label>
-          <input id="rgPw2" type="password" placeholder="請再輸入一次" autocomplete="new-password">
-        </div>
-
-        <div class="row">
-          <label>生日（首次填寫，之後不可更改）</label>
-          <div class="grid2">
-            <select id="rgBy"></select>
-            <select id="rgBm"></select>
-          </div>
-          <div style="margin-top:10px">
-            <select id="rgBd"></select>
-          </div>
-        </div>
-
-        <div class="row" style="grid-column:1/-1">
-          <label>配送地址（務必正確）</label>
-          <textarea id="rgAddr" placeholder="例：台北市○○區○○路○段○號○樓"></textarea>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="btn primary" id="btnRegister" type="button">註冊並進入我的資料</button>
-      </div>
-      <div class="hint">※ 註冊後將自動轉跳至資料頁面。生日只在首次註冊寫入一次。</div>
-      <div class="toast" id="toastRegister"></div>
-    </section>
-
-    <!-- 我的資料 -->
-    <section class="pane" id="paneProfile" aria-label="我的資料">
-      <div class="grid2">
-        <div class="row">
-          <label>會員編號</label>
-          <input id="pfMemberId" class="mono" disabled>
-        </div>
-        <div class="row">
-          <label>手機號碼（不可改）</label>
-          <input id="pfPhone" disabled>
-        </div>
-
-        <div class="row">
-          <label>姓名（可改）</label>
-          <input id="pfName" placeholder="姓名">
-        </div>
-        <div class="row">
-          <label>生日（不可改）</label>
-          <input id="pfBirth" disabled>
-        </div>
-
-        <div class="row" style="grid-column:1/-1">
-          <label>配送地址（可改、務必正確）</label>
-          <textarea id="pfAddr" placeholder="地址"></textarea>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="btn primary" id="btnSaveProfile" type="button">儲存資料</button>
-        <button class="btn" id="btnGoOrders" type="button">查看我的訂單</button>
-        <button class="btn danger" id="btnLogout" type="button">登出</button>
-      </div>
-
-      <div style="margin-top:14px; padding-top:14px; border-top:1px dashed rgba(0,0,0,.14)">
-        <div class="m-title" style="font-size:1.02rem">修改密碼</div>
-        <div class="grid2" style="margin-top:10px">
-          <div class="row">
-            <label>舊密碼</label>
-            <input id="pwOld" type="password" autocomplete="current-password">
-          </div>
-          <div class="row">
-            <label>新密碼（至少 6 碼）</label>
-            <input id="pwNew" type="password" autocomplete="new-password">
-          </div>
-        </div>
-        <div class="actions">
-          <button class="btn" id="btnChangePw" type="button">修改密碼</button>
-        </div>
-      </div>
-
-      <div class="toast" id="toastProfile"></div>
-    </section>
-
-    <!-- 我的訂單 -->
-    <section class="pane" id="paneOrders" aria-label="我的訂單">
-      <div class="actions">
-        <button class="btn" id="btnReloadOrders" type="button">重新整理</button>
-        <button class="btn" id="btnBackProfile" type="button">回到我的資料</button>
-      </div>
-
-      <div class="orders" id="ordersWrap" style="margin-top:10px"></div>
-      <div class="toast" id="toastOrders"></div>
-    </section>
-  </div>
-</main>
+  <div id="msg"></div>
+</div>
 
 <script>
-(() => {
-  // =========================
-  // ✅ 改成你的 GAS WebApp URL
-  // =========================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+const GAS = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
-  const LS_TOKEN = "ten_member_token";
-  const LS_MEMBER = "ten_member_id";
-  const LS_PHONE  = "ten_member_phone";
-
-  const $ = (id) => document.getElementById(id);
-
-  function toast(el, msg, ok=true){
-    if (!el) return;
-    el.className = "toast " + (ok ? "ok" : "bad");
-    el.textContent = msg || "";
-    if (msg) setTimeout(()=>{ el.textContent=""; }, 2500);
-  }
-
-  function setSessionText(){
-    const token = localStorage.getItem(LS_TOKEN) || "";
-    const mid = localStorage.getItem(LS_MEMBER) || "";
-    $("sessionText").textContent = token ? `已登入：${mid}` : `未登入`;
-    $("subText").textContent = token ? `可查看個人資料與訂單` : `登入後可查看個人資料與訂單`;
-  }
-
-  function isPhoneOk(p){ return /^09\d{8}$/.test(String(p||"").trim()); }
-
-  function todayMonth(){
-    const d = new Date();
-    return d.getMonth() + 1;
-  }
-
-  function fmtBirth(y,m,d){
-    if (!y || !m || !d) return "";
-    const mm = String(m).padStart(2,"0");
-    const dd = String(d).padStart(2,"0");
-    return `${y}-${mm}-${dd}`;
-  }
-
-  function applyBirthdayBadge(name, birth_m){
-    const m = Number(birth_m||0);
-    if (m && m === todayMonth()) return `${name} 🎂`;
-    return name;
-  }
-
-  function switchPane(paneId){
-    document.querySelectorAll(".pane").forEach(p => p.classList.remove("active"));
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-
-    const p = $(paneId);
-    if (p) p.classList.add("active");
-    const tab = document.querySelector(`.tab[data-pane="${paneId}"]`);
-    if (tab) tab.classList.add("active");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  // ---------- API ----------
-  async function apiGet(path, params={}){
-    const url = new URL(GAS_URL);
-    url.searchParams.set("path", path);
-    Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, String(v)));
-    const res = await fetch(url.toString(), { cache:"no-store" });
-    const out = await res.json().catch(()=> ({}));
-    return { res, out };
-  }
-
-  async function apiPost(path, body={}){
-    const url = new URL(GAS_URL);
-    url.searchParams.set("path", path);
-    const res = await fetch(url.toString(), {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify(body || {})
-    });
-    const out = await res.json().catch(()=> ({}));
-    return { res, out };
-  }
-
-  // ---------- birth selects ----------
-  function fillBirthSelects(){
-    const by = $("rgBy"), bm = $("rgBm"), bd = $("rgBd");
-    const nowY = new Date().getFullYear();
-    by.innerHTML = `<option value="">年</option>` + Array.from({length: (nowY-1950+1)}, (_,i)=>{
-      const y = nowY - i;
-      return `<option value="${y}">${y}</option>`;
-    }).join("");
-
-    bm.innerHTML = `<option value="">月</option>` + Array.from({length:12}, (_,i)=>{
-      const m = i+1;
-      return `<option value="${m}">${m}</option>`;
-    }).join("");
-
-    bd.innerHTML = `<option value="">日</option>` + Array.from({length:31}, (_,i)=>{
-      const d = i+1;
-      return `<option value="${d}">${d}</option>`;
-    }).join("");
-  }
-
-  // ---------- session / me ----------
-  async function loadMeOrKick(){
-    const token = localStorage.getItem(LS_TOKEN) || "";
-    if (!token) return false;
-
-    const { out } = await apiGet("member_me", { token });
-    if (!out || out.ok !== true){
-      localStorage.removeItem(LS_TOKEN);
-      localStorage.removeItem(LS_MEMBER);
-      localStorage.removeItem(LS_PHONE);
-      setSessionText();
-      return false;
-    }
-
-    const m = out.member || {};
-    localStorage.setItem(LS_MEMBER, String(m.member_id||""));
-    localStorage.setItem(LS_PHONE, String(m.phone||""));
-
-    $("pfMemberId").value = String(m.member_id||"");
-    $("pfPhone").value = String(m.phone||"");
-
-    // 壽星🎂只顯示在畫面，不改資料本體
-    const displayName = applyBirthdayBadge(String(m.name||""), Number(m.birth_m||0));
-    $("pfName").value = String(m.name||""); // input 裡放原始姓名，避免儲存時把 🎂 寫進去
-    $("pfName").dataset.displayName = displayName;
-
-    $("pfBirth").value = fmtBirth(m.birth_y, m.birth_m, m.birth_d);
-    $("pfAddr").value = String(m.address||"");
-
-    setSessionText();
-    return true;
-  }
-
-  // ---------- orders ----------
-  function safeParseItems(items_json){
-    try{
-      const x = JSON.parse(String(items_json||"[]"));
-      return Array.isArray(x) ? x : [];
-    }catch{ return []; }
-  }
-  function money(n){ return `NT$ ${Math.round(Number(n||0))}`; }
-
-  function renderOrders(list){
-    const wrap = $("ordersWrap");
-    if (!wrap) return;
-
-    if (!list || !list.length){
-      wrap.innerHTML = `<div class="muted">目前沒有訂單紀錄。</div>`;
-      return;
-    }
-
-    wrap.innerHTML = list.map(o=>{
-      const items = safeParseItems(o.items_json);
-      const itemsHtml = items.length ? items.map(it=>{
-        const title = it.title || it.name || it.id || "商品";
-        const qty = Number(it.qty||1);
-        const price = Number(it.price||0);
-        return `<div class="item"><span>${title} <span class="muted">× ${qty}</span></span><span>${money(price*qty)}</span></div>`;
-      }).join("") : `<div class="muted">（無商品明細）</div>`;
-
-      return `
-        <div class="order">
-          <div class="order-hd">
-            <div>
-              <div class="order-id">訂單 ${o.order_id || ""}</div>
-              <div class="order-meta">${o.created_at || ""}</div>
-            </div>
-            <div class="order-meta">
-              <div>配送：${o.shipping_method || ""}</div>
-              <div class="mono">${o.phone || ""}</div>
-            </div>
-          </div>
-
-          <div class="order-meta">
-            <div>姓名：${o.name || ""}</div>
-            <div>地址：${o.address_or_store || ""}</div>
-          </div>
-
-          <div class="items">${itemsHtml}</div>
-
-          <div class="order-lines">
-            <div class="line"><span>小計</span><strong>${money(o.subtotal)}</strong></div>
-            <div class="line"><span>折扣</span><strong>- ${money(o.discount)}</strong></div>
-            <div class="line"><span>運費</span><strong>${money(o.shipping_fee)}</strong></div>
-            <div class="line"><span>合計</span><strong>${money(o.total)}</strong></div>
-          </div>
-        </div>
-      `;
-    }).join("");
-  }
-
-  async function loadOrders(){
-    const token = localStorage.getItem(LS_TOKEN) || "";
-    if (!token){
-      toast($("toastOrders"), "請先登入", false);
-      switchPane("paneLogin");
-      return;
-    }
-    const { out } = await apiGet("member_orders", { token });
-    if (!out || out.ok !== true){
-      toast($("toastOrders"), "登入已失效，請重新登入", false);
-      localStorage.removeItem(LS_TOKEN);
-      setSessionText();
-      switchPane("paneLogin");
-      return;
-    }
-    renderOrders(out.orders || []);
-  }
-
-  // ---------- actions ----------
-  async function doLogin(){
-    const phone = String($("lgPhone").value||"").trim();
-    const pw = String($("lgPw").value||"").trim();
-    if (!isPhoneOk(phone)) return toast($("toastLogin"), "手機格式錯誤（09xxxxxxxx）", false);
-    if (pw.length < 1) return toast($("toastLogin"), "請輸入密碼", false);
-
-    toast($("toastLogin"), "登入中…");
-    const { out } = await apiPost("member_login", { phone, password: pw });
-    if (!out || out.ok !== true){
-      return toast($("toastLogin"), out?.error === "BAD_LOGIN" ? "帳號或密碼錯誤" : "登入失敗", false);
-    }
-
-    localStorage.setItem(LS_TOKEN, String(out.token||""));
-    localStorage.setItem(LS_MEMBER, String(out.memberId||""));
-    localStorage.setItem(LS_PHONE, phone);
-    await loadMeOrKick();
-    toast($("toastLogin"), "登入成功 ✅");
-    switchPane("paneProfile");
-  }
-
-  async function doRegister(){
-    const name = String($("rgName").value||"").trim();
-    const phone = String($("rgPhone").value||"").trim();
-    const pw = String($("rgPw").value||"").trim();
-    const pw2 = String($("rgPw2").value||"").trim();
-    const addr = String($("rgAddr").value||"").trim();
-    const by = Number($("rgBy").value||0);
-    const bm = Number($("rgBm").value||0);
-    const bd = Number($("rgBd").value||0);
-
-    if (!name) return toast($("toastRegister"), "請輸入姓名", false);
-    if (!isPhoneOk(phone)) return toast($("toastRegister"), "手機格式錯誤（09xxxxxxxx）", false);
-    if (pw.length < 6) return toast($("toastRegister"), "密碼至少 6 碼", false);
-    if (pw !== pw2) return toast($("toastRegister"), "兩次密碼不一致", false);
-    if (!(by>1900 && bm>=1 && bm<=12 && bd>=1 && bd<=31)) return toast($("toastRegister"), "請選擇生日（年/月/日）", false);
-    if (!addr) return toast($("toastRegister"), "請填寫配送地址（務必正確）", false);
-
-    toast($("toastRegister"), "註冊中…");
-    const { out } = await apiPost("member_register", {
-      phone, password: pw, name,
-      birth_y: by, birth_m: bm, birth_d: bd,
-      address: addr
-    });
-
-    if (!out || out.ok !== true){
-      if (out?.error === "PHONE_EXISTS") return toast($("toastRegister"), "此手機已註冊，請直接登入", false);
-      return toast($("toastRegister"), "註冊失敗", false);
-    }
-
-    localStorage.setItem(LS_TOKEN, String(out.token||""));
-    localStorage.setItem(LS_MEMBER, String(out.memberId||""));
-    localStorage.setItem(LS_PHONE, phone);
-
-    await loadMeOrKick();
-    toast($("toastRegister"), "註冊成功 ✅ 已轉跳到資料頁");
-    switchPane("paneProfile");
-  }
-
-  async function saveProfile(){
-    const token = localStorage.getItem(LS_TOKEN) || "";
-    if (!token) return toast($("toastProfile"), "請先登入", false);
-
-    const name = String($("pfName").value||"").trim();
-    const address = String($("pfAddr").value||"").trim();
-    if (!name) return toast($("toastProfile"), "姓名不可空白", false);
-    if (!address) return toast($("toastProfile"), "地址不可空白", false);
-
-    toast($("toastProfile"), "儲存中…");
-    const { out } = await apiPost("member_update", { token, name, address });
-    if (!out || out.ok !== true) return toast($("toastProfile"), "儲存失敗", false);
-
-    await loadMeOrKick();
-    toast($("toastProfile"), "已儲存 ✅");
-  }
-
-  async function changePassword(){
-    const token = localStorage.getItem(LS_TOKEN) || "";
-    if (!token) return toast($("toastProfile"), "請先登入", false);
-
-    const old_password = String($("pwOld").value||"").trim();
-    const new_password = String($("pwNew").value||"").trim();
-
-    if (!old_password) return toast($("toastProfile"), "請輸入舊密碼", false);
-    if (new_password.length < 6) return toast($("toastProfile"), "新密碼至少 6 碼", false);
-
-    toast($("toastProfile"), "修改中…");
-    const { out } = await apiPost("member_update", { token, old_password, new_password });
-    if (!out || out.ok !== true){
-      if (out?.error === "OLD_PW_WRONG") return toast($("toastProfile"), "舊密碼錯誤", false);
-      return toast($("toastProfile"), "修改失敗", false);
-    }
-
-    $("pwOld").value = "";
-    $("pwNew").value = "";
-    toast($("toastProfile"), "密碼已更新 ✅");
-  }
-
-  async function logout(){
-    const token = localStorage.getItem(LS_TOKEN) || "";
-    if (token){
-      await apiPost("member_logout", { token }).catch(()=>{});
-    }
-    localStorage.removeItem(LS_TOKEN);
-    localStorage.removeItem(LS_MEMBER);
-    localStorage.removeItem(LS_PHONE);
-
-    setSessionText();
-    toast($("toastLogin"), "已登出");
-    switchPane("paneLogin");
-  }
-
-  // ---------- tab binds ----------
-  function bindTabs(){
-    document.querySelectorAll(".tab").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
-        const pane = btn.dataset.pane;
-        if (pane === "paneProfile" || pane === "paneOrders"){
-          const ok = await loadMeOrKick();
-          if (!ok) return switchPane("paneLogin");
-        }
-        if (pane === "paneOrders") await loadOrders();
-        switchPane(pane);
-      });
-    });
-  }
-
-  // ---------- init ----------
-  window.addEventListener("DOMContentLoaded", async ()=>{
-    fillBirthSelects();
-    bindTabs();
-
-    $("btnLogin").addEventListener("click", doLogin);
-    $("btnGoRegister").addEventListener("click", ()=> switchPane("paneRegister"));
-    $("btnRegister").addEventListener("click", doRegister);
-
-    $("btnSaveProfile").addEventListener("click", saveProfile);
-    $("btnGoOrders").addEventListener("click", async ()=>{ await loadOrders(); switchPane("paneOrders"); });
-    $("btnLogout").addEventListener("click", logout);
-
-    $("btnReloadOrders").addEventListener("click", loadOrders);
-    $("btnBackProfile").addEventListener("click", ()=> switchPane("paneProfile"));
-
-    $("btnChangePw").addEventListener("click", changePassword);
-
-    // Enter to login
-    $("lgPw").addEventListener("keydown", (e)=>{ if(e.key==="Enter") doLogin(); });
-    $("lgPhone").addEventListener("keydown", (e)=>{ if(e.key==="Enter") doLogin(); });
-
-    setSessionText();
-
-    // 有 token 就直接進資料頁；沒有就停在登入
-    const ok = await loadMeOrKick();
-    if (ok) switchPane("paneProfile");
-    else switchPane("paneLogin");
+async function post(path, body){
+  const r = await fetch(`${GAS}?path=${path}`,{
+    method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=UTF-8" },
+    body: JSON.stringify(body)
   });
-})();
+  return r.json();
+}
+
+async function doRegister(){
+  const out = await post("member_register",{
+    name:r_name.value,
+    phone:r_phone.value,
+    password:r_pw.value,
+    address:r_addr.value,
+    birth_y:r_y.value,
+    birth_m:r_m.value,
+    birth_d:r_d.value
+  });
+  if(out.ok){
+    localStorage.setItem("ten_token",out.token);
+    location.href="member-profile.html";
+  }else msg.innerText=out.error;
+}
+
+async function doLogin(){
+  const out = await post("member_login",{
+    phone:l_phone.value,
+    password:l_pw.value
+  });
+  if(out.ok){
+    localStorage.setItem("ten_token",out.token);
+    location.href="member-profile.html";
+  }else msg.innerText=out.error;
+}
 </script>
 
-<script src="./include.js"></script>
 </body>
 </html>
