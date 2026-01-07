@@ -2,41 +2,33 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<title>會員｜十年一日</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="assets/style.css">
+<title>會員中心｜十年一日</title>
+
+<style>
+body{font-family:"Noto Serif TC",serif;background:#f6f8f4;margin:0}
+.box{max-width:520px;margin:40px auto;background:#fff;border-radius:16px;padding:24px}
+h1{text-align:center;margin-bottom:16px}
+input,select,button{width:100%;padding:10px;margin:6px 0}
+button{background:#8fa38f;color:#fff;border:none;border-radius:8px;font-size:16px}
+.small{font-size:13px;color:#666}
+</style>
 </head>
+
 <body>
-<script src="./include.js"></script>
-  
-<footer>
-  <div class="footer-row">
-    <div class="col">💎 精選材質<small>不含鉛，安心佩戴</small></div>
-    <div class="col center">✨ 獨特設計<small>韓日歐美風格齊聚</small></div>
-    <div class="col right">🚚 便利配送<small>超商取貨、宅配到府</small></div>
-  </div>
-
-  <div class="footer-brand">
-    <div class="t">十年一日</div>
-    <div class="s">tenyears_oneday</div>
-  </div>
-
-  <div class="footer-links">
-    <a href="https://www.instagram.com/tenyears_oneday" target="_blank" rel="noopener">Instagram</a>
-    <span>｜</span>
-    <a href="https://line.me/R/ti/p/@396kwrga" target="_blank" rel="noopener">LINE</a>
-  </div>
-</footer>
-<h2>會員中心</h2>
+<div class="box">
+<h1>會員中心</h1>
 
 <h3>註冊</h3>
 <input id="r_phone" placeholder="手機 09xxxxxxxx">
-<input id="r_pw" type="password" placeholder="密碼(至少6碼)">
+<input id="r_pw" type="password" placeholder="密碼（至少6碼）">
 <input id="r_name" placeholder="姓名">
-<select id="r_y"></select>
-<select id="r_m"></select>
-<select id="r_d"></select>
-<input id="r_addr" placeholder="地址">
+<div style="display:flex;gap:6px">
+  <select id="r_y"></select>
+  <select id="r_m"></select>
+  <select id="r_d"></select>
+</div>
+<input id="r_addr" placeholder="配送地址">
 <button onclick="doRegister()">註冊並進入資料頁</button>
 
 <hr>
@@ -46,61 +38,65 @@
 <input id="l_pw" type="password" placeholder="密碼">
 <button onclick="doLogin()">登入</button>
 
+<p class="small" id="msg"></p>
+</div>
+
+<!-- 一次性 iframe bridge -->
+<iframe id="gasBridge" style="display:none"></iframe>
+
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/execc";
+const GAS_URL = "請換成你的 GAS /exec URL"; // ← 只改這行
 
-/* 年月日 */
-for(let y=1950;y<=new Date().getFullYear();y++) r_y.innerHTML+=`<option>${y}</option>`;
-for(let m=1;m<=12;m++) r_m.innerHTML+=`<option>${m}</option>`;
-for(let d=1;d<=31;d++) r_d.innerHTML+=`<option>${d}</option>`;
+/* ===== iframe bridge ===== */
+let bridgeReady=false, waiters={};
 
-/* 一次性 iframe 呼叫 */
-function gasCall(path, body){
-  return new Promise((resolve,reject)=>{
-    const rid="RID"+Date.now();
-    const iframe=document.createElement("iframe");
-    iframe.style.display="none";
-    iframe.src=GAS_URL+"?path="+path+"&postMessage=1&rid="+rid;
-    document.body.appendChild(iframe);
+const iframe=document.getElementById("gasBridge");
+iframe.src=GAS_URL+"?path=bridge";
 
-    window.addEventListener("message",function h(e){
-      if(e.data?.rid!==rid) return;
-      window.removeEventListener("message",h);
-      iframe.remove();
-      resolve(e.data);
-    });
+window.addEventListener("message",e=>{
+  const m=e.data||{};
+  if(m.type==="GAS_BRIDGE_READY"){bridgeReady=true;return;}
+  if(m.type==="GAS_BRIDGE_RES" && waiters[m.id]){
+    waiters[m.id](m); delete waiters[m.id];
+  }
+});
 
-    iframe.onload=()=>{
-      iframe.contentWindow.postMessage({body},"*");
-    };
-
-    setTimeout(()=>reject("timeout"),8000);
+function gasCall(path,method,body){
+  return new Promise((res,rej)=>{
+    if(!bridgeReady) return rej("BRIDGE_NOT_READY");
+    const id=Math.random().toString(36).slice(2);
+    waiters[id]=r=>r.error?rej(r.error):res(r.data);
+    iframe.contentWindow.postMessage({type:"GAS_BRIDGE_REQ",id,path,method,body},"*");
   });
 }
 
+/* ===== birthday selects ===== */
+const y=document.getElementById("r_y"),m=document.getElementById("r_m"),d=document.getElementById("r_d");
+for(let i=1930;i<=new Date().getFullYear();i++) y.innerHTML+=`<option>${i}</option>`;
+for(let i=1;i<=12;i++) m.innerHTML+=`<option>${i}</option>`;
+for(let i=1;i<=31;i++) d.innerHTML+=`<option>${i}</option>`;
+
+/* ===== actions ===== */
 async function doRegister(){
-  const res=await gasCall("member_register",{
-    phone:r_phone.value,
-    password:r_pw.value,
-    name:r_name.value,
-    birth_y:r_y.value,
-    birth_m:r_m.value,
-    birth_d:r_d.value,
-    address:r_addr.value
-  });
-  if(!res.ok) return alert(res.error);
-  localStorage.setItem("memberToken",res.token);
-  location.href="member-profile.html";
+  try{
+    const out=await gasCall("member_register","POST",{
+      phone:r_phone.value,password:r_pw.value,name:r_name.value,
+      birth_y:y.value,birth_m:m.value,birth_d:d.value,
+      address:r_addr.value
+    });
+    localStorage.setItem("memberToken",out.token);
+    location.href="member-profile.html";
+  }catch(e){msg.textContent="註冊失敗："+e;}
 }
 
 async function doLogin(){
-  const res=await gasCall("member_login",{
-    phone:l_phone.value,
-    password:l_pw.value
-  });
-  if(!res.ok) return alert("登入失敗");
-  localStorage.setItem("memberToken",res.token);
-  location.href="member-profile.html";
+  try{
+    const out=await gasCall("member_login","POST",{
+      phone:l_phone.value,password:l_pw.value
+    });
+    localStorage.setItem("memberToken",out.token);
+    location.href="member-profile.html";
+  }catch(e){msg.textContent="登入失敗";}
 }
 </script>
 </body>
