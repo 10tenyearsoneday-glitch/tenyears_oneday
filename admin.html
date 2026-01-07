@@ -1,84 +1,107 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-const ADMIN_KEY = "10years1day911321";
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <title>後台管理｜十年一日</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    body { background:#fafafa; }
+    .admin-wrap { max-width:1100px; margin:40px auto; padding:0 16px; }
+    .admin-tabs { display:flex; gap:8px; margin-bottom:24px; }
+    .admin-tabs button {
+      padding:10px 16px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.15);
+      background:#fff;
+      cursor:pointer;
+    }
+    .admin-tabs button.active {
+      background:#2f3a2c;
+      color:#fff;
+      border-color:#2f3a2c;
+    }
+    .admin-tab { display:none; }
+    .admin-tab.active { display:block; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { padding:8px; border-bottom:1px solid #ddd; text-align:left; }
+    input,select,textarea {
+      padding:6px 8px;
+      width:100%;
+      box-sizing:border-box;
+    }
+    .row-actions button { margin-right:6px; }
+  </style>
+</head>
 
-/* ---------- Tabs ---------- */
-document.querySelectorAll(".admin-tabs button").forEach(btn=>{
-  btn.onclick = ()=>{
-    document.querySelectorAll(".admin-tabs button").forEach(b=>b.classList.remove("active"));
-    document.querySelectorAll(".admin-tab").forEach(s=>s.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
-  };
-});
+<body>
+<div class="admin-wrap">
 
-/* ---------- Coupons ---------- */
-const tbody = document.querySelector("#couponTable tbody");
-const btnAddCoupon = document.getElementById("btnAddCoupon");
+  <h1>後台管理</h1>
 
-async function loadCoupons(){
-  const res = await fetch(`${GAS_URL}?path=coupons`);
-  const list = await res.json();
-  tbody.innerHTML = list.map(c=>`
-    <tr>
-      <td>${c.code}</td>
-      <td>${c.enabled ? "✔" : "✖"}</td>
-      <td>${c.type}</td>
-      <td>${c.type==="rate" ? c.rate : c.amount}</td>
-      <td>${c.minSpend||0}</td>
-      <td class="row-actions">
-        <button onclick="delCoupon('${c.code}')">刪除</button>
-      </td>
-    </tr>
-  `).join("");
-}
+  <!-- Tabs -->
+  <div class="admin-tabs">
+    <button data-tab="products" class="active">商品管理</button>
+    <button data-tab="coupons">優惠碼管理</button>
+    <button data-tab="settings">運費 / 折扣</button>
+  </div>
 
-async function delCoupon(code){
-  if(!confirm("刪除優惠碼？")) return;
-  await fetch(`${GAS_URL}?path=coupons&id=${code}&method=DELETE&key=${ADMIN_KEY}`,{method:"POST"});
-  loadCoupons();
-}
+  <!-- 商品 -->
+  <section id="tab-products" class="admin-tab active">
+    <p>⚠️ 這裡保留你原本商品後台（不動結構）</p>
+    <iframe src="admin-products.html" style="width:100%;height:70vh;border:none;"></iframe>
+  </section>
 
-btnAddCoupon.onclick = async ()=>{
-  const code = prompt("優惠碼 code");
-  if(!code) return;
-  await fetch(`${GAS_URL}?path=coupons&key=${ADMIN_KEY}`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      code,
-      enabled:true,
-      type:"rate",
-      rate:0.9,
-      minSpend:0
-    })
-  });
-  loadCoupons();
-};
+  <!-- 優惠碼 -->
+  <section id="tab-coupons" class="admin-tab">
+    <h2>優惠碼管理</h2>
 
-/* ---------- Settings ---------- */
-async function loadSettings(){
-  const res = await fetch(`${GAS_URL}?path=settings`);
-  const s = await res.json();
-  set_shipping_fee.value = s.shipping_fee || 0;
-  set_free_shipping_threshold.value = s.free_shipping_threshold || 0;
-  set_first_purchase_discount.value = s.first_purchase_discount || 1;
-  set_birthday_discount.value = s.birthday_discount || 1;
-}
+    <button id="btnAddCoupon">＋ 新增優惠碼</button>
 
-btnSaveSettings.onclick = async ()=>{
-  await fetch(`${GAS_URL}?path=settings_update&key=${ADMIN_KEY}`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      shipping_fee:Number(set_shipping_fee.value),
-      free_shipping_threshold:Number(set_free_shipping_threshold.value),
-      first_purchase_discount:Number(set_first_purchase_discount.value),
-      birthday_discount:Number(set_birthday_discount.value)
-    })
-  });
-  alert("已儲存");
-};
+    <table id="couponTable">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>啟用</th>
+          <th>類型</th>
+          <th>折扣</th>
+          <th>最低金額</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-/* ---------- init ---------- */
-loadCoupons();
-loadSettings();
+  <!-- 設定 -->
+  <section id="tab-settings" class="admin-tab">
+    <h2>運費 / 折扣設定</h2>
+
+    <label>
+      運費金額
+      <input id="set_shipping_fee" type="number">
+    </label>
+
+    <label>
+      免運門檻
+      <input id="set_free_shipping_threshold" type="number">
+    </label>
+
+    <label>
+      首購折扣（0.9 = 9折）
+      <input id="set_first_purchase_discount" type="number" step="0.01">
+    </label>
+
+    <label>
+      生日折扣
+      <input id="set_birthday_discount" type="number" step="0.01">
+    </label>
+
+    <button id="btnSaveSettings">儲存設定</button>
+  </section>
+
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
