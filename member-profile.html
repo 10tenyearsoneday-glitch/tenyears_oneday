@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>會員資料｜十年一日 TEN YEARS ONE DAY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg1:#F8F9F7; --bg2:#D4E7D1;
+      --ink:rgba(47,58,44,.92);
+      --muted:rgba(47,58,44,.72);
+      --line:rgba(0,0,0,.10);
+      --card:rgba(255,255,255,.86);
+      --brand:#8ea08e;
+      --danger:#8a3b3b;
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:'Noto Serif TC',serif; color:var(--ink);
+      background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);
+      min-height:100vh;
+    }
+    main{max-width:980px;margin:0 auto;padding:18px 14px 70px;}
+    .grid2{display:grid;gap:14px;grid-template-columns:1fr;}
+    @media (min-width: 920px){ .grid2{grid-template-columns: 1fr 1fr;} }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow:0 12px 30px rgba(0,0,0,.08);
+      backdrop-filter: blur(6px);
+    }
+    .title{font-weight:900;letter-spacing:.08em;margin:0 0 6px;display:flex;align-items:center;gap:8px;}
+    .sub{margin:0 0 10px;color:var(--muted);font-size:.95rem;line-height:1.6;}
+    .pillRow{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0;}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(142,160,142,.35);background:rgba(142,160,142,.14);font-weight:800;font-size:.88rem;}
+    .muted{color:var(--muted)}
+    .divider{height:1px;background:rgba(0,0,0,.06);margin:12px 0;}
+    label{font-size:.9rem;color:var(--muted);}
+    input,textarea{
+      width:100%; padding:12px 12px; border-radius:14px;
+      border:1px solid var(--line); background:rgba(255,255,255,.92);
+      outline:none; color:var(--ink);
+    }
+    input:focus,textarea:focus{border-color:rgba(142,160,142,.65); box-shadow:0 0 0 3px rgba(142,160,142,.15);}
+    textarea{resize:vertical;min-height:92px;}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .btn{
+      width:100%; border:none; border-radius:16px;
+      padding:14px 12px; font-weight:900; letter-spacing:.12em;
+      cursor:pointer; background:var(--brand); color:#fff;
+    }
+    .btn.outline{background:transparent;border:1px solid rgba(142,160,142,.55);color:var(--ink);}
+    .btn.danger{background:var(--danger);}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .toast{margin-top:10px;font-size:.92rem;line-height:1.5;}
+    .toast.ok{color:var(--ink)}
+    .toast.bad{color:var(--danger)}
+    .order{border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:12px;background:rgba(255,255,255,.72);}
+    .orderHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+    .orderId{font-weight:900;letter-spacing:.06em}
+    .orderMeta{font-size:.88rem;color:var(--muted);line-height:1.5}
+    .kvs{display:grid;gap:6px;margin-top:10px;font-size:.92rem;}
+    .kv{display:flex;justify-content:space-between;gap:10px;}
+    .items{margin-top:10px;display:grid;gap:8px;}
+    .item{display:flex;justify-content:space-between;gap:10px;font-size:.92rem;}
+    .itemL{min-width:0;}
+    .itemT{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .itemS{font-size:.85rem;color:var(--muted);}
+  </style>
+</head>
+<body>
+  <script src="./include.js"></script>
+
+  <main>
+    <div class="grid2">
+      <section class="card">
+        <h2 class="title">
+          <span id="helloName">會員資料</span>
+          <span id="bdayIcon" style="display:none;">🎂</span>
+        </h2>
+        <p class="sub">姓名/地址可編輯；生日鎖定不可改。你可以在這裡查看你的訂單明細與訂單編號。</p>
+
+        <div class="pillRow" id="discountPills"></div>
+
+        <div class="divider"></div>
+
+        <div style="display:grid;gap:10px;">
+          <div class="row2">
+            <div>
+              <label>手機（登入帳號）</label>
+              <input id="pPhone" disabled>
+            </div>
+            <div>
+              <label>生日（鎖定）</label>
+              <input id="pBirth" disabled>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div>
+              <label>姓名</label>
+              <input id="pName" placeholder="姓名">
+            </div>
+            <div>
+              <label>memberId</label>
+              <input id="pMemberId" disabled>
+            </div>
+          </div>
+
+          <div>
+            <label>配送地址</label>
+            <textarea id="pAddr" placeholder="縣市區路段號樓"></textarea>
+          </div>
+
+          <button class="btn" id="btnSave" type="button">儲存基本資料</button>
+          <div class="toast" id="toastSave"></div>
+
+          <div class="divider"></div>
+
+          <div class="row2">
+            <div>
+              <label>舊密碼</label>
+              <input id="oldPw" type="password" autocomplete="current-password" placeholder="******">
+            </div>
+            <div>
+              <label>新密碼（至少 6 碼）</label>
+              <input id="newPw" type="password" autocomplete="new-password" placeholder="******">
+            </div>
+          </div>
+          <button class="btn outline" id="btnChangePw" type="button">變更密碼</button>
+          <div class="toast" id="toastPw"></div>
+
+          <div class="divider"></div>
+
+          <button class="btn danger" id="btnLogout" type="button">登出</button>
+          <div class="toast" id="toastLogout"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="title">我的訂單</h2>
+        <p class="sub">你會看到：訂單編號、購買商品、消費明細、配送地址、電話、總額等。</p>
+
+        <div id="ordersWrap" style="display:grid;gap:12px;"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+    const BRIDGE_URL = GAS_URL + "?path=bridge";
+    const LS_TOKEN = "ten_member_token";
+    const LS_MEMBER_ID = "ten_member_id";
+
+    let bridgeReady = null;
+    let bridgeFrame = null;
+    const pending = new Map();
+
+    function ensureBridge() {
+      if (bridgeReady) return bridgeReady;
+
+      bridgeReady = new Promise((resolve, reject) => {
+        bridgeFrame = document.getElementById("gasBridge");
+        if (!bridgeFrame) {
+          bridgeFrame = document.createElement("iframe");
+          bridgeFrame.id = "gasBridge";
+          bridgeFrame.src = BRIDGE_URL;
+          bridgeFrame.style.position = "fixed";
+          bridgeFrame.style.left = "-9999px";
+          bridgeFrame.style.top = "-9999px";
+          bridgeFrame.style.width = "1px";
+          bridgeFrame.style.height = "1px";
+          bridgeFrame.setAttribute("aria-hidden", "true");
+          document.body.appendChild(bridgeFrame);
+        }
+
+        const timer = setTimeout(() => reject(new Error("BRIDGE_TIMEOUT")), 8000);
+
+        function onMsg(ev) {
+          const data = (ev && ev.data) || {};
+          if (data.type === "GAS_BRIDGE_READY") {
+            clearTimeout(timer);
+            window.removeEventListener("message", onMsg);
+            resolve(true);
+          }
+        }
+        window.addEventListener("message", onMsg);
+      });
+
+      window.addEventListener("message", (ev) => {
+        const data = (ev && ev.data) || {};
+        if (data.type !== "GAS_BRIDGE_RES") return;
+        const id = data.id;
+        const p = pending.get(id);
+        if (!p) return;
+        pending.delete(id);
+        if (data.error) p.reject(new Error(data.error));
+        else p.resolve(data.data);
+      });
+
+      return bridgeReady;
+    }
+
+    async function gasRequest(path, method = "GET", body = null) {
+      await ensureBridge();
+      const id = "R" + Date.now() + "_" + Math.random().toString(36).slice(2);
+      return new Promise((resolve, reject) => {
+        pending.set(id, { resolve, reject });
+        bridgeFrame.contentWindow.postMessage({
+          type: "GAS_BRIDGE_REQ",
+          id,
+          path,
+          method,
+          body
+        }, "*");
+
+        setTimeout(() => {
+          if (!pending.has(id)) return;
+          pending.delete(id);
+          reject(new Error("REQUEST_TIMEOUT"));
+        }, 12000);
+      });
+    }
+
+    function $(id) { return document.getElementById(id); }
+    function toast(el, msg, ok=true) {
+      el.textContent = msg || "";
+      el.className = "toast " + (ok ? "ok" : "bad");
+    }
+
+    function money(n) {
+      n = Math.round(Number(n || 0));
+      return "NT$ " + n;
+    }
+    function rateToZhe(rate) {
+      rate = Number(rate || 1);
+      if (rate >= 1 || rate <= 0) return null;
+      const z = Math.round(rate * 100) / 10;
+      return String(z).replace(/\.0$/, "");
+    }
+
+    function redirectLogin() { location.href = "member.html"; }
+
+    function parseItems(items_json) {
+      try {
+        const arr = JSON.parse(items_json || "[]");
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+
+    function renderOrders(orders) {
+      const wrap = $("ordersWrap");
+      if (!wrap) return;
+
+      if (!orders || !orders.length) {
+        wrap.innerHTML = '<div class="muted">目前沒有訂單紀錄。</div>';
+        return;
+      }
+
+      wrap.innerHTML = orders.map(o => {
+        const items = parseItems(o.items_json);
+        const itemsHtml = items.map(it => {
+          const title = String(it.title || it.id || "商品");
+          const qty = Number(it.qty || 1);
+          const price = Number(it.price || 0);
+          const lineTotal = Number(it.lineTotal || (price * qty));
+          return `
+            <div class="item">
+              <div class="itemL">
+                <div class="itemT">${escapeHtml(title)}</div>
+                <div class="itemS">x ${qty}｜${money(price)}</div>
+              </div>
+              <div style="font-weight:900;">${money(lineTotal)}</div>
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <div class="order">
+            <div class="orderHead">
+              <div>
+                <div class="orderId">訂單編號：${escapeHtml(String(o.order_id||""))}</div>
+                <div class="orderMeta">${escapeHtml(String(o.created_at||""))}</div>
+              </div>
+              <div style="font-weight:900;">${money(o.total)}</div>
+            </div>
+
+            <div class="kvs">
+              <div class="kv"><span class="muted">收件人</span><span>${escapeHtml(String(o.name||""))}</span></div>
+              <div class="kv"><span class="muted">電話</span><span>${escapeHtml(String(o.phone||""))}</span></div>
+              <div class="kv"><span class="muted">配送方式</span><span>${escapeHtml(String(o.shipping_method||""))}</span></div>
+              <div class="kv"><span class="muted">地址/門市</span><span style="text-align:right;max-width:70%">${escapeHtml(String(o.address_or_store||""))}</span></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="items">
+              ${itemsHtml || '<div class="muted">（無商品明細）</div>'}
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="kvs">
+              <div class="kv"><span class="muted">小計</span><strong>${money(o.subtotal)}</strong></div>
+              <div class="kv"><span class="muted">折扣</span><strong>- ${money(o.discount)}</strong></div>
+              <div class="kv"><span class="muted">運費</span><strong>${money(o.shipping_fee)}</strong></div>
+              <div class="kv" style="font-size:1.05rem;"><span class="muted">合計</span><strong>${money(o.total)}</strong></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderDiscountPills(settings, me, orders) {
+      const el = $("discountPills");
+      if (!el) return;
+
+      const S = settings || {};
+      const firstZhe = rateToZhe(S.first_purchase_discount);
+      const bdayZhe = rateToZhe(S.birthday_discount);
+
+      const birthM = Number(me && me.birth_m || 0);
+      const nowM = (new Date()).getMonth() + 1;
+      const isBdayMonth = (birthM && birthM === nowM);
+
+      const hasOrders = Array.isArray(orders) && orders.length > 0;
+      const eligibleFirst = !hasOrders && !!firstZhe;
+
+      const chips = [];
+      if (eligibleFirst) chips.push(`首購 ${firstZhe} 折`);
+      if (bdayZhe) chips.push(isBdayMonth ? `生日月 ${bdayZhe} 折 ✅` : `生日月 ${bdayZhe} 折`);
+      el.innerHTML = chips.map(t => `<span class="pill">${t}</span>`).join("");
+    }
+
+    async function loadAll() {
+      const token = localStorage.getItem(LS_TOKEN);
+      if (!token) return redirectLogin();
+
+      const meRes = await gasRequest("member_me", "GET", { token });
+      if (!meRes || meRes.ok !== true) return redirectLogin();
+      const m = meRes.member || {};
+
+      const ordersRes = await gasRequest("member_orders", "GET", { token });
+      const orders = (ordersRes && ordersRes.ok) ? (ordersRes.orders || []) : [];
+
+      let settings = {};
+      try {
+        const s = await gasRequest("settings", "GET", null);
+        if (s && typeof s === "object") settings = s;
+      } catch {}
+
+      const nowM = (new Date()).getMonth() + 1;
+      const isBdayMonth = Number(m.birth_m||0) === nowM;
+
+      $("helloName").textContent = (m.name || "會員資料") + (isBdayMonth ? " 🎂" : "");
+      $("bdayIcon").style.display = isBdayMonth ? "" : "none";
+
+      $("pPhone").value = String(m.phone || "");
+      $("pBirth").value = `${m.birth_y||""}-${String(m.birth_m||"").padStart(2,"0")}-${String(m.birth_d||"").padStart(2,"0")}`;
+      $("pName").value = String(m.name || "");
+      $("pAddr").value = String(m.address || "");
+      $("pMemberId").value = String(m.member_id || "");
+
+      if (m.member_id) localStorage.setItem(LS_MEMBER_ID, String(m.member_id));
+
+      renderOrders(orders);
+      renderDiscountPills(settings, m, orders);
+    }
+
+    async function saveProfile() {
+      const btn = $("btnSave");
+      const t = $("toastSave");
+      toast(t, "儲存中…");
+
+      const token = localStorage.getItem(LS_TOKEN);
+      if (!token) return redirectLogin();
+
+      const name = String($("pName").value||"").trim();
+      const address = String($("pAddr").value||"").trim();
+
+      if (!name) return toast(t, "姓名不可空白", false);
+      if (!address) return toast(t, "地址不可空白", false);
+
+      btn.disabled = true;
+      try {
+        const out = await gasRequest("member_update", "POST", { token, name, address });
+        if (!out || out.ok !== true) {
+          btn.disabled = false;
+          return toast(t, "儲存失敗：" + (out && out.error || "ERROR"), false);
+        }
+        toast(t, "✅ 已更新");
+        btn.disabled = false;
+        await loadAll();
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        toast(t, "系統忙碌，請稍後再試", false);
+      }
+    }
+
+    async function changePassword() {
+      const btn = $("btnChangePw");
+      const t = $("toastPw");
+      toast(t, "更新密碼中…");
+
+      const token = localStorage.getItem(LS_TOKEN);
+      if (!token) return redirectLogin();
+
+      const old_password = String($("oldPw").value||"").trim();
+      const new_password = String($("newPw").value||"").trim();
+
+      if (!old_password) return toast(t, "請輸入舊密碼", false);
+      if (new_password.length < 6) return toast(t, "新密碼至少 6 碼", false);
+
+      btn.disabled = true;
+      try {
+        const out = await gasRequest("member_update", "POST", { token, old_password, new_password });
+        if (!out || out.ok !== true) {
+          btn.disabled = false;
+          return toast(t, "更新失敗：" + (out && out.error || "ERROR"), false);
+        }
+        toast(t, "✅ 密碼已更新");
+        $("oldPw").value = "";
+        $("newPw").value = "";
+        btn.disabled = false;
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        toast(t, "系統忙碌，請稍後再試", false);
+      }
+    }
+
+    async function logout() {
+      const btn = $("btnLogout");
+      const t = $("toastLogout");
+      toast(t, "登出中…");
+
+      const token = localStorage.getItem(LS_TOKEN);
+      btn.disabled = true;
+
+      try {
+        if (token) await gasRequest("member_logout", "POST", { token });
+      } catch(e) {
+        console.warn(e);
+      }
+
+      localStorage.removeItem(LS_TOKEN);
+      toast(t, "✅ 已登出");
+      setTimeout(redirectLogin, 250);
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        await loadAll();
+      } catch (e) {
+        console.error(e);
+        redirectLogin();
+      }
+
+      $("btnSave").addEventListener("click", saveProfile);
+      $("btnChangePw").addEventListener("click", changePassword);
+      $("btnLogout").addEventListener("click", logout);
+    });
+  </script>
+</body>
+</html>
