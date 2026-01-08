@@ -57,7 +57,7 @@
 
 <script>
 (() => {
-  const API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
+  const GAS_PRODUCTS_URL = (window.TEN_CONFIG && window.TEN_CONFIG.products_gas_url) || "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
   const grid = document.getElementById("productGrid");
   const chips = document.querySelectorAll("#subcats .chip");
@@ -259,7 +259,7 @@
   });
 
   /* ---------- load ---------- */
-  fetch(`${API_BASE}/products`)
+  fetch(`${GAS_PRODUCTS_URL}?path=products`)
     .then(r=>r.json())
     .then(d=>{
       ALL_PRODUCTS = Array.isArray(d) ? d : [];

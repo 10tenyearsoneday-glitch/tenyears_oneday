@@ -117,9 +117,7 @@
 
   <script>
   (() => {
-    window.API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
-
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+    const GAS_PRODUCTS_URL = (window.TEN_CONFIG && window.TEN_CONFIG.products_gas_url) || "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
     const CART_KEY = "ten_cart";
     const MEMBER_KEY = "ten_member_id";
     const ADMIN_KEY = "10years1day911321";
@@ -375,7 +373,7 @@
       }
 
       try{
-        const res = await fetch(`${window.API_BASE}/settings`, { cache:"no-store" });
+        const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache:"no-store" });
         if(!res.ok) throw new Error("settings error " + res.status);
         const s = await res.json();
         if(s && typeof s === "object"){
@@ -397,7 +395,7 @@
 
     async function loadProductsIndex(){
       try{
-        const res = await fetch(`${window.API_BASE}/products`, { cache:"no-store" });
+        const res = await fetch(`${GAS_PRODUCTS_URL}?path=products`, { cache:"no-store" });
         if(!res.ok) throw new Error("products error " + res.status);
         const list = await res.json();
         const map = {};
@@ -431,7 +429,7 @@
 
     async function validateCoupon(code, subtotal){
       const memberId = getMemberId();
-      const url = `${GAS_URL}?path=coupon_validate`
+      const url = `${GAS_PRODUCTS_URL}?path=coupon_validate`
         + `&code=${encodeURIComponent(code)}`
         + `&memberId=${encodeURIComponent(memberId)}`
         + `&subtotal=${encodeURIComponent(subtotal)}`;
@@ -531,7 +529,7 @@
         if(APPLIED.code){
           toastCoupon("結帳中：寫入優惠碼使用紀錄…");
 
-          const res = await fetch(`${GAS_URL}?path=coupon_use&key=${encodeURIComponent(ADMIN_KEY)}`, {
+          const res = await fetch(`${GAS_PRODUCTS_URL}?path=coupon_use&key=${encodeURIComponent(ADMIN_KEY)}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ code: APPLIED.code, memberId, subtotal, orderId })

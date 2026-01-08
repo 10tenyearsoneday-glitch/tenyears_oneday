@@ -57,7 +57,7 @@
       <div class="hint">這頁會直接寫入 Google Sheet（需要 ADMIN_KEY）。</div>
     </div>
     <div class="admin-actions">
-      <a class="btn2 secondary" href="admin.html">← 回商品後台</a>
+      <a class="btn2 secondary" href="admin.html">← 回後台</a>
       <button class="btn2 secondary" id="btnReload" type="button">重新載入</button>
       <button class="btn2" id="btnAddCoupon" type="button">新增優惠碼</button>
     </div>
@@ -189,7 +189,7 @@
 <script>
 (() => {
   // ✅ 改成你的
-  const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+  const GAS_PRODUCTS_URL = (window.TEN_CONFIG && window.TEN_CONFIG.products_gas_url) || "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
   const ADMIN_KEY = "10years1day911321";
 
   const $ = (id) => document.getElementById(id);
@@ -263,7 +263,7 @@
 
   async function gasPost(path, method, body, id=""){
     const url =
-      `${GAS_URL}?path=${encodeURIComponent(path)}` +
+      `${GAS_PRODUCTS_URL}?path=${encodeURIComponent(path)}` +
       `&key=${encodeURIComponent(ADMIN_KEY)}` +
       (method ? `&method=${encodeURIComponent(method)}` : "") +
       (id ? `&id=${encodeURIComponent(id)}` : "");
@@ -282,7 +282,7 @@
   async function loadSettings(){
     toast(toastSettings, "載入設定中…");
     try{
-      const res = await fetch(`${GAS_URL}?path=settings`, { cache: "no-store" });
+      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
       const s = await res.json().catch(()=> ({}));
 
       sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true"));
@@ -370,7 +370,7 @@
   async function loadCoupons(){
     toast(toastCoupons, "載入優惠碼中…");
     try{
-      const res = await fetch(`${GAS_URL}?path=coupons`, { cache: "no-store" });
+      const res = await fetch(`${GAS_PRODUCTS_URL}?path=coupons`, { cache: "no-store" });
       const data = await res.json().catch(()=> ([]));
       COUPONS = Array.isArray(data) ? data : [];
       renderCoupons();

@@ -7,13 +7,18 @@
   window.TEN_INCLUDE_LOADED = true;
 
   // ===== 全域設定 =====
-  window.API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
+  // window.API_BASE 已不再使用（改用 GAS）
 
   const CART_KEY = "ten_cart";
   const MEMBER_KEY = "ten_member_id";
 
-  const GAS_URL =
-    "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+  window.TEN_CONFIG = window.TEN_CONFIG || {
+    products_gas_url: "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec",
+    members_gas_url: "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec"
+  };
+
+  const GAS_PRODUCTS_URL = window.TEN_CONFIG.products_gas_url;
+  const GAS_MEMBERS_URL  = window.TEN_CONFIG.members_gas_url;
 
   // ⚠️ 注意：放在前端一定會曝光（任何人都能看到）
   // 目前先沿用你現況；正式上線金流建議改由 server 代理
@@ -274,7 +279,7 @@
     }
 
     try {
-      const res = await fetch(`${window.API_BASE}/settings`, { cache: "no-store" });
+      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
       if (!res.ok) throw new Error("settings error " + res.status);
       const s = await res.json();
 
@@ -297,6 +302,35 @@
     } catch (e) {
       console.warn("loadSettings failed", e);
     }
+
+  // ===== products cache for drawer hydration =====
+  async function loadProductsCache() {
+    const cacheKey = "tyod_products_cache_v1";
+    // sessionStorage 優先，避免每頁都抓
+    const ss = sessionStorage.getItem(cacheKey);
+    if (ss) {
+      try {
+        const arr = JSON.parse(ss);
+        if (Array.isArray(arr)) {
+          window.TEN_PRODUCTS_BY_ID = Object.fromEntries(arr.map(p => [String(p.id ?? p._id ?? ""), p]).filter(([k])=>k));
+          return;
+        }
+      } catch {}
+    }
+
+    try {
+      const res = await fetch(`${GAS_PRODUCTS_URL}?path=products`, { cache: "no-store" });
+      if (!res.ok) throw new Error("products error " + res.status);
+      const arr = await res.json();
+      if (Array.isArray(arr)) {
+        sessionStorage.setItem(cacheKey, JSON.stringify(arr));
+        window.TEN_PRODUCTS_BY_ID = Object.fromEntries(arr.map(p => [String(p.id ?? p._id ?? ""), p]).filter(([k])=>k));
+      }
+    } catch (e) {
+      console.warn("loadProductsCache failed", e);
+    }
+  }
+
   }
 
   // ===== 計算 =====
@@ -467,7 +501,7 @@
   async function validateCoupon(code, subtotal) {
     const memberId = getMemberId();
     const url =
-      `${GAS_URL}?path=coupon_validate` +
+      `${GAS_PRODUCTS_URL}?path=coupon_validate` +
       `&code=${encodeURIComponent(code)}` +
       `&memberId=${encodeURIComponent(memberId)}` +
       `&subtotal=${encodeURIComponent(subtotal)}`;
@@ -748,7 +782,7 @@
       const btn = $("ckSubmit");
       if (btn) btn.disabled = true;
 
-      const res = await fetch(`${GAS_URL}?path=order_create&key=${encodeURIComponent(ADMIN_KEY)}`, {
+      const res = await fetch(`${GAS_PRODUCTS_URL}?path=order_create&key=${encodeURIComponent(ADMIN_KEY)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -884,6 +918,7 @@
   window.addEventListener("DOMContentLoaded", async () => {
     await loadHeader();
     await loadSettings();
+    await loadProductsCache();
     renderCartBadge();
     bindListeners();
   });
