@@ -91,6 +91,7 @@
     const html = await res.text();
     document.body.insertAdjacentHTML("afterbegin", html);
 
+    // badge（首次）
     const badge = $("cartCount");
     if (badge) {
       const n = cartCount();
@@ -98,9 +99,12 @@
       badge.style.display = n ? "inline-flex" : "none";
     }
 
-    const cartBtn = document.querySelector('[data-icon="cart"]');
-    if (cartBtn) {
-      cartBtn.addEventListener("click", (e) => {
+    // ✅ 用事件委派：不管你點到 svg / path 都能打開抽屜
+    if (!window.__TEN_CART_DELEGATE__) {
+      window.__TEN_CART_DELEGATE__ = true;
+      document.addEventListener("click", (e) => {
+        const a = e.target.closest('[data-icon="cart"]');
+        if (!a) return;
         e.preventDefault();
         openDrawer();
       });
@@ -111,21 +115,39 @@
   function openDrawer() {
     const bd = $("cartBackdrop");
     const dr = $("cartDrawer");
-    if (!bd || !dr) {
-      console.warn("cart drawer DOM missing: cartBackdrop/cartDrawer");
-      return;
-    }
+    if (!bd || !dr) return;
 
-    // ⚠️ 你的 header.css / drawer css 是靠 `.open` 觸發右側滑入
+    // 先解除 hidden，讓 transition 有起點
     bd.hidden = false;
     dr.hidden = false;
-    bd.classList.add("open");
-    dr.classList.add("open");
+
+    // 保險：有些情況 hidden=false 但仍 display:none
+    bd.style.display = "block";
+    dr.style.display = "block";
+
+    // 先設成「關閉狀態」再下一幀打開，避免第一次沒動畫 / 沒進場
+    bd.classList.remove("open");
+    dr.classList.remove("open");
     bd.setAttribute("aria-hidden", "false");
     dr.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
 
-    renderDrawer();
+    // fallback（如果你的 CSS 沒處理 open）
+    bd.style.pointerEvents = "auto";
+    dr.style.pointerEvents = "auto";
+    bd.style.opacity = "0";
+    dr.style.transform = "translateX(102%)";
+
+    requestAnimationFrame(() => {
+      bd.classList.add("open");
+      dr.classList.add("open");
+
+      // fallback（確保真的看得到）
+      bd.style.opacity = "1";
+      dr.style.transform = "translateX(0)";
+    });
+
+    document.body.style.overflow = "hidden";
+    renderDrawer?.();
   }
 
   function closeDrawer() {
@@ -137,12 +159,20 @@
     dr.classList.remove("open");
     bd.setAttribute("aria-hidden", "true");
     dr.setAttribute("aria-hidden", "true");
+
+    // fallback
+    bd.style.opacity = "0";
+    dr.style.transform = "translateX(102%)";
+    bd.style.pointerEvents = "none";
+    dr.style.pointerEvents = "none";
+
     document.body.style.overflow = "";
 
-    // 讓 transition 走完再 hidden
     setTimeout(() => {
       bd.hidden = true;
       dr.hidden = true;
+      bd.style.display = "none";
+      dr.style.display = "none";
     }, 220);
   }
 
@@ -176,18 +206,31 @@
   }
 
   /* ========= 結帳（先不接金流） ========= */
-  function goCheckoutPage() {
+  async function submitOrder() {
     const cart = readCart();
     if (!cart.length) return alert("購物車是空的");
-    // 先用轉跳頁面（checkout.html 讀 localStorage 的 ten_cart）
-    location.href = "checkout.html";
+
+    const payload = {
+      memberId: getMemberId(),
+      items: cart,
+      createdAt: new Date().toISOString()
+    };
+
+    await fetch(`${GAS_PRODUCTS_URL}?path=order_create&key=${ADMIN_KEY}`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    writeCart([]);
+    closeDrawer();
+    alert("訂單已建立（未付款）");
   }
 
   /* ========= 監聽 ========= */
   function bindEvents() {
     $("cartClose")?.addEventListener("click", closeDrawer);
     $("cartBackdrop")?.addEventListener("click", closeDrawer);
-    $("cartGoCheckout")?.addEventListener("click", goCheckoutPage);
+    $("cartGoCheckout")?.addEventListener("click", submitOrder);
 
     window.addEventListener("cart:changed", () => {
       const badge = $("cartCount");
