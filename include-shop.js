@@ -173,7 +173,9 @@
   function bindEvents() {
     $("cartClose")?.addEventListener("click", closeDrawer);
     $("cartBackdrop")?.addEventListener("click", closeDrawer);
-    $("cartGoCheckout")?.addEventListener("click", submitOrder);
+    $("cartGoCheckout")?.addEventListener("click", () => {
+  window.location.href = "checkout.html";
+});
 
     window.addEventListener("cart:changed", () => {
       const badge = $("cartCount");
