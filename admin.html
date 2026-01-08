@@ -1,6 +1,48 @@
-
-<!doctype html><html><head><meta charset="utf-8"><title>後台</title></head>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>後台｜十年一日</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .wrap{max-width:900px;margin:auto;padding:18px}
+    .title{font-size:1.15rem;letter-spacing:.08em;color:rgba(47,58,44,.85);margin:10px 0 14px;}
+    .card{background:rgba(255,255,255,.70);border:1px solid rgba(0,0,0,.06);box-shadow:0 10px 30px rgba(0,0,0,.06);border-radius:16px;overflow:hidden}
+    .bd{padding:14px}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.62);border:1px solid rgba(0,0,0,.06);text-decoration:none;color:rgba(47,58,44,.95)}
+    .muted{opacity:.75;font-size:.9rem}
+  </style>
+</head>
 <body>
-<h2>後台</h2>
-<a href="admin-products.html">商品管理</a>
-</body></html>
+<script src="./include.js"></script>
+
+<main class="wrap">
+  <div class="title">後台</div>
+
+  <section class="card">
+    <div class="bd">
+      <div class="muted">提示：後台寫入（新增/更新/刪除）需要 ADMIN KEY，前端一定會曝光。正式上線建議改走伺服器代理。</div>
+      <div class="list" style="margin-top:12px;">
+        <a class="a" href="admin-coupons.html">
+          <div>
+            <div style="font-weight:700">優惠碼管理</div>
+            <div class="muted">新增/修改/刪除優惠碼、查看使用狀態</div>
+          </div>
+          <div>→</div>
+        </a>
+        <a class="a" href="admin-products.html">
+          <div>
+            <div style="font-weight:700">商品管理</div>
+            <div class="muted">新增/修改/刪除商品、上/下架、分類</div>
+          </div>
+          <div>→</div>
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>
