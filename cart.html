@@ -99,11 +99,12 @@
           <div class="sum-row sum-total"><span>合計</span><strong id="sumTotal">NT$ 0</strong></div>
 
           <div style="margin-top:12px;">
-            <button class="btn2" id="btnCheckout" type="button" style="width:100%">
-              前往付款
+            <button class="btn2" id="btnCheckout" type="button" style="width:100%" disabled>
+              結帳（示意）
             </button>
             <div class="muted" style="font-size:.85rem;margin-top:8px;">
-              結帳將跳轉至綠界付款，付款完成後會導回結果頁。</div>
+              目前：結帳會在有套用優惠碼時寫入 coupon_uses，成功後清空購物車。
+            </div>
           </div>
         </div>
       </aside>
@@ -519,22 +520,12 @@
       const subtotal = calcSubtotal(cart);
       if(subtotal <= 0) return toast("購物車是空的", false);
 
-      // 計算：折扣/運費/合計（與畫面一致）
-      const discount = Math.min(subtotal, Math.max(0, Number(APPLIED.discount || 0)));
-      const after = Math.max(0, subtotal - discount);
-      const shipping = calcShipping(after);
-      const total = after + shipping;
-
       const memberId = getMemberId();
-      const orderId = "TEN" + Date.now(); // 前端訂單號（GAS 會再轉成 MerchantTradeNo）
-
-      // 組 itemName（綠界規格：# 分隔、<=200）
-      const itemName = cart.map(i => `${i.name} x ${i.qty}`).join("#").slice(0,200);
+      const orderId = "O-" + Date.now();
 
       try{
         btnCheckout.disabled = true;
 
-        // 有使用優惠碼 → 先記使用紀錄（沿用你原本商品 GAS）
         if(APPLIED.code){
           toastCoupon("結帳中：寫入優惠碼使用紀錄…");
 
@@ -543,6 +534,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ code: APPLIED.code, memberId, subtotal, orderId })
           });
+
           const out = await res.json();
 
           if(!res.ok || !out?.ok){
@@ -550,34 +542,18 @@
             btnCheckout.disabled = false;
             return;
           }
+
           toastCoupon(`✅ 優惠碼已使用：${out.code}（折抵 ${money(out.discount)}）`);
         }
 
-        // ✅ 送綠界：用「隱藏表單」POST 到你的綠界 GAS（避免 CORS）
-        const form = document.getElementById("ecpayForm");
-        form.action = (window.TEN_CONFIG && window.TEN_CONFIG.ecpay_gas_url) ? window.TEN_CONFIG.ecpay_gas_url : "";
-        if(!form.action){
-          toast("未設定綠界 API（TEN_CONFIG.ecpay_gas_url）", false);
-          btnCheckout.disabled = false;
-          return;
-        }
-
-        // 保存最後一次訂單資料，方便結果頁顯示/查詢
-        localStorage.setItem("ten_last_order", JSON.stringify({
-          orderId, total, itemName, memberId, createdAt: Date.now()
-        }));
-
-        document.getElementById("ec_orderId").value = orderId;
-        document.getElementById("ec_amount").value = String(total);
-        document.getElementById("ec_itemName").value = itemName;
-        document.getElementById("ec_email").value = (getMemberEmail && getMemberEmail()) || "";
-
-        form.submit();
+        clearCart();
+        toast("結帳完成（示意）✅");
 
       }catch(e){
         console.error(e);
         toast("結帳失敗，請稍後再試", false);
-        btnCheckout.disabled = false;
+      }finally{
+        renderAll();
       }
     }
 
