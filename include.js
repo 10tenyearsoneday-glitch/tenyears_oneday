@@ -1,6 +1,13 @@
 // include.js (FINAL A++ Full)
 // - header.html 內含：header + nav + cart drawer/backdrop + checkout modal DOM
 // - include.js 負責：插入 header、active、badge、抽屜互動、優惠碼、結帳表單、寫入 orders（order_create）
+// include.js 最上面
+const IS_MEMBER_PAGE = location.pathname.includes("member");
+
+if (IS_MEMBER_PAGE) {
+  // 只留必要功能，不跑商品 / header / cart
+  window.__TEN_MEMBER_ONLY__ = true;
+}
 
 (() => {
   if (window.TEN_INCLUDE_LOADED) return;
