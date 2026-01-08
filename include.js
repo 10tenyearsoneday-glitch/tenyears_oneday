@@ -923,3 +923,9 @@
     bindListeners();
   });
 })();
+// ===== 修補：避免 ReferenceError =====
+// 如果你原本就有 products cache，可之後再替換
+function loadProductsCache() {
+  // 保底空實作，避免 JS 中斷
+  return Promise.resolve([]);
+}
