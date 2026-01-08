@@ -109,14 +109,41 @@
 
   /* ========= Drawer ========= */
   function openDrawer() {
-    $("cartBackdrop").hidden = false;
-    $("cartDrawer").hidden = false;
+    const bd = $("cartBackdrop");
+    const dr = $("cartDrawer");
+    if (!bd || !dr) {
+      console.warn("cart drawer DOM missing: cartBackdrop/cartDrawer");
+      return;
+    }
+
+    // ⚠️ 你的 header.css / drawer css 是靠 `.open` 觸發右側滑入
+    bd.hidden = false;
+    dr.hidden = false;
+    bd.classList.add("open");
+    dr.classList.add("open");
+    bd.setAttribute("aria-hidden", "false");
+    dr.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
     renderDrawer();
   }
 
   function closeDrawer() {
-    $("cartBackdrop").hidden = true;
-    $("cartDrawer").hidden = true;
+    const bd = $("cartBackdrop");
+    const dr = $("cartDrawer");
+    if (!bd || !dr) return;
+
+    bd.classList.remove("open");
+    dr.classList.remove("open");
+    bd.setAttribute("aria-hidden", "true");
+    dr.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+
+    // 讓 transition 走完再 hidden
+    setTimeout(() => {
+      bd.hidden = true;
+      dr.hidden = true;
+    }, 220);
   }
 
   function renderDrawer() {
@@ -149,33 +176,18 @@
   }
 
   /* ========= 結帳（先不接金流） ========= */
-  async function submitOrder() {
+  function goCheckoutPage() {
     const cart = readCart();
     if (!cart.length) return alert("購物車是空的");
-
-    const payload = {
-      memberId: getMemberId(),
-      items: cart,
-      createdAt: new Date().toISOString()
-    };
-
-    await fetch(`${GAS_PRODUCTS_URL}?path=order_create&key=${ADMIN_KEY}`, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    writeCart([]);
-    closeDrawer();
-    alert("訂單已建立（未付款）");
+    // 先用轉跳頁面（checkout.html 讀 localStorage 的 ten_cart）
+    location.href = "checkout.html";
   }
 
   /* ========= 監聽 ========= */
   function bindEvents() {
     $("cartClose")?.addEventListener("click", closeDrawer);
     $("cartBackdrop")?.addEventListener("click", closeDrawer);
-    $("cartGoCheckout")?.addEventListener("click", () => {
-  window.location.href = "checkout.html";
-});
+    $("cartGoCheckout")?.addEventListener("click", goCheckoutPage);
 
     window.addEventListener("cart:changed", () => {
       const badge = $("cartCount");
