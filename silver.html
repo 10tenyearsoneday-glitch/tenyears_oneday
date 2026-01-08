@@ -1,273 +1,139 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <title>十年一日｜純銀飾品</title>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=20260107">
+<title>十年一日｜純銀飾品</title>
+
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+
 </head>
-
 <body>
-
-<!-- ✅ 先載入 include.js：它會插 header + drawer + checkout modal + TEN.addToCart -->
-<script src="./include.js"></script>
-
 <main>
-  <div class="subcats" id="subcats">
-    <button class="chip active" data-filter="全部">全部</button>
-    <button class="chip" data-filter="項鍊">項鍊</button>
-    <button class="chip" data-filter="手鏈">手鏈</button>
-    <button class="chip" data-filter="耳環">耳環</button>
-    <button class="chip" data-filter="戒指">戒指</button>
-    <button class="chip" data-filter="其他">其他</button>
+<div class="subcats" id="subcats">
+  <button class="chip active" data-filter="全部" type="button">全部</button>
+  <button class="chip" data-filter="項鍊" type="button">項鍊</button>
+  <button class="chip" data-filter="手鏈" type="button">手鏈</button>
+  <button class="chip" data-filter="耳環" type="button">耳環</button>
+  <button class="chip" data-filter="戒指" type="button">戒指</button>
+  <button class="chip" data-filter="其他" type="button">其他</button>
+</div>
+<div class="grid">
+
+  <div class="product" data-cat="項鍊">
+    <div class="thumb">圖片</div>
+    <div class="body">
+      <div>
+        <div class="name">項鍊 A</div>
+        <div class="meta">純銀飾品｜項鍊</div>
+      </div>
+      <div class="price">NT$ 1280</div>
+    </div>
   </div>
 
-  <div class="grid" id="productGrid"></div>
+  <div class="product" data-cat="耳環">
+    <div class="thumb">圖片</div>
+    <div class="body">
+      <div>
+        <div class="name">耳環 B</div>
+        <div class="meta">純銀飾品｜耳環</div>
+      </div>
+      <div class="price">NT$ 880</div>
+    </div>
+  </div>
+
+  <div class="product" data-cat="戒指">
+    <div class="thumb">圖片</div>
+    <div class="body">
+      <div>
+        <div class="name">戒指 C</div>
+        <div class="meta">純銀飾品｜戒指</div>
+      </div>
+      <div class="price">NT$ 1580</div>
+    </div>
+  </div>
+
+  <div class="product" data-cat="其他">
+    <div class="thumb">圖片</div>
+    <div class="body">
+      <div>
+        <div class="name">吊飾 D</div>
+        <div class="meta">純銀飾品｜其他（自動歸類）</div>
+      </div>
+      <div class="price">NT$ 420</div>
+    </div>
+  </div>
+
+  <div class="product" data-cat="手鏈">
+    <div class="thumb">圖片</div>
+    <div class="body">
+      <div>
+        <div class="name">（待新增）</div>
+        <div class="meta">純銀飾品｜手鏈</div>
+      </div>
+      <div class="price">NT$ 0</div>
+    </div>
+  </div>
+
+</div>
+
+
 </main>
 
 <footer>
+  <a class="admin-link" href="admin.html" aria-label="admin"></a>
   <div class="footer-row">
     <div class="col">💎 精選材質<small>不含鉛，安心佩戴</small></div>
     <div class="col center">✨ 獨特設計<small>韓日歐美風格齊聚</small></div>
     <div class="col right">🚚 便利配送<small>超商取貨、宅配到府</small></div>
   </div>
-
   <div class="footer-brand">
     <div class="t">十年一日</div>
     <div class="s">tenyears_oneday</div>
   </div>
 
-  <div class="footer-links">
-    <a href="https://www.instagram.com/tenyears_oneday" target="_blank" rel="noopener">Instagram</a>
-    <span>｜</span>
-    <a href="https://line.me/R/ti/p/@396kwrga" target="_blank" rel="noopener">LINE</a>
-  </div>
 </footer>
-
-<!-- ✅ 商品 Modal（只有商品，不含購物車抽屜） -->
-<div class="ui-backdrop" id="pdBackdrop" aria-hidden="true">
-  <div class="ui-panel product-panel" role="dialog" aria-modal="true" aria-label="商品資訊">
-    <button class="ui-x" id="pdClose" type="button" aria-label="關閉">×</button>
-    <div class="pd-wrap" id="pdWrap"></div>
-  </div>
-</div>
-
-<button id="backToTop">↑</button>
+<button id="backToTop" aria-label="回到頂端">↑</button>
 
 <script>
-(() => {
-  const API_BASE = window.API_BASE || "https://tenyears-oneday-api.onrender.com";
+  // 回到頂端
+  const btn = document.getElementById("backToTop");
+  if (btn) {
+    window.addEventListener("scroll", () => {
+      btn.style.display = window.scrollY > 300 ? "block" : "none";
+    });
+    btn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
 
-  const grid = document.getElementById("productGrid");
+  // 子分類篩選
   const chips = document.querySelectorAll("#subcats .chip");
-  const pdBackdrop = document.getElementById("pdBackdrop");
-  const pdWrap = document.getElementById("pdWrap");
-  const pdClose = document.getElementById("pdClose");
+  const products = document.querySelectorAll(".product");
 
-  let ALL_PRODUCTS = [];
-
-  /* ---------- helpers ---------- */
-  const getPid = (p) => String(p?.id ?? p?._id ?? "").trim();
-
-  function parseImagesField(v){
-    if (Array.isArray(v)) return v.map(s => String(s).trim()).filter(Boolean);
-    const s = String(v || "").trim();
-    if (!s) return [];
-    return s.split(/[\n,]+/g).map(x => x.trim()).filter(Boolean);
-  }
-
-  function getImages(p){
-    let arr = [];
-
-    ["image","image2","image3","image4","image5","cover"].forEach(k => {
-      if (p && p[k]) arr.push(String(p[k]).trim());
+  function applyFilter(filter) {
+    products.forEach(p => {
+      const cat = p.dataset.cat || "其他";
+      const show = (filter === "全部" || cat === filter);
+      p.style.display = show ? "" : "none";
     });
-
-    const multi = (p && (p.images ?? p.Images ?? p["images"])) ?? "";
-    arr.push(...parseImagesField(multi));
-
-    if (Array.isArray(p?.images)) arr.push(...p.images);
-
-    arr = [...new Set(arr)].filter(Boolean);
-    return arr.length ? arr : ["assets/placeholder.png"];
   }
 
-  function money(n){
-    n = Math.round(Number(n || 0));
-    return `NT$ ${n}`;
-  }
+  chips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      chips.forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
 
-  /* ---------- render ---------- */
-  function productCard(p, i){
-    const img = getImages(p)[0];
-    return `
-      <a href="#" class="product-link js-open-product" data-id="${getPid(p)}">
-        <div class="product">
-          <div class="thumb">
-            <img src="${img}" alt="${(p.title||"").replaceAll('"','&quot;')}" loading="${i<2?'eager':'lazy'}">
-          </div>
-          <div class="body">
-            <div>
-              <div class="name">${p.title||""}</div>
-              <div class="meta">${p.series||""}｜${p.category||""}</div>
-            </div>
-            <div class="price">${money(p.price||0)}</div>
-          </div>
-        </div>
-      </a>
-    `;
-  }
-
-  function render(list){
-    grid.innerHTML = list.map(productCard).join("");
-  }
-
-  function applyFilter(f){
-    render(
-      ALL_PRODUCTS.filter(p =>
-        (p.status||"上架")==="上架" &&
-        (f==="全部" || p.category===f)
-      )
-    );
-  }
-
-  chips.forEach(c=>{
-    c.onclick=()=>{
-      chips.forEach(x=>x.classList.remove("active"));
-      c.classList.add("active");
-      applyFilter(c.dataset.filter);
-    };
+      const f = chip.dataset.filter;
+      applyFilter(f);
+    });
   });
 
-  /* ---------- modal ---------- */
-  function openProduct(p){
-    if(!p) return;
-
-    const imgs = getImages(p);
-    const title = p.title || "";
-    const price = Number(p.price || 0);
-    const desc = String(p.desc ?? p.description ?? "").trim();
-
-    pdWrap.innerHTML = `
-      <div class="pd-card">
-        <div class="pd-photo">
-          <img id="pdMain" src="${imgs[0]}" alt="${title.replaceAll('"','&quot;')}">
-        </div>
-
-        ${imgs.length > 1 ? `
-          <div class="pd-thumbs">
-            ${imgs.map((src, idx)=>`
-              <button class="pd-thumb ${idx===0?'active':''}" type="button" data-src="${src}">
-                <img src="${src}" alt="">
-              </button>
-            `).join("")}
-          </div>
-        ` : ""}
-
-        <div class="pd-center">
-          <div class="pd-title">${title}</div>
-          <div class="pd-price">${money(price)}</div>
-        </div>
-
-        ${desc ? `<div class="pd-desc">${desc}</div>` : ""}
-
-        <div class="pd-qtyrow">
-          <div class="pd-qtylabel">數量</div>
-          <div class="qty">
-            <button class="qty-btn" id="pdDec" type="button" aria-label="減少">−</button>
-            <input class="qty-input" id="pdQty" type="number" min="1" step="1" value="1" inputmode="numeric">
-            <button class="qty-btn" id="pdInc" type="button" aria-label="增加">＋</button>
-          </div>
-        </div>
-
-        <button class="pd-add" id="pdAdd" type="button">加入購物車</button>
-        <div class="pd-toast" id="pdToast" style="display:none;"></div>
-      </div>
-    `;
-
-    // thumbs click
-    pdWrap.querySelectorAll(".pd-thumb").forEach(btn=>{
-      btn.onclick = () => {
-        pdWrap.querySelector("#pdMain").src = btn.dataset.src;
-        pdWrap.querySelectorAll(".pd-thumb").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-      };
-    });
-
-    // qty
-    const qtyEl = pdWrap.querySelector("#pdQty");
-    const dec = pdWrap.querySelector("#pdDec");
-    const inc = pdWrap.querySelector("#pdInc");
-    const toast = pdWrap.querySelector("#pdToast");
-
-    const normQty = () => {
-      let v = Number(qtyEl.value || 1);
-      if (!Number.isFinite(v) || v < 1) v = 1;
-      qtyEl.value = String(Math.floor(v));
-      return Number(qtyEl.value);
-    };
-
-    dec.onclick = () => { qtyEl.value = String(Math.max(1, normQty() - 1)); };
-    inc.onclick = () => { qtyEl.value = String(normQty() + 1); };
-    qtyEl.onchange = normQty;
-
-    // ✅ add to cart：改用 include.js 的 TEN.addToCart（唯一版本）
-    pdWrap.querySelector("#pdAdd").onclick = () => {
-      const qty = normQty();
-
-      if (!window.TEN || typeof window.TEN.addToCart !== "function") {
-        toast.style.display = "block";
-        toast.textContent = "加入失敗：TEN.addToCart 未載入";
-        setTimeout(()=> toast.style.display="none", 1600);
-        return;
-      }
-
-      window.TEN.addToCart({
-        id: getPid(p),
-        title,
-        price,
-        image: imgs[0],
-      }, qty);
-
-      toast.style.display = "block";
-      toast.textContent = `已加入購物車 ✅（${qty} 件）`;
-      setTimeout(()=> toast.style.display="none", 1200);
-    };
-
-    pdBackdrop.classList.add("open");
-    pdBackdrop.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-  }
-
-  function closeProduct(){
-    pdBackdrop.classList.remove("open");
-    pdBackdrop.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
-  }
-
-  pdClose.onclick = closeProduct;
-  pdBackdrop.onclick = (e)=>{ if(e.target === pdBackdrop) closeProduct(); };
-  window.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeProduct(); });
-
-  document.addEventListener("click", (e) => {
-    const a = e.target.closest(".js-open-product");
-    if(!a) return;
-    e.preventDefault();
-    const p = ALL_PRODUCTS.find(x => getPid(x) === a.dataset.id);
-    openProduct(p);
-  });
-
-  /* ---------- load ---------- */
-  fetch(`${API_BASE}/products`)
-    .then(r=>r.json())
-    .then(d=>{
-      ALL_PRODUCTS = Array.isArray(d) ? d : [];
-      applyFilter("純銀");
-    })
-    .catch(()=>{ grid.innerHTML = `<div class="note">載入商品失敗，請稍後再試。</div>`; });
-})();
+  applyFilter("全部");
 </script>
+<script src="./include.js"></script>
 
 </body>
+
 </html>
