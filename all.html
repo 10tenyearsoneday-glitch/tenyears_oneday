@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <title>十年一日｜全系列</title>
+  <title>十年一日｜韓系飾品</title>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
@@ -263,7 +263,7 @@
     .then(r=>r.json())
     .then(d=>{
       ALL_PRODUCTS = Array.isArray(d) ? d : [];
-      applyFilter("全部");
+      applyFilter("韓系'");
     })
     .catch(()=>{ grid.innerHTML = `<div class="note">載入商品失敗，請稍後再試。</div>`; });
 })();
