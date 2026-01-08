@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>後台｜商品管理｜十年一日</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    body{background:linear-gradient(135deg,#F8F9F7 0%,#D4E7D1 40%,#B8C9A8 100%);color:rgba(30,38,28,.92);}
+    .wrap{max-width:1100px;margin:0 auto;padding:22px 16px 46px;}
+    .card{background:rgba(255,255,255,.86);border:1px solid rgba(0,0,0,.06);box-shadow:0 10px 30px rgba(0,0,0,.06);border-radius:18px;padding:16px;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input,select,textarea{padding:10px 12px;border-radius:12px;border:1px solid rgba(0,0,0,.15);background:#fff;outline:none}
+    textarea{min-height:84px;resize:vertical;width:100%}
+    .btn{padding:10px 12px;border-radius:12px;border:1px solid rgba(0,0,0,.14);background:rgba(255,255,255,.9);cursor:pointer}
+    .btn.primary{background:rgba(90,120,88,.16);border-color:rgba(90,120,88,.35)}
+    .btn.danger{background:rgba(180,70,70,.12);border-color:rgba(180,70,70,.35)}
+    .muted{opacity:.75}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border-bottom:1px solid rgba(0,0,0,.08);padding:10px 8px;text-align:left;vertical-align:top}
+    th{font-weight:700}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.06);font-size:12px}
+    .small{font-size:12px}
+    .grow{flex:1}
+  </style>
+</head>
+<body>
+  <script src="./include.js"></script>
+
+  <div class="wrap">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px">
+      <div>
+        <h1 style="margin:0 0 4px 0;font-size:22px">後台｜商品管理</h1>
+        <div class="muted small">新增 / 編輯 / 刪除商品（對應 products 表單）。</div>
+      </div>
+      <div class="row">
+        <a class="btn" href="./admin.html">回後台</a>
+        <a class="btn" href="./all.html">去前台</a>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="row">
+        <div class="grow">
+          <div class="small muted" style="margin-bottom:6px">管理密鑰（ADMIN_KEY）</div>
+          <input id="key" placeholder="輸入後台 key（例：10years1day911321）" style="width:100%" />
+          <div class="small muted" style="margin-top:6px">＊此 key 只會存到你的瀏覽器 localStorage，不會公開在頁面。</div>
+        </div>
+        <button class="btn primary" id="btnSaveKey">儲存 key</button>
+        <button class="btn" id="btnReload">重新載入商品</button>
+      </div>
+      <div id="msg" class="small" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <h2 style="margin:0 0 10px 0;font-size:16px">新增 / 編輯</h2>
+
+      <div class="row">
+        <div style="flex:1;min-width:220px">
+          <div class="small muted">id（必填、不可重複）</div>
+          <input id="p_id" placeholder="例如：S001" style="width:100%" />
+        </div>
+        <div style="flex:2;min-width:240px">
+          <div class="small muted">name（必填）</div>
+          <input id="p_name" placeholder="商品名稱" style="width:100%" />
+        </div>
+        <div style="flex:1;min-width:160px">
+          <div class="small muted">price（必填）</div>
+          <input id="p_price" type="number" min="0" step="1" placeholder="999" style="width:100%" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1;min-width:220px">
+          <div class="small muted">category（用來分頁）</div>
+          <select id="p_category" style="width:100%">
+            <option value="">（空）</option>
+            <option value="all">all（全系列）</option>
+            <option value="silver">silver（純銀飾品）</option>
+          </select>
+        </div>
+        <div style="flex:2;min-width:240px">
+          <div class="small muted">image（圖片網址）</div>
+          <input id="p_image" placeholder="https://..." style="width:100%" />
+        </div>
+        <div style="flex:1;min-width:160px">
+          <div class="small muted">status</div>
+          <select id="p_status" style="width:100%">
+            <option value="on">on（上架）</option>
+            <option value="off">off（下架）</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <div class="small muted">desc（描述）</div>
+        <textarea id="p_desc" placeholder="商品描述（可留空）"></textarea>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <button class="btn primary" id="btnCreate">新增（POST）</button>
+        <button class="btn" id="btnUpdate">更新（PUT）</button>
+        <button class="btn danger" id="btnDelete">刪除（DELETE）</button>
+        <span class="small muted">＊點下面列表某一列可自動帶入表單。</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <h2 style="margin:0;font-size:16px">商品列表</h2>
+        <div class="row">
+          <input id="q" placeholder="搜尋 id / name" />
+          <span class="pill"><span id="count">0</span> items</span>
+        </div>
+      </div>
+      <div class="small muted" style="margin-top:6px">＊列表只顯示前端用得到的常用欄位（其餘欄位仍會原樣送出/保留）。</div>
+
+      <div style="overflow:auto">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th style="min-width:110px">id</th>
+              <th style="min-width:220px">name</th>
+              <th style="min-width:90px">price</th>
+              <th style="min-width:90px">category</th>
+              <th style="min-width:90px">status</th>
+              <th style="min-width:180px">updatedAt</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+(() => {
+  const GAS = (window.TEN_CONFIG && window.TEN_CONFIG.products_gas_url) || "";
+  const KEY_STORE = "ten_admin_key";
+
+  const $ = (id) => document.getElementById(id);
+  const msg = (t, ok=true) => {
+    const el = $("msg");
+    el.textContent = t || "";
+    el.style.color = ok ? "rgba(47,58,44,.9)" : "#8a3b3b";
+  };
+
+  function getKey(){
+    return String(localStorage.getItem(KEY_STORE) || "").trim();
+  }
+  function setKey(k){
+    localStorage.setItem(KEY_STORE, String(k||"").trim());
+  }
+
+  $("key").value = getKey();
+
+  $("btnSaveKey").addEventListener("click", () => {
+    setKey($("key").value);
+    msg("已儲存 key ✅");
+  });
+
+  async function getJSON(url){
+    const r = await fetch(url, { cache:"no-store" });
+    const t = await r.text();
+    try { return JSON.parse(t); } catch { return t; }
+  }
+
+  async function postJSON(url, body){
+    const r = await fetch(url, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify(body || {})
+    });
+    const t = await r.text();
+    try { return JSON.parse(t); } catch { return t; }
+  }
+
+  function buildWriteUrl(path, method, id){
+    const key = getKey();
+    const u = new URL(GAS);
+    u.searchParams.set("path", path);
+    u.searchParams.set("key", key);
+    u.searchParams.set("method", method);
+    if (id) u.searchParams.set("id", id);
+    return u.toString();
+  }
+
+  let raw = [];
+
+  function norm(p){
+    return {
+      id: String(p.id||"").trim(),
+      name: String(p.name||"").trim(),
+      price: Number(p.price||0),
+      category: String(p.category||"").trim(),
+      status: String(p.status||"on").trim(),
+      image: String(p.image||"").trim(),
+      desc: String(p.desc||p.description||"").trim(),
+      updatedAt: String(p.updatedAt||"").trim(),
+      _raw: p
+    };
+  }
+
+  function render(list){
+    const tb = $("tbl").querySelector("tbody");
+    tb.innerHTML = "";
+    list.forEach(p => {
+      const tr = document.createElement("tr");
+      tr.style.cursor="pointer";
+      tr.innerHTML = `
+        <td><b>${escapeHtml(p.id)}</b></td>
+        <td>${escapeHtml(p.name)}</td>
+        <td>${escapeHtml(String(p.price||0))}</td>
+        <td>${escapeHtml(p.category||"")}</td>
+        <td>${escapeHtml(p.status||"")}</td>
+        <td class="small muted">${escapeHtml(p.updatedAt||"")}</td>
+      `;
+      tr.addEventListener("click", () => fill(p));
+      tb.appendChild(tr);
+    });
+    $("count").textContent = String(list.length);
+  }
+
+  function escapeHtml(s){
+    return String(s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function fill(p){
+    $("p_id").value = p.id || "";
+    $("p_name").value = p.name || "";
+    $("p_price").value = p.price || 0;
+    $("p_category").value = p.category || "";
+    $("p_status").value = p.status || "on";
+    $("p_image").value = p.image || "";
+    $("p_desc").value = p.desc || "";
+    msg(`已帶入：${p.id}`);
+  }
+
+  function collect(){
+    const body = Object.assign({}, (raw.find(x => String(x.id)===String($("p_id").value).trim()) || {}));
+    body.id = String($("p_id").value||"").trim();
+    body.name = String($("p_name").value||"").trim();
+    body.price = Number($("p_price").value||0);
+    body.category = String($("p_category").value||"").trim();
+    body.status = String($("p_status").value||"on").trim();
+    body.image = String($("p_image").value||"").trim();
+    body.desc = String($("p_desc").value||"").trim();
+    return body;
+  }
+
+  async function load(){
+    if (!GAS) { msg("找不到 products_gas_url（include.js 未載入或未設定）", false); return; }
+    msg("載入商品中…");
+    try{
+      const data = await getJSON(GAS + "?path=products&_=" + Date.now());
+      raw = Array.isArray(data) ? data : [];
+      const list = raw.map(norm).sort((a,b)=> (a.id>b.id?1:-1));
+      render(list);
+      msg("載入完成 ✅");
+    }catch(err){
+      console.error(err);
+      msg("載入失敗：" + err.message, false);
+    }
+  }
+
+  $("btnReload").addEventListener("click", load);
+
+  $("q").addEventListener("input", () => {
+    const q = String($("q").value||"").trim().toLowerCase();
+    const list = raw.map(norm).filter(p => !q || p.id.toLowerCase().includes(q) || p.name.toLowerCase().includes(q));
+    render(list);
+  });
+
+  $("btnCreate").addEventListener("click", async () => {
+    try{
+      const body = collect();
+      if (!body.id || !body.name) return msg("id / name 必填", false);
+      const url = buildWriteUrl("products", "POST");
+      msg("新增中…");
+      const out = await postJSON(url, body);
+      if (out && out.ok) { msg("新增成功 ✅"); await load(); }
+      else msg("新增失敗：" + JSON.stringify(out), false);
+    }catch(err){ msg("新增失敗：" + err.message, false); }
+  });
+
+  $("btnUpdate").addEventListener("click", async () => {
+    try{
+      const body = collect();
+      if (!body.id) return msg("請先填 id", false);
+      const url = buildWriteUrl("products", "PUT", body.id);
+      msg("更新中…");
+      const out = await postJSON(url, body);
+      if (out && out.ok) { msg("更新成功 ✅"); await load(); }
+      else msg("更新失敗：" + JSON.stringify(out), false);
+    }catch(err){ msg("更新失敗：" + err.message, false); }
+  });
+
+  $("btnDelete").addEventListener("click", async () => {
+    try{
+      const id = String($("p_id").value||"").trim();
+      if (!id) return msg("請先填 id", false);
+      const url = buildWriteUrl("products", "DELETE", id);
+      msg("刪除中…");
+      const out = await postJSON(url, { id });
+      if (out && out.ok) { msg("刪除成功 ✅"); $("p_id").value=""; await load(); }
+      else msg("刪除失敗：" + JSON.stringify(out), false);
+    }catch(err){ msg("刪除失敗：" + err.message, false); }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
