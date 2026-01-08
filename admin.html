@@ -294,6 +294,7 @@ textarea{min-height:110px;resize:vertical}
       fTitle.value = "";
       fCategory.value = "其他";
       fSeries.value = "全系列";
+     fSeries.value = "純銀飾品";
       fPrice.value = 0;
       fImage.value = "";
       fDesc.value = "";
@@ -314,6 +315,7 @@ textarea{min-height:110px;resize:vertical}
       fTitle.value = item.title || "";
       fCategory.value = item.category || "其他";
       fSeries.value = item.series || "全系列";
+      fSeries.value = item.series || "純銀飾品";
       fPrice.value = (typeof item.price === "number") ? item.price : Number(item.price || 0);
       fImage.value = item.image || "";
       fDesc.value = item.desc || "";
@@ -350,6 +352,7 @@ if (Array.isArray(item.images)) {
         <td>
           <div style="font-weight:600;letter-spacing:.03em;">${p.title || "（未命名）"}</div>
           <div class="mini">${p.series || "全系列"}｜${p.category || "其他"}｜<span class="${stClass}">${st}</span></div>
+           <div class="mini">${p.series || "純銀飾品"}｜${p.category || "其他"}｜<span class="${stClass}">${st}</span></div>
           <div class="mini">ID：${p.id}</div>
         </td>
         <td style="width:120px;text-align:right;font-weight:700;color:#6c7f67;">
