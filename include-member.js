@@ -1,121 +1,82 @@
+// include-member.js
+// TEN YEARS ONE DAY – MEMBER ONLY (FINAL)
+// 負責：會員註冊、登入、資料顯示
+
 (() => {
   if (window.TEN_MEMBER_LOADED) return;
   window.TEN_MEMBER_LOADED = true;
 
-  const MEMBERS_GAS =
+  const MEMBER_KEY = "ten_member_id";
+
+  const GAS_MEMBERS_URL =
     "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
 
-  function $(id) {
-    return document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
+
+  function setMemberId(id) {
+    localStorage.setItem(MEMBER_KEY, id);
   }
 
-  function toast(msg, ok = false) {
-    const el = $("memberToast");
-    if (!el) return alert(msg);
-    el.textContent = msg;
-    el.style.color = ok ? "#4b6b4b" : "#8a3b3b";
+  function getMemberId() {
+    return localStorage.getItem(MEMBER_KEY);
   }
 
-  /* =============================
-     註冊
-  ============================== */
-  async function registerMember() {
-    const phone = $("mPhone")?.value.trim();
-    const password = $("mPassword")?.value.trim();
-    const name = $("mName")?.value.trim();
-    const address = $("mAddress")?.value.trim();
-    const y = $("birthY")?.value;
-    const m = $("birthM")?.value;
-    const d = $("birthD")?.value;
+  /* ========= 註冊 ========= */
+  async function register() {
+    const name = $("m_name").value.trim();
+    const phone = $("m_phone").value.trim();
+    const birthday = $("m_birthday").value;
 
-    if (!phone || !password || !name) {
-      toast("請填寫所有必填欄位");
+    if (!name || !phone) {
+      alert("請填寫姓名與電話");
       return;
     }
 
-    const payload = {
-      path: "member_register",
-      phone,
-      password,
-      name,
-      address,
-      birthday: `${y}-${m}-${d}`,
-    };
+    const res = await fetch(GAS_MEMBERS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "register",
+        name,
+        phone,
+        birthday
+      })
+    });
 
-    try {
-      toast("註冊中…");
+    const out = await res.json();
 
-      const res = await fetch(MEMBERS_GAS, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const out = await res.json();
-
-      if (!out.ok) {
-        toast(out.error || "註冊失敗");
-        return;
-      }
-
-      localStorage.setItem("ten_member_id", out.memberId);
-      toast("註冊成功，已登入", true);
-
-      setTimeout(() => {
-        location.href = "member-profile.html";
-      }, 600);
-    } catch (e) {
-      console.error(e);
-      toast("系統錯誤");
-    }
-  }
-
-  /* =============================
-     登入
-  ============================== */
-  async function loginMember() {
-    const phone = $("lPhone")?.value.trim();
-    const password = $("lPassword")?.value.trim();
-
-    if (!phone || !password) {
-      toast("請輸入手機與密碼");
+    if (!out.ok) {
+      alert(out.error || "註冊失敗");
       return;
     }
 
-    try {
-      toast("登入中…");
-
-      const res = await fetch(
-        `${MEMBERS_GAS}?path=member_login&phone=${encodeURIComponent(
-          phone
-        )}&password=${encodeURIComponent(password)}`,
-        { cache: "no-store" }
-      );
-
-      const out = await res.json();
-
-      if (!out.ok) {
-        toast(out.error || "登入失敗");
-        return;
-      }
-
-      localStorage.setItem("ten_member_id", out.memberId);
-      toast("登入成功", true);
-
-      setTimeout(() => {
-        location.href = "member-profile.html";
-      }, 600);
-    } catch (e) {
-      console.error(e);
-      toast("系統錯誤");
-    }
+    setMemberId(out.memberId);
+    alert("註冊成功");
+    location.href = "member-profile.html";
   }
 
-  /* =============================
-     綁定按鈕
-  ============================== */
+  /* ========= Profile ========= */
+  async function loadProfile() {
+    const memberId = getMemberId();
+    if (!memberId) return;
+
+    const res = await fetch(`${GAS_MEMBERS_URL}?action=get&memberId=${memberId}`);
+    const m = await res.json();
+
+    if (!m.ok) return;
+
+    $("p_name").textContent = m.name;
+    $("p_phone").textContent = m.phone;
+    $("p_birthday").textContent = m.birthday || "-";
+  }
+
+  /* ========= 綁定 ========= */
   window.addEventListener("DOMContentLoaded", () => {
-    $("btnRegister")?.addEventListener("click", registerMember);
-    $("btnLogin")?.addEventListener("click", loginMember);
+    if ($("memberRegisterBtn")) {
+      $("memberRegisterBtn").addEventListener("click", register);
+    }
+
+    if ($("memberProfile")) {
+      loadProfile();
+    }
   });
 })();
