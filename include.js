@@ -14,7 +14,8 @@
 
   window.TEN_CONFIG = window.TEN_CONFIG || {
     products_gas_url: "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec",
-    members_gas_url: "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec"
+    members_gas_url: "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec",
+    ecpay_gas_url: "https://script.google.com/macros/s/AKfycbxWtbjq9wGkpgILF4eDqjyHlyPjbqN1ybWwkW9vh1gFAniqTSKfXpBYgvf76u0VZ1Re/exec"
   };
 
   const GAS_PRODUCTS_URL = window.TEN_CONFIG.products_gas_url;
@@ -67,6 +68,26 @@
       id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
       localStorage.setItem(MEMBER_KEY, id);
     }
+
+  function getMemberEmail(){
+    try{
+      const memberId = getMemberId();
+      if(!memberId) return "";
+      const raw = localStorage.getItem("ten_member_profile_" + memberId);
+      if(raw){
+        const obj = JSON.parse(raw);
+        return obj.email || obj.customerEmail || "";
+      }
+      // fallback: some pages store member object
+      const raw2 = localStorage.getItem("ten_member");
+      if(raw2){
+        const obj2 = JSON.parse(raw2);
+        return obj2.email || obj2.customerEmail || "";
+      }
+      return "";
+    }catch(e){ return ""; }
+  }
+  window.getMemberEmail = getMemberEmail;
     return id;
   }
 

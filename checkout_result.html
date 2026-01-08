@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>付款結果｜十年一日</title>
+  <script src="include.js"></script>
+  <style>
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Noto Serif TC",serif;background:linear-gradient(135deg,#F8F9F7 0%,#D4E7D1 100%);min-height:100vh;margin:0}
+    .wrap{max-width:860px;margin:0 auto;padding:24px}
+    .card{background:rgba(255,255,255,.82);border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:18px 18px 8px;box-shadow:0 10px 25px rgba(0,0,0,.06)}
+    .muted{opacity:.7}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:10px 14px;border:1px solid rgba(0,0,0,.12);background:#fff;cursor:pointer;text-decoration:none;color:#111}
+    .ok{font-weight:700}
+    code{background:rgba(0,0,0,.06);padding:2px 6px;border-radius:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="headerMount"></div>
+
+    <div class="card">
+      <h2 style="margin:0 0 8px;">付款結果</h2>
+      <p class="muted" style="margin:0 0 14px;">
+        付款完成後，綠界會先以背景通知（ReturnURL）更新訂單狀態；若你剛付款完成，可能需要幾秒鐘才會同步。
+      </p>
+
+      <div id="status" class="ok">正在載入訂單資訊…</div>
+      <div id="detail" class="muted" style="margin-top:10px;"></div>
+
+      <div class="row" style="margin-top:16px;">
+        <a class="btn" href="all.html">回全系列</a>
+        <a class="btn" href="cart.html">回購物車</a>
+      </div>
+
+      <div style="height:10px"></div>
+    </div>
+  </div>
+
+<script>
+(async function(){
+  try{
+    // header
+    if(window.TEN && TEN.mountHeader) TEN.mountHeader("#headerMount");
+  }catch(e){}
+
+  const statusEl = document.getElementById("status");
+  const detailEl = document.getElementById("detail");
+
+  const last = localStorage.getItem("ten_last_order");
+  if(!last){
+    statusEl.textContent = "找不到訂單資訊（可能你不是從本站結帳進來）";
+    return;
+  }
+  const o = JSON.parse(last);
+
+    // 付款回來後先清空購物車（避免重複下單）
+  try{ localStorage.removeItem("ten_cart"); }catch(e){}
+
+  // 先顯示基本資訊
+  statusEl.textContent = "已收到付款流程回來，等待付款狀態更新…";
+  detailEl.innerHTML = `
+    訂單號：<code>${o.orderId}</code><br>
+    金額：<code>NT$ ${o.total}</code><br>
+    商品：<span class="muted">${o.itemName}</span>
+  `;
+
+  // 如果你的綠界 GAS 有提供查詢訂單的 route（可選）
+  // 這裡先做「提示型」頁面：你要我加訂單查詢 API，我可以下一步直接補上
+})();
+</script>
+</body>
+</html>
