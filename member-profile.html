@@ -160,147 +160,134 @@
   </div>
 
 <script>
-const MEMBER_GAS_URL = "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
-const TOKEN_KEY = "ten_member_token";
 
-/** header safe */
-(async function loadHeaderSafe() {
-  try {
-    const res = await fetch("./header.html", { cache: "no-store" });
-    if (!res.ok) return;
-    const html = await res.text();
-    document.getElementById("headerMount").innerHTML = html;
-  } catch(e) {}
-})();
+// ========= TEN YEARS ONE DAY - Member Profile (JSONP) =========
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
+const LS_TOKEN = "ten_member_token";
+const LS_MEMBER_ID = "ten_member_id";
 
-/** JSONP helper */
-function jsonp(url, params = {}) {
+function $(sel) { return document.querySelector(sel); }
+
+function jsonp(path, params = {}) {
   return new Promise((resolve, reject) => {
     const cb = "cb_" + Math.random().toString(36).slice(2);
-    const qs = new URLSearchParams({ ...params, callback: cb }).toString();
+    const qs = new URLSearchParams({ path, callback: cb, ...params }).toString();
+    const src = GAS_URL + "?" + qs;
+
     const script = document.createElement("script");
-    script.src = url + (url.includes("?") ? "&" : "?") + qs;
+    script.src = src;
     script.async = true;
 
-    window[cb] = (data) => { cleanup(); resolve(data); };
-
-    const timer = setTimeout(() => { cleanup(); reject(new Error("JSONP_TIMEOUT")); }, 12000);
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error("JSONP_TIMEOUT"));
+    }, 12000);
 
     function cleanup() {
       clearTimeout(timer);
-      if (script.parentNode) script.parentNode.removeChild(script);
-      try { delete window[cb]; } catch(_) { window[cb] = undefined; }
+      try { delete window[cb]; } catch {}
+      script.remove();
     }
-    script.onerror = () => { cleanup(); reject(new Error("JSONP_ERROR")); };
+
+    window[cb] = (data) => {
+      cleanup();
+      resolve(data);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("JSONP_ERROR"));
+    };
+
     document.head.appendChild(script);
   });
 }
 
-function toast(el, msg, ok=true) {
-  el.textContent = msg || "";
-  el.className = "toast " + (msg ? (ok ? "ok" : "bad") : "");
+function toast(msg, ok=true) {
+  const el = document.querySelector("#msg");
+  if (!el) return alert(msg);
+  el.textContent = msg;
+  el.style.color = ok ? "rgba(47,58,44,.9)" : "#8a3b3b";
 }
 
-function safeDateToInput(v) {
-  if (!v) return "";
-  const s = String(v);
-  const m = s.match(/(\d{4}-\d{2}-\d{2})/);
-  return m ? m[1] : "";
+function logout() {
+  localStorage.removeItem(LS_TOKEN);
+  // 不刪 member_id 也可以；但為了乾淨一起刪
+  localStorage.removeItem(LS_MEMBER_ID);
+  location.href = "./member.html";
 }
-
-async function apiGet(token) {
-  return jsonp(MEMBER_GAS_URL, { path:"member_get_jsonp", token });
-}
-async function apiUpdate(token, payload) {
-  return jsonp(MEMBER_GAS_URL, { path:"member_update_jsonp", token, ...payload });
-}
-async function apiLogout(token) {
-  return jsonp(MEMBER_GAS_URL, { path:"member_logout_jsonp", token });
-}
-
-const hello = document.getElementById("hello");
-const saveToast = document.getElementById("saveToast");
-const btnSave = document.getElementById("btnSave");
-btnSave.dataset.label = btnSave.textContent;
-
-function setBusy(btn, busy) {
-  btn.disabled = !!busy;
-  btn.textContent = busy ? "處理中…" : btn.dataset.label;
-}
-
-function goLogin(msg) {
-  if (msg) alert(msg);
-  localStorage.removeItem(TOKEN_KEY);
-  location.href = "member.html";
-}
-
-let currentToken = "";
 
 async function loadMe() {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (!token) return goLogin("請先登入");
+  const token = localStorage.getItem(LS_TOKEN) || "";
+  if (!token) {
+    toast("請先登入", false);
+    return setTimeout(() => location.href="./member.html", 350);
+  }
 
+  toast("載入中…");
   try {
-    const out = await apiGet(token);
-    if (!out || out.ok !== true || !out.member) {
-      return goLogin(out?.message || out?.error || "登入已失效，請重新登入");
+    const out = await jsonp("member_get", { token });
+    if (!out || out.ok !== true) {
+      toast("登入狀態失效，請重新登入", false);
+      return setTimeout(logout, 500);
     }
-    currentToken = token;
 
-    hello.textContent = `你好，${out.member.name || "會員"}`;
-    document.getElementById("phone").textContent = out.member.phone || "—";
-    document.getElementById("memberId").textContent = out.member.memberId || "—";
-    document.getElementById("createdAt").textContent = out.member.createdAt || "—";
+    // fill ui
+    $("#me_id").textContent = out.member?.member_id || "";
+    $("#me_name").value = out.member?.name || "";
+    $("#me_phone").value = out.member?.phone || "";
+    $("#me_email").value = out.member?.email || "";
+    $("#me_birth").value = out.member?.birth || "";
+    $("#me_address").value = out.member?.address || "";
 
-    document.getElementById("name").value = out.member.name || "";
-    document.getElementById("email").value = out.member.email || "";
-    document.getElementById("birthday").value = safeDateToInput(out.member.birthday);
-    document.getElementById("address").value = out.member.address || "";
+    toast("");
 
-  } catch(e) {
-    goLogin("系統忙碌或連線失敗，請重新登入");
+  } catch (e) {
+    console.error(e);
+    toast("載入失敗，請稍後再試", false);
   }
 }
 
-document.getElementById("btnBack").addEventListener("click", () => location.href = "index.html");
-
-document.getElementById("btnLogout").addEventListener("click", async () => {
-  const token = localStorage.getItem(TOKEN_KEY);
-  localStorage.removeItem(TOKEN_KEY);
-  if (!token) return location.href = "member.html";
-  try { await apiLogout(token); } catch(_) {}
-  location.href = "member.html";
-});
-
-btnSave.addEventListener("click", async () => {
-  toast(saveToast, "");
-  if (!currentToken) return goLogin("請先登入");
-
-  const payload = {
-    name: String(document.getElementById("name").value || "").trim(),
-    email: String(document.getElementById("email").value || "").trim(),
-    birthday: String(document.getElementById("birthday").value || "").trim(),
-    address: String(document.getElementById("address").value || "").trim(),
-  };
-
-  if (!payload.name) return toast(saveToast, "姓名不可空白", false);
+async function saveMe(e) {
+  e.preventDefault();
+  const btn = $("#btnSave");
+  if (btn) { btn.disabled = true; btn.textContent = "儲存中…"; }
+  toast("");
 
   try {
-    setBusy(btnSave, true);
-    const out = await apiUpdate(currentToken, payload);
+    const token = localStorage.getItem(LS_TOKEN) || "";
+    const name = String($("#me_name")?.value || "").trim();
+    const email = String($("#me_email")?.value || "").trim();
+    const birth = String($("#me_birth")?.value || "").trim();
+    const address = String($("#me_address")?.value || "").trim();
+
+    if (!name) return toast("姓名不可空白", false);
+
+    const out = await jsonp("member_update", {
+      token, name,
+      email: email || "",
+      birth: birth || "",
+      address: address || ""
+    });
+
     if (!out || out.ok !== true) {
-      return toast(saveToast, out?.message || out?.error || "儲存失敗", false);
+      return toast(`儲存失敗：${out?.error || "ERROR"}`, false);
     }
-    toast(saveToast, "✅ 已儲存");
-    await loadMe();
-  } catch(e) {
-    toast(saveToast, "系統忙碌或連線失敗，請稍後再試", false);
+    toast("✅ 已更新");
+  } catch (e) {
+    console.error(e);
+    toast("系統忙碌或連線失敗", false);
   } finally {
-    setBusy(btnSave, false);
+    if (btn) { btn.disabled = false; btn.textContent = "儲存"; }
   }
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  $("#btnLogout")?.addEventListener("click", logout);
+  $("#formMe")?.addEventListener("submit", saveMe);
+  loadMe();
 });
 
-window.addEventListener("DOMContentLoaded", loadMe);
 </script>
 </body>
 </html>
