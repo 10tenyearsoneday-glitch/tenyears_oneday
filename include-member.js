@@ -361,3 +361,4 @@
     initProfilePage();
   });
 })();
+<script src="./include-member.js"></script>
