@@ -3,291 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>會員資料｜十年一日</title>
+  <title>會員資料｜十年一日 TEN YEARS ONE DAY</title>
   <link rel="stylesheet" href="assets/style.css">
   <style>
-    :root {
-      --bg1:#F8F9F7; --bg2:#D4E7D1; --bg3:#B8C9A8;
-      --ink:rgba(47,58,44,.92);
-      --muted:rgba(47,58,44,.68);
-      --card:rgba(255,255,255,.78);
-      --line:rgba(0,0,0,.10);
-      --accent:#8ea08e;
-      --danger:#8a3b3b;
-      --radius:18px;
-    }
-    body {
-      margin:0;
-      font-family:"Noto Serif TC", serif;
-      color:var(--ink);
-      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
-      min-height:100vh;
-    }
-    .wrap { max-width:980px; margin:0 auto; padding: 22px 16px 80px; }
-    .card {
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow: 0 12px 30px rgba(0,0,0,.06);
-      overflow:hidden;
-    }
-    .top {
-      padding:18px 18px 14px;
-      border-bottom:1px solid rgba(0,0,0,.06);
-      display:flex;
-      gap:12px;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
-    }
-    .title { font-weight:900; letter-spacing:.14em; }
-    .sub { margin-top:6px; font-size:.92rem; color:var(--muted); }
-    .actions { display:flex; gap:10px; }
-    .btn {
-      border:none;
-      border-radius:14px;
-      padding:10px 12px;
-      font-weight:900;
-      letter-spacing:.10em;
-      cursor:pointer;
-      background: var(--accent);
-      color:#fff;
-    }
-    .btn.ghost {
-      background: rgba(255,255,255,.65);
-      color: var(--ink);
-      border: 1px solid rgba(0,0,0,.12);
-    }
-    .btn.danger { background: rgba(138,59,59,.92); }
-    .grid {
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:14px;
-      padding:16px;
-    }
-    @media (min-width: 900px) {
-      .grid { grid-template-columns: 1.1fr .9fr; }
-    }
-    .pane {
-      border:1px solid rgba(0,0,0,.08);
-      border-radius:var(--radius);
-      padding:14px;
-      background:rgba(255,255,255,.70);
-    }
-    .h { font-weight:900; letter-spacing:.10em; margin:2px 0 10px; }
-    .field { display:grid; gap:8px; margin:10px 0; }
-    label { font-size:.88rem; color:var(--muted); }
-    input, textarea {
-      width:100%;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid rgba(0,0,0,.12);
-      background:rgba(255,255,255,.92);
-      outline:none;
-      font-size:1rem;
-    }
-    input:focus, textarea:focus { border-color: rgba(142,160,142,.55); box-shadow: 0 0 0 4px rgba(142,160,142,.18); }
-    textarea { resize: vertical; min-height: 90px; }
-    .kv { display:grid; grid-template-columns: 120px 1fr; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(0,0,0,.10); }
-    .kv:last-child { border-bottom:none; }
-    .k { color:var(--muted); }
-    .v { font-weight:800; }
-    .toast { margin-top:10px; font-size:.92rem; line-height:1.6; }
-    .toast.ok { color: rgba(47,58,44,.90); }
-    .toast.bad { color: var(--danger); }
-    .icon-row .icon svg { width:22px; height:22px; }
-    .icon-row .icon { width:auto; height:auto; }
+    .page-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 14px;background:linear-gradient(135deg,#F8F9F7 0%,#D4E7D1 55%,#B8C9A8 100%);}
+    .card{width:min(640px,100%);background:rgba(255,255,255,.82);backdrop-filter:blur(10px);border:1px solid rgba(0,0,0,.06);border-radius:26px;box-shadow:0 18px 50px rgba(0,0,0,.08);padding:22px 18px;}
+    .brand{text-align:center;margin-bottom:14px}
+    .brand h1{margin:0;font-size:20px;letter-spacing:.12em}
+    .brand .sub{margin-top:6px;opacity:.75;font-size:12px;letter-spacing:.12em}
+    .panel{background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.06);border-radius:22px;padding:18px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .field label{display:block;font-size:12px;opacity:.75;margin:0 0 6px 4px;letter-spacing:.12em}
+    .field input{width:100%;padding:12px 14px;border-radius:16px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.92);outline:none}
+    .row{display:flex;gap:10px;margin-top:14px}
+    .btn{flex:1;border:none;border-radius:18px;padding:14px 12px;font-size:15px;font-weight:900;letter-spacing:.16em;cursor:pointer;background:#8ea08e;color:#fff}
+    .btn.outline{background:transparent;color:#2f3a2c;border:1px solid rgba(0,0,0,.18)}
+    .toast{margin-top:10px;text-align:center;font-size:13px;min-height:18px}
+    @media (max-width:520px){.grid2{grid-template-columns:1fr}.row{flex-direction:column}}
   </style>
 </head>
-
 <body>
-  <div id="headerMount"></div>
-
-  <div class="wrap">
-    <div class="card">
-      <div class="top">
-        <div>
-          <div class="title">會員資料</div>
-          <div class="sub" id="hello">載入中…</div>
-        </div>
-        <div class="actions">
-          <button class="btn ghost" id="btnBack" type="button">回首頁</button>
-          <button class="btn danger" id="btnLogout" type="button">登出</button>
-        </div>
+  <div class="page-wrap">
+    <div class="card" id="profileWrap">
+      <div class="brand">
+        <h1>會員資料</h1>
+        <div class="sub">十年一日 TEN YEARS ONE DAY</div>
       </div>
 
-      <div class="grid">
-        <section class="pane">
-          <div class="h">基本資料</div>
-
+      <section class="panel">
+        <div class="grid2">
           <div class="field">
-            <label>姓名</label>
-            <input id="name" placeholder="姓名">
+            <label>姓名 *</label>
+            <input id="pfName" placeholder="姓名">
           </div>
-
           <div class="field">
-            <label>Email</label>
-            <input id="email" placeholder="Email（選填）">
+            <label>手機（帳號）</label>
+            <input id="pfPhone" disabled>
           </div>
-
           <div class="field">
-            <label>生日</label>
-            <input id="birthday" type="date">
+            <label>Email（選填）</label>
+            <input id="pfEmail" inputmode="email" autocomplete="email" placeholder="you@example.com">
           </div>
-
           <div class="field">
-            <label>收件資訊（選填）</label>
-            <textarea id="address" placeholder="地址 / 超商門市資訊（選填）"></textarea>
+            <label>生日（選填）</label>
+            <input id="pfBirth" type="date">
           </div>
+        </div>
 
-          <button class="btn" id="btnSave" type="button">儲存</button>
-          <div class="toast" id="saveToast"></div>
-        </section>
+        <div class="field" style="margin-top:10px">
+          <label>地址（選填）</label>
+          <input id="pfAddress" autocomplete="street-address" placeholder="縣市區路段號樓">
+        </div>
 
-        <aside class="pane">
-          <div class="h">帳號資訊</div>
+        <div class="row">
+          <button id="btnSaveProfile" class="btn" type="button">儲存</button>
+          <button id="btnLogout" class="btn outline" type="button">登出</button>
+        </div>
 
-          <div class="kv"><div class="k">手機（帳號）</div><div class="v" id="phone">—</div></div>
-          <div class="kv"><div class="k">會員ID</div><div class="v" id="memberId">—</div></div>
-          <div class="kv"><div class="k">建立時間</div><div class="v" id="createdAt">—</div></div>
-
-          <div style="margin-top:12px; font-size:.88rem; color:var(--muted); line-height:1.7;">
-            若你看到「token 失效」：代表你換了 GAS 或重新部署，請回登入頁重新登入即可。
-          </div>
-        </aside>
-      </div>
+        <div id="profileToast" class="toast"></div>
+      </section>
     </div>
   </div>
 
-<script>
-
-// ========= TEN YEARS ONE DAY - Member Profile (JSONP) =========
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
-const LS_TOKEN = "ten_member_token";
-const LS_MEMBER_ID = "ten_member_id";
-
-function $(sel) { return document.querySelector(sel); }
-
-function jsonp(path, params = {}) {
-  return new Promise((resolve, reject) => {
-    const cb = "cb_" + Math.random().toString(36).slice(2);
-    const qs = new URLSearchParams({ path, callback: cb, ...params }).toString();
-    const src = GAS_URL + "?" + qs;
-
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-
-    const timer = setTimeout(() => {
-      cleanup();
-      reject(new Error("JSONP_TIMEOUT"));
-    }, 12000);
-
-    function cleanup() {
-      clearTimeout(timer);
-      try { delete window[cb]; } catch {}
-      script.remove();
-    }
-
-    window[cb] = (data) => {
-      cleanup();
-      resolve(data);
-    };
-
-    script.onerror = () => {
-      cleanup();
-      reject(new Error("JSONP_ERROR"));
-    };
-
-    document.head.appendChild(script);
-  });
-}
-
-function toast(msg, ok=true) {
-  const el = document.querySelector("#msg");
-  if (!el) return alert(msg);
-  el.textContent = msg;
-  el.style.color = ok ? "rgba(47,58,44,.9)" : "#8a3b3b";
-}
-
-function logout() {
-  localStorage.removeItem(LS_TOKEN);
-  // 不刪 member_id 也可以；但為了乾淨一起刪
-  localStorage.removeItem(LS_MEMBER_ID);
-  location.href = "./member.html";
-}
-
-async function loadMe() {
-  const token = localStorage.getItem(LS_TOKEN) || "";
-  if (!token) {
-    toast("請先登入", false);
-    return setTimeout(() => location.href="./member.html", 350);
-  }
-
-  toast("載入中…");
-  try {
-    const out = await jsonp("member_get", { token });
-    if (!out || out.ok !== true) {
-      toast("登入狀態失效，請重新登入", false);
-      return setTimeout(logout, 500);
-    }
-
-    // fill ui
-    $("#me_id").textContent = out.member?.member_id || "";
-    $("#me_name").value = out.member?.name || "";
-    $("#me_phone").value = out.member?.phone || "";
-    $("#me_email").value = out.member?.email || "";
-    $("#me_birth").value = out.member?.birth || "";
-    $("#me_address").value = out.member?.address || "";
-
-    toast("");
-
-  } catch (e) {
-    console.error(e);
-    toast("載入失敗，請稍後再試", false);
-  }
-}
-
-async function saveMe(e) {
-  e.preventDefault();
-  const btn = $("#btnSave");
-  if (btn) { btn.disabled = true; btn.textContent = "儲存中…"; }
-  toast("");
-
-  try {
-    const token = localStorage.getItem(LS_TOKEN) || "";
-    const name = String($("#me_name")?.value || "").trim();
-    const email = String($("#me_email")?.value || "").trim();
-    const birth = String($("#me_birth")?.value || "").trim();
-    const address = String($("#me_address")?.value || "").trim();
-
-    if (!name) return toast("姓名不可空白", false);
-
-    const out = await jsonp("member_update", {
-      token, name,
-      email: email || "",
-      birth: birth || "",
-      address: address || ""
-    });
-
-    if (!out || out.ok !== true) {
-      return toast(`儲存失敗：${out?.error || "ERROR"}`, false);
-    }
-    toast("✅ 已更新");
-  } catch (e) {
-    console.error(e);
-    toast("系統忙碌或連線失敗", false);
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = "儲存"; }
-  }
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  $("#btnLogout")?.addEventListener("click", logout);
-  $("#formMe")?.addEventListener("submit", saveMe);
-  loadMe();
-});
-
-</script>
+  <script src="./include-member.js"></script>
 </body>
 </html>
