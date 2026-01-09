@@ -3,364 +3,393 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>會員中心｜十年一日</title>
-  <link rel="stylesheet" href="assets/style.css">
+  <title>會員｜十年一日 TEN YEARS ONE DAY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg1:#F8F9F7; --bg2:#D4E7D1; --bg3:#B8C9A8;
+      --bg1:#F8F9F7; --bg2:#D4E7D1;
       --ink:rgba(47,58,44,.92);
-      --muted:rgba(47,58,44,.68);
-      --card:rgba(255,255,255,.78);
+      --muted:rgba(47,58,44,.72);
       --line:rgba(0,0,0,.10);
-      --accent:#8ea08e;
+      --card:rgba(255,255,255,.86);
+      --brand:#8ea08e;
       --danger:#8a3b3b;
       --radius:18px;
     }
-    body {
-      margin:0;
-      font-family: "Noto Serif TC", serif;
-      color:var(--ink);
-      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:'Noto Serif TC',serif; color:var(--ink);
+      background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);
       min-height:100vh;
     }
-    .wrap { max-width:980px; margin:0 auto; padding: 22px 16px 80px; }
-    .card {
+    main{max-width:980px;margin:0 auto;padding:18px 14px 70px;}
+    .wrap{display:grid;gap:14px;grid-template-columns:1fr;}
+    .card{
       background:var(--card);
       border:1px solid var(--line);
       border-radius:var(--radius);
-      box-shadow: 0 12px 30px rgba(0,0,0,.06);
-      overflow:hidden;
-    }
-    .top {
-      padding:18px 18px 14px;
-      text-align:center;
-      border-bottom:1px solid rgba(0,0,0,.06);
-    }
-    .title { font-weight:900; letter-spacing:.14em; }
-    .sub { margin-top:6px; font-size:.92rem; color:var(--muted); }
-    .tabs {
-      display:flex; gap:10px; justify-content:center;
-      padding:12px 14px;
-    }
-    .tab {
-      border:1px solid rgba(0,0,0,.12);
-      background:rgba(255,255,255,.65);
-      color:var(--ink);
-      padding:10px 14px;
-      border-radius:999px;
-      cursor:pointer;
-      font-weight:800;
-      letter-spacing:.06em;
-    }
-    .tab.active {
-      border-color: rgba(0,0,0,.16);
-      background: rgba(142,160,142,.20);
-    }
-    .grid {
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:14px;
       padding:16px;
+      box-shadow:0 12px 30px rgba(0,0,0,.08);
+      backdrop-filter: blur(6px);
     }
-    @media (min-width: 900px) {
-      .grid { grid-template-columns: 1fr 1fr; }
+    .title{font-weight:900;letter-spacing:.08em;margin:0 0 6px;}
+    .sub{margin:0 0 10px;color:var(--muted);font-size:.95rem;line-height:1.6;}
+    .tabs{display:flex;gap:10px;}
+    .tab{
+      flex:1; border:1px solid var(--line); background:rgba(255,255,255,.72);
+      border-radius:14px; padding:10px 12px; cursor:pointer;
+      font-weight:800; letter-spacing:.06em;
     }
-    .pane {
-      border:1px solid rgba(0,0,0,.08);
-      border-radius:var(--radius);
-      padding:14px;
-      background:rgba(255,255,255,.70);
+    .tab.active{background:rgba(142,160,142,.18); border-color:rgba(142,160,142,.45);}
+    .grid{display:grid;gap:10px;}
+    label{font-size:.9rem;color:var(--muted);}
+    input,select{
+      width:100%; padding:12px 12px; border-radius:14px;
+      border:1px solid var(--line); background:rgba(255,255,255,.92);
+      outline:none; color:var(--ink);
     }
-    .pane.hidden { display:none; }
-    .h { font-weight:900; letter-spacing:.10em; margin:2px 0 10px; }
-    .field { display:grid; gap:8px; margin:10px 0; }
-    label { font-size:.88rem; color:var(--muted); }
-    input {
-      width:100%;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid rgba(0,0,0,.12);
-      background:rgba(255,255,255,.92);
-      outline:none;
-      font-size: 1rem;
+    input:focus,select:focus{border-color:rgba(142,160,142,.65); box-shadow:0 0 0 3px rgba(142,160,142,.15);}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+    .btn{
+      width:100%; border:none; border-radius:16px;
+      padding:14px 12px; font-weight:900; letter-spacing:.12em;
+      cursor:pointer; background:var(--brand); color:#fff;
     }
-    input:focus { border-color: rgba(142,160,142,.55); box-shadow: 0 0 0 4px rgba(142,160,142,.18); }
-    .row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    .btn {
-      width:100%;
-      border:none;
-      border-radius:16px;
-      padding:13px 12px;
-      font-size:1rem;
-      font-weight:900;
-      letter-spacing:.14em;
-      cursor:pointer;
-      background: var(--accent);
-      color:#fff;
-    }
-    .btn:disabled { opacity:.6; cursor:not-allowed; }
-    .hint { font-size:.88rem; color:var(--muted); line-height:1.6; }
-    .toast { margin-top:10px; font-size:.92rem; line-height:1.6; }
-    .toast.ok { color: rgba(47,58,44,.90); }
-    .toast.bad { color: var(--danger); }
-    .mini {
-      margin-top:10px;
-      font-size:.86rem;
-      color:var(--muted);
-      background:rgba(255,255,255,.55);
-      border:1px dashed rgba(0,0,0,.14);
-      border-radius:14px;
-      padding:10px 12px;
-      line-height:1.7;
-       text-align:center;
-    }
-    /* 避免 header icon 被頁面 CSS 放大（保底） */
-    .icon-row .icon svg { width:22px; height:22px; }
-    .icon-row .icon { width:auto; height:auto; }
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .toast{margin-top:10px;font-size:.92rem;line-height:1.5;}
+    .toast.ok{color:var(--ink)}
+    .toast.bad{color:var(--danger)}
+    .note{font-size:.85rem;color:var(--muted);line-height:1.6;}
+    .divider{height:1px;background:rgba(0,0,0,.06);margin:12px 0;}
   </style>
 </head>
-
 <body>
-  <div id="headerMount"></div>
+  <!-- 你的 header 由 include.js 插入 -->
+  <script src="./include.js"></script>
 
-  <div class="wrap">
-    <div class="card">
-      <div class="top">
-        <div class="title">會員中心</div>
-        <div class="sub">十年一日 TEN YEARS ONE DAY</div>
-      </div>
+  <main>
+    <div class="wrap">
+      <section class="card">
+        <h2 class="title">會員中心</h2>
+        <p class="sub">註冊成功會自動登入並跳轉到「資料頁」。</p>
 
-      <div class="tabs">
-        <button class="tab active" id="tabLogin" type="button">登入</button>
-        <button class="tab" id="tabRegister" type="button">註冊</button>
-      </div>
+        <div class="tabs">
+          <button class="tab active" id="tabRegister" type="button">註冊</button>
+          <button class="tab" id="tabLogin" type="button">登入</button>
+        </div>
 
-      <div class="grid">
-        <!-- Login -->
-        <section class="pane" id="paneLogin">
-          <div class="h">登入</div>
+        <div class="divider"></div>
 
-          <div class="field">
-            <label>手機（帳號）*</label>
-            <input id="loginPhone" inputmode="tel" autocomplete="tel" placeholder="例如：0912xxxxxx">
-          </div>
-
-          <div class="field">
-            <label>密碼 *</label>
-            <input id="loginPassword" type="password" autocomplete="current-password" placeholder="請輸入密碼">
-          </div>
-
-          <button class="btn" id="btnLogin" type="button">登入</button>
-          <div class="toast" id="loginToast"></div>
-
-          <div class="mini">
-            <div>✅ 登入成功會自動前往「會員資料」</div>
-            <div>❗ 若你之前會員資料寫在另一個試算表（或另一個 GAS），請用新的「會員 GAS」重新註冊一次。</div>
-          </div>
-        </section>
-
-        <!-- Register -->
-        <section class="pane hidden" id="paneRegister">
-          <div class="h">註冊</div>
-
-          <div class="row">
-            <div class="field">
-              <label>姓名 *</label>
-              <input id="regName" autocomplete="name" placeholder="請輸入姓名">
+        <!-- REGISTER -->
+        <div id="panelRegister">
+          <div class="grid">
+            <div>
+              <label>手機（09xxxxxxxx）*</label>
+              <input id="rPhone" inputmode="tel" autocomplete="tel" placeholder="09xxxxxxxx">
             </div>
-            <div class="field">
-              <label>手機（帳號）*</label>
-              <input id="regPhone" inputmode="tel" autocomplete="tel" placeholder="例如：0912xxxxxx">
-            </div>
-          </div>
 
-          <div class="row">
-            <div class="field">
-              <label>Email（選填）</label>
-              <input id="regEmail" inputmode="email" autocomplete="email" placeholder="xxx@email.com">
+            <div class="row2">
+              <div>
+                <label>密碼（至少 6 碼）*</label>
+                <input id="rPw" type="password" autocomplete="new-password" placeholder="******">
+              </div>
+              <div>
+                <label>姓名 *</label>
+                <input id="rName" autocomplete="name" placeholder="王小明">
+              </div>
             </div>
-            <div class="field">
-              <label>生日（選填）</label>
-              <input id="regBirthday" type="date">
-            </div>
-          </div>
 
-          <div class="row">
-            <div class="field">
+            <div>
+              <label>生日（首次填寫後鎖定）*</label>
+              <div class="row3">
+                <select id="rY"></select>
+                <select id="rM"></select>
+                <select id="rD"></select>
+              </div>
+            </div>
+
+            <div>
+              <label>配送地址 *</label>
+              <input id="rAddr" autocomplete="street-address" placeholder="縣市區路段號樓">
+            </div>
+
+            <button class="btn" id="btnRegister" type="button">註冊並進入資料頁</button>
+            <div class="toast" id="toastRegister"></div>
+            <div class="note">提醒：註冊/登入會把你的 <b>memberId</b> 寫進 localStorage，之後結帳訂單才會被你查得到。</div>
+          </div>
+        </div>
+
+        <!-- LOGIN -->
+        <div id="panelLogin" style="display:none;">
+          <div class="grid">
+            <div>
+              <label>手機 *</label>
+              <input id="lPhone" inputmode="tel" autocomplete="tel" placeholder="09xxxxxxxx">
+            </div>
+            <div>
               <label>密碼 *</label>
-              <input id="regPassword" type="password" autocomplete="new-password" placeholder="至少 6 碼">
+              <input id="lPw" type="password" autocomplete="current-password" placeholder="******">
             </div>
-            <div class="field">
-              <label>再次輸入密碼 *</label>
-              <input id="regPassword2" type="password" autocomplete="new-password" placeholder="再次輸入">
-            </div>
+            <button class="btn" id="btnLogin" type="button">登入並進入資料頁</button>
+            <div class="toast" id="toastLogin"></div>
           </div>
-
-          <button class="btn" id="btnRegister" type="button">建立帳號</button>
-          <div class="toast" id="regToast"></div>
-
-          <div class="hint">
-            我會用「手機」當唯一帳號。若同一支手機重複註冊，後端會回傳「此手機已註冊」。
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
-  </div>
+  </main>
 
-<script>
-/** ====== 會員 GAS（JSONP）設定 ====== */
-const MEMBER_GAS_URL = "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
-const TOKEN_KEY = "ten_member_token";
+  <script>
+    // =========================
+    // 設定
+    // =========================
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
+    const BRIDGE_URL = GAS_URL + "?path=bridge";
+    const LS_TOKEN = "ten_member_token";
+    const LS_MEMBER_ID = "ten_member_id"; // include.js 也用這個 key
 
-/** ====== header（如果你有 header.html 就會載入；沒有也不影響會員功能） ====== */
-(async function loadHeaderSafe() {
-  try {
-    const res = await fetch("./header.html", { cache: "no-store" });
-    if (!res.ok) return;
-    const html = await res.text();
-    document.getElementById("headerMount").innerHTML = html;
-  } catch(e) {}
-})();
+    // =========================
+    // Bridge（postMessage）CORS 版
+    // =========================
+    let bridgeReady = null;
+    let bridgeFrame = null;
+    const pending = new Map();
 
-/** ====== JSONP helper ====== */
-function jsonp(url, params = {}) {
-  return new Promise((resolve, reject) => {
-    const cb = "cb_" + Math.random().toString(36).slice(2);
-    const qs = new URLSearchParams({ ...params, callback: cb }).toString();
-    const script = document.createElement("script");
-    script.src = url + (url.includes("?") ? "&" : "?") + qs;
-    script.async = true;
-    window[cb] = (data) => { cleanup(); resolve(data); };
+    function ensureBridge() {
+      if (bridgeReady) return bridgeReady;
 
-    const timer = setTimeout(() => { cleanup(); reject(new Error("JSONP_TIMEOUT")); }, 12000);
+      bridgeReady = new Promise((resolve, reject) => {
+        bridgeFrame = document.getElementById("gasBridge");
+        if (!bridgeFrame) {
+          bridgeFrame = document.createElement("iframe");
+          bridgeFrame.id = "gasBridge";
+          bridgeFrame.src = BRIDGE_URL;
+          bridgeFrame.style.position = "fixed";
+          bridgeFrame.style.left = "-9999px";
+          bridgeFrame.style.top = "-9999px";
+          bridgeFrame.style.width = "1px";
+          bridgeFrame.style.height = "1px";
+          bridgeFrame.setAttribute("aria-hidden", "true");
+          document.body.appendChild(bridgeFrame);
+        }
 
-    function cleanup() {
-      clearTimeout(timer);
-      if (script.parentNode) script.parentNode.removeChild(script);
-      try { delete window[cb]; } catch(_) { window[cb] = undefined; }
-    }
-    script.onerror = () => { cleanup(); reject(new Error("JSONP_ERROR")); };
-    document.head.appendChild(script);
-  });
-}
+        const timer = setTimeout(() => reject(new Error("BRIDGE_TIMEOUT")), 8000);
 
-function toast(el, msg, ok=true) {
-  el.textContent = msg || "";
-  el.className = "toast " + (msg ? (ok ? "ok" : "bad") : "");
-}
+        function onMsg(ev) {
+          const data = ev?.data || {};
+          if (data?.type === "GAS_BRIDGE_READY") {
+            clearTimeout(timer);
+            window.removeEventListener("message", onMsg);
+            resolve(true);
+          }
+        }
+        window.addEventListener("message", onMsg);
+      });
 
-function onlyDigitsPhone(s) {
-  s = String(s || "").trim();
-  const d = s.replace(/\D/g,"");
-  if (d.startsWith("886") && d.length >= 11) return "0" + d.slice(3);
-  return d;
-}
+      window.addEventListener("message", (ev) => {
+        const data = ev?.data || {};
+        if (data?.type !== "GAS_BRIDGE_RES") return;
+        const id = data.id;
+        const p = pending.get(id);
+        if (!p) return;
+        pending.delete(id);
+        if (data.error) p.reject(new Error(data.error));
+        else p.resolve(data.data);
+      });
 
-function setBusy(btn, busy) {
-  btn.disabled = !!busy;
-  btn.textContent = busy ? "處理中…" : btn.dataset.label;
-}
-
-/** ====== UI tabs ====== */
-const tabLogin = document.getElementById("tabLogin");
-const tabRegister = document.getElementById("tabRegister");
-const paneLogin = document.getElementById("paneLogin");
-const paneRegister = document.getElementById("paneRegister");
-
-tabLogin.addEventListener("click", () => {
-  tabLogin.classList.add("active");
-  tabRegister.classList.remove("active");
-  paneLogin.classList.remove("hidden");
-  paneRegister.classList.add("hidden");
-});
-tabRegister.addEventListener("click", () => {
-  tabRegister.classList.add("active");
-  tabLogin.classList.remove("active");
-  paneRegister.classList.remove("hidden");
-  paneLogin.classList.add("hidden");
-});
-
-/** ====== API calls ====== */
-async function apiRegister(payload) {
-  return jsonp(MEMBER_GAS_URL, { path:"member_register_jsonp", ...payload });
-}
-async function apiLogin(payload) {
-  return jsonp(MEMBER_GAS_URL, { path:"member_login_jsonp", ...payload });
-}
-
-/** ====== Login ====== */
-const loginToast = document.getElementById("loginToast");
-const btnLogin = document.getElementById("btnLogin");
-btnLogin.dataset.label = btnLogin.textContent;
-
-btnLogin.addEventListener("click", async () => {
-  toast(loginToast, "");
-  const phone = onlyDigitsPhone(document.getElementById("loginPhone").value);
-  const password = String(document.getElementById("loginPassword").value || "");
-
-  if (!phone) return toast(loginToast, "請輸入手機", false);
-  if (!password) return toast(loginToast, "請輸入密碼", false);
-
-  try {
-    setBusy(btnLogin, true);
-    const out = await apiLogin({ phone, password });
-    if (!out || out.ok !== true) {
-      return toast(loginToast, out?.message || out?.error || "登入失敗", false);
-    }
-    localStorage.setItem(TOKEN_KEY, out.token);
-    toast(loginToast, "✅ 登入成功，跳轉中…");
-    location.href = "member-profile.html";
-  } catch (e) {
-    toast(loginToast, "系統忙碌或連線失敗，請稍後再試", false);
-  } finally {
-    setBusy(btnLogin, false);
-  }
-});
-
-/** ====== Register ====== */
-const regToast = document.getElementById("regToast");
-const btnRegister = document.getElementById("btnRegister");
-btnRegister.dataset.label = btnRegister.textContent;
-
-btnRegister.addEventListener("click", async () => {
-  toast(regToast, "");
-  const name = String(document.getElementById("regName").value || "").trim();
-  const phone = onlyDigitsPhone(document.getElementById("regPhone").value);
-  const email = String(document.getElementById("regEmail").value || "").trim();
-  const birthday = String(document.getElementById("regBirthday").value || "").trim();
-  const pw1 = String(document.getElementById("regPassword").value || "");
-  const pw2 = String(document.getElementById("regPassword2").value || "");
-
-  if (!name) return toast(regToast, "請輸入姓名", false);
-  if (!phone) return toast(regToast, "請輸入手機", false);
-  if (!pw1 || pw1.length < 6) return toast(regToast, "密碼至少 6 碼", false);
-  if (pw1 !== pw2) return toast(regToast, "兩次密碼不一致", false);
-
-  try {
-    setBusy(btnRegister, true);
-    const out = await apiRegister({ name, phone, email, birthday, password: pw1 });
-    if (!out || out.ok !== true) {
-      const msg = out?.message || (out?.error === "PHONE_EXISTS" ? "此手機已註冊，請直接登入" : (out?.error || "註冊失敗"));
-      return toast(regToast, msg, false);
+      return bridgeReady;
     }
 
-    // 註冊成功後自動登入
-    const loginOut = await apiLogin({ phone, password: pw1 });
-    if (loginOut && loginOut.ok === true && loginOut.token) {
-      localStorage.setItem(TOKEN_KEY, loginOut.token);
-      toast(regToast, "✅ 註冊成功，跳轉中…");
+    async function gasRequest(path, method = "GET", body = null) {
+      await ensureBridge();
+      const id = "R" + Date.now() + "_" + Math.random().toString(36).slice(2);
+      return new Promise((resolve, reject) => {
+        pending.set(id, { resolve, reject });
+        bridgeFrame.contentWindow.postMessage({
+          type: "GAS_BRIDGE_REQ",
+          id,
+          path,
+          method,
+          body
+        }, "*");
+
+        setTimeout(() => {
+          if (!pending.has(id)) return;
+          pending.delete(id);
+          reject(new Error("REQUEST_TIMEOUT"));
+        }, 12000);
+      });
+    }
+
+    function $(id) { return document.getElementById(id); }
+    function toast(el, msg, ok=true) {
+      el.textContent = msg || "";
+      el.className = "toast " + (ok ? "ok" : "bad");
+    }
+    function normPhone(v) {
+      v = String(v||"").trim();
+      return /^09\d{8}$/.test(v) ? v : "";
+    }
+
+    function fillBirthdaySelects() {
+      const y = $("rY"), m = $("rM"), d = $("rD");
+      const now = new Date();
+      const curY = now.getFullYear();
+      const startY = curY - 80;
+      const endY = curY - 10;
+
+      y.innerHTML = "";
+      for (let yy=endY; yy>=startY; yy--) {
+        const opt = document.createElement("option");
+        opt.value = String(yy);
+        opt.textContent = yy + " 年";
+        y.appendChild(opt);
+      }
+
+      m.innerHTML = "";
+      for (let mm=1; mm<=12; mm++) {
+        const opt = document.createElement("option");
+        opt.value = String(mm);
+        opt.textContent = mm + " 月";
+        m.appendChild(opt);
+      }
+
+      function renderDays() {
+        const yy = Number(y.value);
+        const mm = Number(m.value);
+        const last = new Date(yy, mm, 0).getDate();
+        const prev = Number(d.value || 1);
+
+        d.innerHTML = "";
+        for (let dd=1; dd<=last; dd++) {
+          const opt = document.createElement("option");
+          opt.value = String(dd);
+          opt.textContent = dd + " 日";
+          d.appendChild(opt);
+        }
+        d.value = String(Math.min(prev, last));
+      }
+      y.addEventListener("change", renderDays);
+      m.addEventListener("change", renderDays);
+      renderDays();
+    }
+
+    function goProfile() {
       location.href = "member-profile.html";
-    } else {
-      toast(regToast, "✅ 註冊成功（請回到登入頁登入）");
-      tabLogin.click();
-      document.getElementById("loginPhone").value = phone;
     }
-  } catch (e) {
-    toast(regToast, "系統忙碌或連線失敗，請稍後再試", false);
-  } finally {
-    setBusy(btnRegister, false);
-  }
-});
-</script>
+
+    function bindTabs() {
+      const tabR = $("tabRegister");
+      const tabL = $("tabLogin");
+      const pR = $("panelRegister");
+      const pL = $("panelLogin");
+
+      tabR.addEventListener("click", () => {
+        tabR.classList.add("active");
+        tabL.classList.remove("active");
+        pR.style.display = "";
+        pL.style.display = "none";
+      });
+      tabL.addEventListener("click", () => {
+        tabL.classList.add("active");
+        tabR.classList.remove("active");
+        pL.style.display = "";
+        pR.style.display = "none";
+      });
+    }
+
+    async function doRegister() {
+      const btn = $("btnRegister");
+      const t = $("toastRegister");
+      toast(t, "註冊中…");
+
+      const phone = normPhone($("rPhone").value);
+      const password = String($("rPw").value||"").trim();
+      const name = String($("rName").value||"").trim();
+      const address = String($("rAddr").value||"").trim();
+      const birth_y = Number($("rY").value||0);
+      const birth_m = Number($("rM").value||0);
+      const birth_d = Number($("rD").value||0);
+
+      if (!phone) return toast(t, "手機格式錯誤（需 09xxxxxxxx）", false);
+      if (password.length < 6) return toast(t, "密碼至少 6 碼", false);
+      if (!name) return toast(t, "請輸入姓名", false);
+      if (!address) return toast(t, "請輸入地址", false);
+
+      btn.disabled = true;
+      try {
+        const out = await gasRequest("member_register", "POST", {
+          phone, password, name, birth_y, birth_m, birth_d, address
+        });
+
+        if (!out || out.ok !== true) {
+          btn.disabled = false;
+          return toast(t, "註冊失敗：" + (out?.error || "ERROR"), false);
+        }
+
+        // ✅ 存 token + memberId（讓訂單可以查得到）
+        localStorage.setItem(LS_TOKEN, out.token);
+        localStorage.setItem(LS_MEMBER_ID, out.memberId);
+
+        toast(t, "✅ 註冊成功，前往資料頁…");
+        setTimeout(goProfile, 350);
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        toast(t, "系統忙碌或 Bridge 未就緒，請重整再試", false);
+      }
+    }
+
+    async function doLogin() {
+      const btn = $("btnLogin");
+      const t = $("toastLogin");
+      toast(t, "登入中…");
+
+      const phone = normPhone($("lPhone").value);
+      const password = String($("lPw").value||"").trim();
+
+      if (!phone) return toast(t, "手機格式錯誤（需 09xxxxxxxx）", false);
+      if (!password) return toast(t, "請輸入密碼", false);
+
+      btn.disabled = true;
+      try {
+        const out = await gasRequest("member_login", "POST", { phone, password });
+        if (!out || out.ok !== true) {
+          btn.disabled = false;
+          return toast(t, "登入失敗：" + (out?.error || "ERROR"), false);
+        }
+
+        localStorage.setItem(LS_TOKEN, out.token);
+        localStorage.setItem(LS_MEMBER_ID, out.memberId);
+
+        toast(t, "✅ 登入成功，前往資料頁…");
+        setTimeout(goProfile, 350);
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        toast(t, "系統忙碌或 Bridge 未就緒，請重整再試", false);
+      }
+    }
+
+    // 已登入就直接去資料頁
+    window.addEventListener("DOMContentLoaded", async () => {
+      fillBirthdaySelects();
+      bindTabs();
+
+      $("btnRegister").addEventListener("click", doRegister);
+      $("btnLogin").addEventListener("click", doLogin);
+
+      const token = localStorage.getItem(LS_TOKEN);
+      if (token) {
+        // 先試著驗證 token，有效就跳
+        try {
+          const me = await gasRequest("member_me", "GET", { token });
+          if (me?.ok) return goProfile();
+        } catch {}
+      }
+    });
+  </script>
 </body>
 </html>
