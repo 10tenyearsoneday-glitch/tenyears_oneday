@@ -1,82 +1,306 @@
 <!doctype html>
 <html lang="zh-TW">
 <head>
-<meta charset="utf-8">
-<title>會員中心</title>
- <link rel="stylesheet" href="assets/style.css">
-<script src="./include-member.js"></script>
- <style>
-    body{background:linear-gradient(135deg,#F8F9F7 0%,#D4E7D1 55%,#A8BCA5 100%);}
-    .wrap{max-width:980px;margin:0 auto;padding:22px 16px 46px;}
-    .card{background:rgba(255,255,255,.88);border:1px solid rgba(0,0,0,.08);border-radius:22px;box-shadow:0 12px 40px rgba(0,0,0,.08);overflow:hidden}
-    .head{padding:18px 18px 6px}
-    .ttl{font-size:1.35rem;font-weight:900;letter-spacing:.08em}
-    .sub{margin-top:6px;opacity:.75;line-height:1.6}
-    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 18px 0}
-    .tabbtn{border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);border-radius:16px;padding:12px 10px;font-weight:900;letter-spacing:.12em;cursor:pointer}
-    .tabbtn.active{background:#8ea08e;color:#fff;border-color:#8ea08e}
-    .body{padding:14px 18px 18px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .inp,select{width:100%;padding:12px;border-radius:14px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.92);outline:none}
-    .btn{width:100%;border:none;border-radius:16px;padding:14px 12px;font-size:1rem;font-weight:900;letter-spacing:.12em;cursor:pointer;background:#8ea08e;color:#fff}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
-    .toast{margin-top:10px;font-size:.92rem;opacity:.92}
-    .muted{opacity:.7;font-size:.9rem;line-height:1.6}
-    .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
-    .mini{font-size:.85rem;opacity:.75}
-    .bdayRow{display:grid;grid-template-columns:1.1fr .9fr .9fr;gap:10px}
-    @media (max-width:720px){.grid{grid-template-columns:1fr}.bdayRow{grid-template-columns:1fr 1fr 1fr}}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>會員資料｜十年一日</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    :root {
+      --bg1:#F8F9F7; --bg2:#D4E7D1; --bg3:#B8C9A8;
+      --ink:rgba(47,58,44,.92);
+      --muted:rgba(47,58,44,.68);
+      --card:rgba(255,255,255,.78);
+      --line:rgba(0,0,0,.10);
+      --accent:#8ea08e;
+      --danger:#8a3b3b;
+      --radius:18px;
+    }
+    body {
+      margin:0;
+      font-family:"Noto Serif TC", serif;
+      color:var(--ink);
+      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
+      min-height:100vh;
+    }
+    .wrap { max-width:980px; margin:0 auto; padding: 22px 16px 80px; }
+    .card {
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow: 0 12px 30px rgba(0,0,0,.06);
+      overflow:hidden;
+    }
+    .top {
+      padding:18px 18px 14px;
+      border-bottom:1px solid rgba(0,0,0,.06);
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .title { font-weight:900; letter-spacing:.14em; }
+    .sub { margin-top:6px; font-size:.92rem; color:var(--muted); }
+    .actions { display:flex; gap:10px; }
+    .btn {
+      border:none;
+      border-radius:14px;
+      padding:10px 12px;
+      font-weight:900;
+      letter-spacing:.10em;
+      cursor:pointer;
+      background: var(--accent);
+      color:#fff;
+    }
+    .btn.ghost {
+      background: rgba(255,255,255,.65);
+      color: var(--ink);
+      border: 1px solid rgba(0,0,0,.12);
+    }
+    .btn.danger { background: rgba(138,59,59,.92); }
+    .grid {
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+      padding:16px;
+    }
+    @media (min-width: 900px) {
+      .grid { grid-template-columns: 1.1fr .9fr; }
+    }
+    .pane {
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:var(--radius);
+      padding:14px;
+      background:rgba(255,255,255,.70);
+    }
+    .h { font-weight:900; letter-spacing:.10em; margin:2px 0 10px; }
+    .field { display:grid; gap:8px; margin:10px 0; }
+    label { font-size:.88rem; color:var(--muted); }
+    input, textarea {
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(0,0,0,.12);
+      background:rgba(255,255,255,.92);
+      outline:none;
+      font-size:1rem;
+    }
+    input:focus, textarea:focus { border-color: rgba(142,160,142,.55); box-shadow: 0 0 0 4px rgba(142,160,142,.18); }
+    textarea { resize: vertical; min-height: 90px; }
+    .kv { display:grid; grid-template-columns: 120px 1fr; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(0,0,0,.10); }
+    .kv:last-child { border-bottom:none; }
+    .k { color:var(--muted); }
+    .v { font-weight:800; }
+    .toast { margin-top:10px; font-size:.92rem; line-height:1.6; }
+    .toast.ok { color: rgba(47,58,44,.90); }
+    .toast.bad { color: var(--danger); }
+    .icon-row .icon svg { width:22px; height:22px; }
+    .icon-row .icon { width:auto; height:auto; }
   </style>
-
-<style>
-body{font-family:"Noto Serif TC";padding:40px}
-</style>
 </head>
+
 <body>
+  <div id="headerMount"></div>
 
-<h2 id="hello"></h2>
-<div id="discount"></div>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div>
+          <div class="title">會員資料</div>
+          <div class="sub" id="hello">載入中…</div>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" id="btnBack" type="button">回首頁</button>
+          <button class="btn danger" id="btnLogout" type="button">登出</button>
+        </div>
+      </div>
 
-<p>電話：<span id="phone"></span></p>
-<p>地址：<input id="addr"><button onclick="save()">儲存</button></p>
+      <div class="grid">
+        <section class="pane">
+          <div class="h">基本資料</div>
 
-<h3>我的訂單</h3>
-<ul id="orders"></ul>
+          <div class="field">
+            <label>姓名</label>
+            <input id="name" placeholder="姓名">
+          </div>
+
+          <div class="field">
+            <label>Email</label>
+            <input id="email" placeholder="Email（選填）">
+          </div>
+
+          <div class="field">
+            <label>生日</label>
+            <input id="birthday" type="date">
+          </div>
+
+          <div class="field">
+            <label>收件資訊（選填）</label>
+            <textarea id="address" placeholder="地址 / 超商門市資訊（選填）"></textarea>
+          </div>
+
+          <button class="btn" id="btnSave" type="button">儲存</button>
+          <div class="toast" id="saveToast"></div>
+        </section>
+
+        <aside class="pane">
+          <div class="h">帳號資訊</div>
+
+          <div class="kv"><div class="k">手機（帳號）</div><div class="v" id="phone">—</div></div>
+          <div class="kv"><div class="k">會員ID</div><div class="v" id="memberId">—</div></div>
+          <div class="kv"><div class="k">建立時間</div><div class="v" id="createdAt">—</div></div>
+
+          <div style="margin-top:12px; font-size:.88rem; color:var(--muted); line-height:1.7;">
+            若你看到「token 失效」：代表你換了 GAS 或重新部署，請回登入頁重新登入即可。
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
 
 <script>
-const API="https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
-const OLD_ORDER_API="https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-const token=localStorage.getItem("TEN_TOKEN");
+const MEMBER_GAS_URL = "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
+const TOKEN_KEY = "ten_member_token";
 
-async function api(path,data){
-  const r=await fetch(API,{
-    method:"POST",
-    body:JSON.stringify(Object.assign({path,token},data))
-  });
-  return r.json();
-}
-
-(async()=>{
-  const me=await api("member_me",{});
-  if(!me.ok){ location.href="member.html"; return; }
-
-  const m=me.member;
-  hello.textContent = m.name +
-    ((new Date().getMonth()+1===m.birth_m)?" 🎂":"");
-
-  phone.textContent=m.phone;
-  addr.value=m.address;
-
-  discount.textContent =
-    "首購 / 生日折數會在結帳時自動套用";
-
-  const o=await api("member_orders",{});
-  // 這裡再用 OLD_ORDER_API 查你的訂單（照你原本做法）
+/** header safe */
+(async function loadHeaderSafe() {
+  try {
+    const res = await fetch("./header.html", { cache: "no-store" });
+    if (!res.ok) return;
+    const html = await res.text();
+    document.getElementById("headerMount").innerHTML = html;
+  } catch(e) {}
 })();
-async function save(){
-  await api("member_update",{address:addr.value});
-  alert("已更新");
+
+/** JSONP helper */
+function jsonp(url, params = {}) {
+  return new Promise((resolve, reject) => {
+    const cb = "cb_" + Math.random().toString(36).slice(2);
+    const qs = new URLSearchParams({ ...params, callback: cb }).toString();
+    const script = document.createElement("script");
+    script.src = url + (url.includes("?") ? "&" : "?") + qs;
+    script.async = true;
+
+    window[cb] = (data) => { cleanup(); resolve(data); };
+
+    const timer = setTimeout(() => { cleanup(); reject(new Error("JSONP_TIMEOUT")); }, 12000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try { delete window[cb]; } catch(_) { window[cb] = undefined; }
+    }
+    script.onerror = () => { cleanup(); reject(new Error("JSONP_ERROR")); };
+    document.head.appendChild(script);
+  });
 }
+
+function toast(el, msg, ok=true) {
+  el.textContent = msg || "";
+  el.className = "toast " + (msg ? (ok ? "ok" : "bad") : "");
+}
+
+function safeDateToInput(v) {
+  if (!v) return "";
+  const s = String(v);
+  const m = s.match(/(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : "";
+}
+
+async function apiGet(token) {
+  return jsonp(MEMBER_GAS_URL, { path:"member_get_jsonp", token });
+}
+async function apiUpdate(token, payload) {
+  return jsonp(MEMBER_GAS_URL, { path:"member_update_jsonp", token, ...payload });
+}
+async function apiLogout(token) {
+  return jsonp(MEMBER_GAS_URL, { path:"member_logout_jsonp", token });
+}
+
+const hello = document.getElementById("hello");
+const saveToast = document.getElementById("saveToast");
+const btnSave = document.getElementById("btnSave");
+btnSave.dataset.label = btnSave.textContent;
+
+function setBusy(btn, busy) {
+  btn.disabled = !!busy;
+  btn.textContent = busy ? "處理中…" : btn.dataset.label;
+}
+
+function goLogin(msg) {
+  if (msg) alert(msg);
+  localStorage.removeItem(TOKEN_KEY);
+  location.href = "member.html";
+}
+
+let currentToken = "";
+
+async function loadMe() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return goLogin("請先登入");
+
+  try {
+    const out = await apiGet(token);
+    if (!out || out.ok !== true || !out.member) {
+      return goLogin(out?.message || out?.error || "登入已失效，請重新登入");
+    }
+    currentToken = token;
+
+    hello.textContent = `你好，${out.member.name || "會員"}`;
+    document.getElementById("phone").textContent = out.member.phone || "—";
+    document.getElementById("memberId").textContent = out.member.memberId || "—";
+    document.getElementById("createdAt").textContent = out.member.createdAt || "—";
+
+    document.getElementById("name").value = out.member.name || "";
+    document.getElementById("email").value = out.member.email || "";
+    document.getElementById("birthday").value = safeDateToInput(out.member.birthday);
+    document.getElementById("address").value = out.member.address || "";
+
+  } catch(e) {
+    goLogin("系統忙碌或連線失敗，請重新登入");
+  }
+}
+
+document.getElementById("btnBack").addEventListener("click", () => location.href = "index.html");
+
+document.getElementById("btnLogout").addEventListener("click", async () => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_KEY);
+  if (!token) return location.href = "member.html";
+  try { await apiLogout(token); } catch(_) {}
+  location.href = "member.html";
+});
+
+btnSave.addEventListener("click", async () => {
+  toast(saveToast, "");
+  if (!currentToken) return goLogin("請先登入");
+
+  const payload = {
+    name: String(document.getElementById("name").value || "").trim(),
+    email: String(document.getElementById("email").value || "").trim(),
+    birthday: String(document.getElementById("birthday").value || "").trim(),
+    address: String(document.getElementById("address").value || "").trim(),
+  };
+
+  if (!payload.name) return toast(saveToast, "姓名不可空白", false);
+
+  try {
+    setBusy(btnSave, true);
+    const out = await apiUpdate(currentToken, payload);
+    if (!out || out.ok !== true) {
+      return toast(saveToast, out?.message || out?.error || "儲存失敗", false);
+    }
+    toast(saveToast, "✅ 已儲存");
+    await loadMe();
+  } catch(e) {
+    toast(saveToast, "系統忙碌或連線失敗，請稍後再試", false);
+  } finally {
+    setBusy(btnSave, false);
+  }
+});
+
+window.addEventListener("DOMContentLoaded", loadMe);
 </script>
 </body>
 </html>

@@ -1,95 +1,365 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>會員｜十年一日 TEN YEARS ONE DAY</title>
-  <link rel="stylesheet" href="assets/style.css" />
-<script src="./include-member.js"></script>
-<style>
-    body{background:linear-gradient(135deg,#F8F9F7 0%,#D4E7D1 55%,#A8BCA5 100%);}
-    .wrap{max-width:980px;margin:0 auto;padding:22px 16px 46px;}
-    .card{background:rgba(255,255,255,.88);border:1px solid rgba(0,0,0,.08);border-radius:22px;box-shadow:0 12px 40px rgba(0,0,0,.08);overflow:hidden}
-    .head{padding:18px 18px 6px}
-    .ttl{font-size:1.35rem;font-weight:900;letter-spacing:.08em}
-    .sub{margin-top:6px;opacity:.75;line-height:1.6}
-    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 18px 0}
-    .tabbtn{border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);border-radius:16px;padding:12px 10px;font-weight:900;letter-spacing:.12em;cursor:pointer}
-    .tabbtn.active{background:#8ea08e;color:#fff;border-color:#8ea08e}
-    .body{padding:14px 18px 18px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .inp,select{width:100%;padding:12px;border-radius:14px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.92);outline:none}
-    .btn{width:100%;border:none;border-radius:16px;padding:14px 12px;font-size:1rem;font-weight:900;letter-spacing:.12em;cursor:pointer;background:#8ea08e;color:#fff}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
-    .toast{margin-top:10px;font-size:.92rem;opacity:.92}
-    .muted{opacity:.7;font-size:.9rem;line-height:1.6}
-    .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
-    .mini{font-size:.85rem;opacity:.75}
-    .bdayRow{display:grid;grid-template-columns:1.1fr .9fr .9fr;gap:10px}
-    @media (max-width:720px){.grid{grid-template-columns:1fr}.bdayRow{grid-template-columns:1fr 1fr 1fr}}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>會員中心｜十年一日</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    :root {
+      --bg1:#F8F9F7; --bg2:#D4E7D1; --bg3:#B8C9A8;
+      --ink:rgba(47,58,44,.92);
+      --muted:rgba(47,58,44,.68);
+      --card:rgba(255,255,255,.78);
+      --line:rgba(0,0,0,.10);
+      --accent:#8ea08e;
+      --danger:#8a3b3b;
+      --radius:18px;
+    }
+    body {
+      margin:0;
+      font-family: "Noto Serif TC", serif;
+      color:var(--ink);
+      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
+      min-height:100vh;
+    }
+    .wrap { max-width:980px; margin:0 auto; padding: 22px 16px 80px; }
+    .card {
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow: 0 12px 30px rgba(0,0,0,.06);
+      overflow:hidden;
+    }
+    .top {
+      padding:18px 18px 14px;
+      text-align:center;
+      border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    .title { font-weight:900; letter-spacing:.14em; }
+    .sub { margin-top:6px; font-size:.92rem; color:var(--muted); }
+    .tabs {
+      display:flex; gap:10px; justify-content:center;
+      padding:12px 14px;
+    }
+    .tab {
+      border:1px solid rgba(0,0,0,.12);
+      background:rgba(255,255,255,.65);
+      color:var(--ink);
+      padding:10px 14px;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:.06em;
+    }
+    .tab.active {
+      border-color: rgba(0,0,0,.16);
+      background: rgba(142,160,142,.20);
+    }
+    .grid {
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+      padding:16px;
+    }
+    @media (min-width: 900px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+    }
+    .pane {
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:var(--radius);
+      padding:14px;
+      background:rgba(255,255,255,.70);
+    }
+    .pane.hidden { display:none; }
+    .h { font-weight:900; letter-spacing:.10em; margin:2px 0 10px; }
+    .field { display:grid; gap:8px; margin:10px 0; }
+    label { font-size:.88rem; color:var(--muted); }
+    input {
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(0,0,0,.12);
+      background:rgba(255,255,255,.92);
+      outline:none;
+      font-size: 1rem;
+    }
+    input:focus { border-color: rgba(142,160,142,.55); box-shadow: 0 0 0 4px rgba(142,160,142,.18); }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .btn {
+      width:100%;
+      border:none;
+      border-radius:16px;
+      padding:13px 12px;
+      font-size:1rem;
+      font-weight:900;
+      letter-spacing:.14em;
+      cursor:pointer;
+      background: var(--accent);
+      color:#fff;
+    }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .hint { font-size:.88rem; color:var(--muted); line-height:1.6; }
+    .toast { margin-top:10px; font-size:.92rem; line-height:1.6; }
+    .toast.ok { color: rgba(47,58,44,.90); }
+    .toast.bad { color: var(--danger); }
+    .mini {
+      margin-top:10px;
+      font-size:.86rem;
+      color:var(--muted);
+      background:rgba(255,255,255,.55);
+      border:1px dashed rgba(0,0,0,.14);
+      border-radius:14px;
+      padding:10px 12px;
+      line-height:1.7;
+    }
+    /* 避免 header icon 被頁面 CSS 放大（保底） */
+    .icon-row .icon svg { width:22px; height:22px; }
+    .icon-row .icon { width:auto; height:auto; }
   </style>
-
-<style>
-body{font-family:"Noto Serif TC";padding:40px}
-input,button{display:block;margin:8px 0;padding:10px;width:100%}
-</style>
 </head>
+
 <body>
+  <div id="headerMount"></div>
 
-<h2>會員註冊</h2>
-<input id="r_phone" placeholder="手機 09xxxxxxxx">
-<input id="r_pw" placeholder="密碼（6 碼以上）" type="password">
-<input id="r_name" placeholder="姓名">
-<input id="r_addr" placeholder="地址">
-<input id="r_y" placeholder="出生年">
-<input id="r_m" placeholder="月">
-<input id="r_d" placeholder="日">
-<button onclick="register()">註冊</button>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div class="title">會員中心</div>
+        <div class="sub">十年一日 TEN YEARS ONE DAY</div>
+      </div>
 
-<hr>
+      <div class="tabs">
+        <button class="tab active" id="tabLogin" type="button">登入</button>
+        <button class="tab" id="tabRegister" type="button">註冊</button>
+      </div>
 
-<h2>會員登入</h2>
-<input id="l_phone" placeholder="手機">
-<input id="l_pw" placeholder="密碼" type="password">
-<button onclick="login()">登入</button>
+      <div class="grid">
+        <!-- Login -->
+        <section class="pane" id="paneLogin">
+          <div class="h">登入</div>
+
+          <div class="field">
+            <label>手機（帳號）*</label>
+            <input id="loginPhone" inputmode="tel" autocomplete="tel" placeholder="例如：0912xxxxxx">
+          </div>
+
+          <div class="field">
+            <label>密碼 *</label>
+            <input id="loginPassword" type="password" autocomplete="current-password" placeholder="請輸入密碼">
+          </div>
+
+          <button class="btn" id="btnLogin" type="button">登入</button>
+          <div class="toast" id="loginToast"></div>
+
+          <div class="mini">
+            <div>✅ 登入成功會自動前往「會員資料」</div>
+            <div>❗ 若你之前會員資料寫在另一個試算表（或另一個 GAS），請用新的「會員 GAS」重新註冊一次。</div>
+          </div>
+        </section>
+
+        <!-- Register -->
+        <section class="pane hidden" id="paneRegister">
+          <div class="h">註冊</div>
+
+          <div class="row">
+            <div class="field">
+              <label>姓名 *</label>
+              <input id="regName" autocomplete="name" placeholder="請輸入姓名">
+            </div>
+            <div class="field">
+              <label>手機（帳號）*</label>
+              <input id="regPhone" inputmode="tel" autocomplete="tel" placeholder="例如：0912xxxxxx">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Email（選填）</label>
+              <input id="regEmail" inputmode="email" autocomplete="email" placeholder="xxx@email.com">
+            </div>
+            <div class="field">
+              <label>生日（選填）</label>
+              <input id="regBirthday" type="date">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>密碼 *</label>
+              <input id="regPassword" type="password" autocomplete="new-password" placeholder="至少 6 碼">
+            </div>
+            <div class="field">
+              <label>再次輸入密碼 *</label>
+              <input id="regPassword2" type="password" autocomplete="new-password" placeholder="再次輸入">
+            </div>
+          </div>
+
+          <button class="btn" id="btnRegister" type="button">建立帳號</button>
+          <div class="toast" id="regToast"></div>
+
+          <div class="hint">
+            我會用「手機」當唯一帳號。若同一支手機重複註冊，後端會回傳「此手機已註冊」。
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
+/** ====== 會員 GAS（JSONP）設定 ====== */
+const MEMBER_GAS_URL = "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
+const TOKEN_KEY = "ten_member_token";
 
-async function api(path,data){
-  const r = await fetch(API,{
-    method:"POST",
-    body:JSON.stringify(Object.assign({path},data))
+/** ====== header（如果你有 header.html 就會載入；沒有也不影響會員功能） ====== */
+(async function loadHeaderSafe() {
+  try {
+    const res = await fetch("./header.html", { cache: "no-store" });
+    if (!res.ok) return;
+    const html = await res.text();
+    document.getElementById("headerMount").innerHTML = html;
+  } catch(e) {}
+})();
+
+/** ====== JSONP helper ====== */
+function jsonp(url, params = {}) {
+  return new Promise((resolve, reject) => {
+    const cb = "cb_" + Math.random().toString(36).slice(2);
+    const qs = new URLSearchParams({ ...params, callback: cb }).toString();
+    const script = document.createElement("script");
+    script.src = url + (url.includes("?") ? "&" : "?") + qs;
+    script.async = true;
+    window[cb] = (data) => { cleanup(); resolve(data); };
+
+    const timer = setTimeout(() => { cleanup(); reject(new Error("JSONP_TIMEOUT")); }, 12000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try { delete window[cb]; } catch(_) { window[cb] = undefined; }
+    }
+    script.onerror = () => { cleanup(); reject(new Error("JSONP_ERROR")); };
+    document.head.appendChild(script);
   });
-  return r.json();
 }
 
-async function register(){
-  const res = await api("member_register",{
-    phone:r_phone.value,
-    password:r_pw.value,
-    name:r_name.value,
-    address:r_addr.value,
-    birth_y:r_y.value,
-    birth_m:r_m.value,
-    birth_d:r_d.value
-  });
-  if(res.ok){
-    localStorage.setItem("TEN_TOKEN",res.token);
-    location.href="member-profile.html";
-  } else alert(res.error);
+function toast(el, msg, ok=true) {
+  el.textContent = msg || "";
+  el.className = "toast " + (msg ? (ok ? "ok" : "bad") : "");
 }
 
-async function login(){
-  const res = await api("member_login",{
-    phone:l_phone.value,
-    password:l_pw.value
-  });
-  if(res.ok){
-    localStorage.setItem("TEN_TOKEN",res.token);
-    location.href="member-profile.html";
-  } else alert(res.error);
+function onlyDigitsPhone(s) {
+  s = String(s || "").trim();
+  const d = s.replace(/\D/g,"");
+  if (d.startsWith("886") && d.length >= 11) return "0" + d.slice(3);
+  return d;
 }
+
+function setBusy(btn, busy) {
+  btn.disabled = !!busy;
+  btn.textContent = busy ? "處理中…" : btn.dataset.label;
+}
+
+/** ====== UI tabs ====== */
+const tabLogin = document.getElementById("tabLogin");
+const tabRegister = document.getElementById("tabRegister");
+const paneLogin = document.getElementById("paneLogin");
+const paneRegister = document.getElementById("paneRegister");
+
+tabLogin.addEventListener("click", () => {
+  tabLogin.classList.add("active");
+  tabRegister.classList.remove("active");
+  paneLogin.classList.remove("hidden");
+  paneRegister.classList.add("hidden");
+});
+tabRegister.addEventListener("click", () => {
+  tabRegister.classList.add("active");
+  tabLogin.classList.remove("active");
+  paneRegister.classList.remove("hidden");
+  paneLogin.classList.add("hidden");
+});
+
+/** ====== API calls ====== */
+async function apiRegister(payload) {
+  return jsonp(MEMBER_GAS_URL, { path:"member_register_jsonp", ...payload });
+}
+async function apiLogin(payload) {
+  return jsonp(MEMBER_GAS_URL, { path:"member_login_jsonp", ...payload });
+}
+
+/** ====== Login ====== */
+const loginToast = document.getElementById("loginToast");
+const btnLogin = document.getElementById("btnLogin");
+btnLogin.dataset.label = btnLogin.textContent;
+
+btnLogin.addEventListener("click", async () => {
+  toast(loginToast, "");
+  const phone = onlyDigitsPhone(document.getElementById("loginPhone").value);
+  const password = String(document.getElementById("loginPassword").value || "");
+
+  if (!phone) return toast(loginToast, "請輸入手機", false);
+  if (!password) return toast(loginToast, "請輸入密碼", false);
+
+  try {
+    setBusy(btnLogin, true);
+    const out = await apiLogin({ phone, password });
+    if (!out || out.ok !== true) {
+      return toast(loginToast, out?.message || out?.error || "登入失敗", false);
+    }
+    localStorage.setItem(TOKEN_KEY, out.token);
+    toast(loginToast, "✅ 登入成功，跳轉中…");
+    location.href = "member-profile.html";
+  } catch (e) {
+    toast(loginToast, "系統忙碌或連線失敗，請稍後再試", false);
+  } finally {
+    setBusy(btnLogin, false);
+  }
+});
+
+/** ====== Register ====== */
+const regToast = document.getElementById("regToast");
+const btnRegister = document.getElementById("btnRegister");
+btnRegister.dataset.label = btnRegister.textContent;
+
+btnRegister.addEventListener("click", async () => {
+  toast(regToast, "");
+  const name = String(document.getElementById("regName").value || "").trim();
+  const phone = onlyDigitsPhone(document.getElementById("regPhone").value);
+  const email = String(document.getElementById("regEmail").value || "").trim();
+  const birthday = String(document.getElementById("regBirthday").value || "").trim();
+  const pw1 = String(document.getElementById("regPassword").value || "");
+  const pw2 = String(document.getElementById("regPassword2").value || "");
+
+  if (!name) return toast(regToast, "請輸入姓名", false);
+  if (!phone) return toast(regToast, "請輸入手機", false);
+  if (!pw1 || pw1.length < 6) return toast(regToast, "密碼至少 6 碼", false);
+  if (pw1 !== pw2) return toast(regToast, "兩次密碼不一致", false);
+
+  try {
+    setBusy(btnRegister, true);
+    const out = await apiRegister({ name, phone, email, birthday, password: pw1 });
+    if (!out || out.ok !== true) {
+      const msg = out?.message || (out?.error === "PHONE_EXISTS" ? "此手機已註冊，請直接登入" : (out?.error || "註冊失敗"));
+      return toast(regToast, msg, false);
+    }
+
+    // 註冊成功後自動登入
+    const loginOut = await apiLogin({ phone, password: pw1 });
+    if (loginOut && loginOut.ok === true && loginOut.token) {
+      localStorage.setItem(TOKEN_KEY, loginOut.token);
+      toast(regToast, "✅ 註冊成功，跳轉中…");
+      location.href = "member-profile.html";
+    } else {
+      toast(regToast, "✅ 註冊成功（請回到登入頁登入）");
+      tabLogin.click();
+      document.getElementById("loginPhone").value = phone;
+    }
+  } catch (e) {
+    toast(regToast, "系統忙碌或連線失敗，請稍後再試", false);
+  } finally {
+    setBusy(btnRegister, false);
+  }
+});
 </script>
 </body>
 </html>
