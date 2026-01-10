@@ -6,9 +6,18 @@
 (() => {
   if (window.TEN_SHOP_LOADED) return;
   window.TEN_SHOP_LOADED = true;
+  // ========= Guard: don't run on admin/backstage pages =========
+  const __p = (location.pathname.split('/').pop() || '').toLowerCase();
+  if (__p.includes('admin') || __p.includes('backend') || __p.includes('manage')) {
+    // This file is for storefront pages only.
+    window.TEN_SHOP_LOADED = false;
+    return;
+  }
+
 
   // ========= Config =========
   const CART_KEY = "ten_cart";
+  const MEMBER_KEY = "ten_member_id";
   const APPLIED_KEY = "ten_applied_coupon_v1";
 
   window.TEN_CONFIG = window.TEN_CONFIG || {
@@ -35,12 +44,14 @@
     return `NT$ ${n}`;
   }
 
-function getId() {
-  // 由 include-member.js 負責寫入
-  const member = JSON.parse(localStorage.getItem("ten_member") || "null");
-  return member?.memberId || "";
-}
-
+  function getId() {
+    let id = localStorage.getItem(MEMBER_KEY);
+    if (!id) {
+      id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
+      localStorage.setItem(MEMBER_KEY, id);
+    }
+    return id;
+  }
 
   // ========= Cart Storage =========
   function readCart() {
@@ -357,7 +368,7 @@ function getId() {
     if (msg) setTimeout(() => (el.textContent = ""), 2200);
   }
 
-  async function validateCoupon(code, subtotal) {
+  async async function validateCoupon(code, subtotal) {
     const memberId = getId();
     const url =
       `${GAS_PRODUCTS_URL}?path=coupon_validate` +
