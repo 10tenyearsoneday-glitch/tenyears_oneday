@@ -6,6 +6,14 @@
 (() => {
   if (window.TEN_SHOP_LOADED) return;
   window.TEN_SHOP_LOADED = true;
+  // ========= Guard: don't run on admin/backstage pages =========
+  const __p = (location.pathname.split('/').pop() || '').toLowerCase();
+  if (__p.includes('admin') || __p.includes('backend') || __p.includes('manage')) {
+    // This file is for storefront pages only.
+    window.TEN_SHOP_LOADED = false;
+    return;
+  }
+
 
   // ========= Config =========
   const CART_KEY = "ten_cart";
@@ -36,7 +44,7 @@
     return `NT$ ${n}`;
   }
 
-  function getMemberId() {
+  function getId() {
     let id = localStorage.getItem(MEMBER_KEY);
     if (!id) {
       id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
@@ -44,6 +52,9 @@
     }
     return id;
   }
+
+  // Backward-compat alias (older code may call getMemberId)
+  function getMemberId(){ return getId(); }
 
   // ========= Cart Storage =========
   function readCart() {
@@ -361,7 +372,7 @@
   }
 
   async function validateCoupon(code, subtotal) {
-    const memberId = getMemberId();
+    const memberId = getId();
     const url =
       `${GAS_PRODUCTS_URL}?path=coupon_validate` +
       `&code=${encodeURIComponent(code)}` +
@@ -571,7 +582,7 @@
 
       const payload = {
         orderId: "O-" + Date.now(),
-        memberId: getMemberId(),
+        memberId: getId(),
         couponCode: String(window.TEN_APPLIED?.code || ""),
         items: cart2,
         subtotal: cart2.reduce((s, it) => s + it.price * it.qty, 0),
