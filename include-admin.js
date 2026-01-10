@@ -33,9 +33,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       toast.style.color = "green";
     } catch (e) {
       console.error(e);
+      console.log("fetchProducts 回傳:", products);
       tbl.innerHTML = `<tr><td colspan="5">載入失敗</td></tr>`;
       toast.textContent = "❌ 載入商品失敗";
       toast.style.color = "red";
+      
     }
   }
 
