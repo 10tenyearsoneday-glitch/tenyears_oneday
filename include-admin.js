@@ -3,14 +3,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const tbl = document.getElementById("tbl");
   const toast = document.getElementById("toast");
 
-  // 載入商品清單
   async function loadProducts() {
     try {
       const products = await fetchProducts();
       console.log("API 回傳:", products);
 
       let html = `<tr><th>ID</th><th>名稱</th><th>價格</th><th>庫存</th><th>操作</th></tr>`;
-
       if (Array.isArray(products)) {
         html += products.map(rowHtml).join("");
       } else if (products && Array.isArray(products.data)) {
@@ -19,7 +17,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("products 格式錯誤:", products);
         html += `<tr><td colspan="5">載入失敗</td></tr>`;
       }
-
       tbl.innerHTML = html;
       toast.textContent = "✅ 商品清單已載入";
       toast.style.color = "green";
@@ -74,19 +71,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     const btn = e.target.closest(".del-product");
     if (!btn) return;
     const id = btn.dataset.id;
-    openModal("刪除商品", [
-      { label: "確定要刪除商品？", type: "hidden", name: "id", value: id }
-    ], async () => {
-      const out = await deleteProduct(id);
-      if (out?.ok) {
-        toast.textContent = "✅ 商品已刪除";
-        toast.style.color = "green";
-        loadProducts();
-      } else {
-        toast.textContent = "❌ 刪除商品失敗";
-        toast.style.color = "red";
-      }
-    });
+    const out = await deleteProduct(id);
+    if (out?.ok) {
+      toast.textContent = "✅ 商品已刪除";
+      toast.style.color = "green";
+      loadProducts();
+    } else {
+      toast.textContent = "❌ 刪除商品失敗";
+      toast.style.color = "red";
+    }
   });
 
   // 編輯商品
