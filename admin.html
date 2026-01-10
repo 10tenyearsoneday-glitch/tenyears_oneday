@@ -80,6 +80,11 @@ textarea{min-height:110px;resize:vertical}
   </style>
 </head>
 <body>
+<!-- 先載入共用函式 -->
+<script src="./include-common.js"></script>
+
+<!-- 再載入 admin 專用程式 -->
+<script src="./include-admin.js"></script>
 
 
   <main class="admin-wrap">
@@ -478,7 +483,6 @@ async function deleteProduct(){
 
   loadProducts();
 </script>
-script src="./include-common.js"></script> 
-  <script src="./include-admin.js"></script>
+
 </body>
 </html>
