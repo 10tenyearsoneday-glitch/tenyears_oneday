@@ -279,3 +279,5 @@ modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); }
 document.addEventListener("DOMContentLoaded", () => {
   loadProducts();
 });
+
+    })();  
