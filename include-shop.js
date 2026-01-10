@@ -1,3 +1,15 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const headerContainer = document.getElementById("header");
+  if (headerContainer) {
+    fetch("header.html")
+      .then(res => res.text())
+      .then(html => {
+        headerContainer.innerHTML = html;
+      });
+  }
+});
+
+
 // include-shop.js
 const API_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
