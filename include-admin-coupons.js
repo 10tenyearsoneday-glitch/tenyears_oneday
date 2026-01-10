@@ -90,3 +90,41 @@ tbl.addEventListener("click", async (e) => {
     toast.style.color = "red";
   }
 });
+// 在載入優惠碼清單時，為每一列加上「編輯」按鈕
+html += coupons.map(c => `
+  <tr>
+    <td>${c.code}</td>
+    <td>${c.discount}</td>
+    <td>${c.note ?? ""}</td>
+    <td>
+      <button class="edit-coupon" data-code="${c.code}" data-discount="${c.discount}" data-note="${c.note}">編輯</button>
+      <button class="del-coupon" data-code="${c.code}">刪除</button>
+    </td>
+  </tr>
+`).join("");
+
+// 綁定編輯事件
+tbl.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".edit-coupon");
+  if (!btn) return;
+  const code = btn.dataset.code;
+  const discount = Number(prompt("折扣金額：", btn.dataset.discount));
+  const note = prompt("備註：", btn.dataset.note);
+  if (!code || !discount) return alert("❌ 請輸入完整資料");
+
+  try {
+    const out = await updateCoupon({ code, discount, note });
+    if (out?.ok) {
+      toast.textContent = "✅ 優惠碼已更新";
+      toast.style.color = "green";
+      loadCoupons();
+    } else {
+      toast.textContent = "❌ 更新優惠碼失敗";
+      toast.style.color = "red";
+    }
+  } catch (e) {
+    console.error(e);
+    toast.textContent = "❌ 系統錯誤";
+    toast.style.color = "red";
+  }
+});
