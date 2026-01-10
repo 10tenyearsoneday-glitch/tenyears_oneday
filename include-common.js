@@ -35,3 +35,18 @@ async function addCoupon(coupon) {
   });
   return res.json();
 }
+// 刪除商品
+async function deleteProduct(id) {
+  const res = await fetch(`${GAS_PRODUCTS_URL}?path=product_delete&key=${encodeURIComponent(ADMIN_KEY)}&id=${encodeURIComponent(id)}`, {
+    method: "POST"
+  });
+  return res.json();
+}
+
+// 刪除優惠碼
+async function deleteCoupon(code) {
+  const res = await fetch(`${GAS_PRODUCTS_URL}?path=coupon_delete&key=${encodeURIComponent(ADMIN_KEY)}&code=${encodeURIComponent(code)}`, {
+    method: "POST"
+  });
+  return res.json();
+}
