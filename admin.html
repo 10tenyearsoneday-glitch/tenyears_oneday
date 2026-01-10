@@ -80,12 +80,8 @@ textarea{min-height:110px;resize:vertical}
   </style>
 </head>
 <body>
-<!-- 先載入共用函式 -->
-<script src="./include-common.js"></script>
 
-<!-- 再載入 admin 專用程式 -->
-<script src="./include-admin.js"></script>
-
+  <script src="include.js"></script>
 
   <main class="admin-wrap">
     <div class="admin-top">
@@ -100,9 +96,8 @@ textarea{min-height:110px;resize:vertical}
       </div>
     </div>
 
- <table class="table" id="tblProducts"></table>
-<div class="toast" id="toastProducts"></div>
-
+    <table class="table" id="tbl"></table>
+    <div class="toast" id="toast"></div>
   </main>
 
   <!-- modal -->
@@ -199,6 +194,7 @@ textarea{min-height:110px;resize:vertical}
 <script>
   // ✅ 改這兩個
   const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+  const ADMIN_KEY = "10years1day911321";
 
   const PLACEHOLDER = "assets/placeholder.png";
   const IMG_BASE = "https://10tenyearsoneday-glitch.github.io/tenyears_oneday/assets/products/";
