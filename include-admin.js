@@ -2,26 +2,59 @@ document.addEventListener("DOMContentLoaded", async () => {
   const tbl = document.getElementById("tbl");
   const toast = document.getElementById("toast");
 
-  try {
-    const products = await fetchProducts();
-    let html = `
-      <tr><th>ID</th><th>名稱</th><th>價格</th><th>庫存</th></tr>
-    `;
-    html += products.map(p => `
-      <tr>
-        <td>${p.id}</td>
-        <td>${p.title}</td>
-        <td>NT$ ${p.price}</td>
-        <td>${p.stock ?? "-"}</td>
-      </tr>
-    `).join("");
-    tbl.innerHTML = html;
-    toast.textContent = "✅ 商品清單已載入";
-    toast.style.color = "green";
-  } catch (e) {
-    console.error(e);
-    tbl.innerHTML = `<tr><td colspan="4">載入失敗</td></tr>`;
-    toast.textContent = "❌ 載入商品失敗";
-    toast.style.color = "red";
+  // 載入商品清單
+  async function loadProducts() {
+    try {
+      const products = await fetchProducts();
+      let html = `
+        <tr><th>ID</th><th>名稱</th><th>價格</th><th>庫存</th></tr>
+      `;
+      html += products.map(p => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.title}</td>
+          <td>NT$ ${p.price}</td>
+          <td>${p.stock ?? "-"}</td>
+        </tr>
+      `).join("");
+      tbl.innerHTML = html;
+      toast.textContent = "✅ 商品清單已載入";
+      toast.style.color = "green";
+    } catch (e) {
+      console.error(e);
+      tbl.innerHTML = `<tr><td colspan="4">載入失敗</td></tr>`;
+      toast.textContent = "❌ 載入商品失敗";
+      toast.style.color = "red";
+    }
   }
+
+  // 綁定「新增商品」按鈕
+  document.querySelector("button.add-product")?.addEventListener("click", async () => {
+    const title = prompt("商品名稱：");
+    const price = Number(prompt("商品價格："));
+    const stock = Number(prompt("庫存數量："));
+    if (!title || !price) return alert("❌ 請輸入完整資料");
+
+    try {
+      const out = await addProduct({ title, price, stock });
+      if (out?.ok) {
+        toast.textContent = "✅ 商品已新增";
+        toast.style.color = "green";
+        loadProducts();
+      } else {
+        toast.textContent = "❌ 新增商品失敗";
+        toast.style.color = "red";
+      }
+    } catch (e) {
+      console.error(e);
+      toast.textContent = "❌ 系統錯誤";
+      toast.style.color = "red";
+    }
+  });
+
+  // 綁定「重新載入」按鈕
+  document.querySelector("button.reload")?.addEventListener("click", loadProducts);
+
+  // 初始載入
+  loadProducts();
 });
