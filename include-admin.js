@@ -6,12 +6,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const toast = document.getElementById("toast");
 
   // 載入商品清單
-  async function loadProducts() {
-    try {
-      const products = await fetchProducts(); // 從 include-common.js
-      let html = `
-        <tr><th>ID</th><th>名稱</th><th>價格</th><th>庫存</th><th>操作</th></tr>
-      `;
+ async function loadProducts() {
+  try {
+    const products = await fetchProducts();
+    console.log("API 回傳:", products);
+
+    let html = `<tr><th>ID</th><th>名稱</th><th>價格</th><th>庫存</th><th>操作</th></tr>`;
+
+    if (Array.isArray(products)) {
       html += products.map(p => `
         <tr>
           <td>${p.id}</td>
@@ -28,18 +30,39 @@ document.addEventListener("DOMContentLoaded", async () => {
           </td>
         </tr>
       `).join("");
-      tbl.innerHTML = html;
-      toast.textContent = "✅ 商品清單已載入";
-      toast.style.color = "green";
-    } catch (e) {
-      console.error(e);
-      console.log("fetchProducts 回傳:", products);
-      tbl.innerHTML = `<tr><td colspan="5">載入失敗</td></tr>`;
-      toast.textContent = "❌ 載入商品失敗";
-      toast.style.color = "red";
-      
+    } else if (Array.isArray(products.data)) {
+      html += products.data.map(p => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.title}</td>
+          <td>NT$ ${p.price}</td>
+          <td>${p.stock ?? "-"}</td>
+          <td>
+            <button class="edit-product" 
+              data-id="${p.id}" 
+              data-title="${p.title}" 
+              data-price="${p.price}" 
+              data-stock="${p.stock}">編輯</button>
+            <button class="del-product" data-id="${p.id}">刪除</button>
+          </td>
+        </tr>
+      `).join("");
+    } else {
+      console.error("products 格式錯誤:", products);
+      html += `<tr><td colspan="5">載入失敗</td></tr>`;
     }
+
+    tbl.innerHTML = html;
+    toast.textContent = "✅ 商品清單已載入";
+    toast.style.color = "green";
+  } catch (e) {
+    console.error(e);
+    tbl.innerHTML = `<tr><td colspan="5">載入失敗</td></tr>`;
+    toast.textContent = "❌ 載入商品失敗";
+    toast.style.color = "red";
   }
+}
+
 
   // 新增商品
   document.querySelector("button.add-product")?.addEventListener("click", () => {
