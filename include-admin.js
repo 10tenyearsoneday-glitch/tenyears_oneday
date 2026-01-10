@@ -92,3 +92,43 @@ tbl.addEventListener("click", async (e) => {
     toast.style.color = "red";
   }
 });
+// 在載入商品清單時，為每一列加上「編輯」按鈕
+html += products.map(p => `
+  <tr>
+    <td>${p.id}</td>
+    <td>${p.title}</td>
+    <td>NT$ ${p.price}</td>
+    <td>${p.stock ?? "-"}</td>
+    <td>
+      <button class="edit-product" data-id="${p.id}" data-title="${p.title}" data-price="${p.price}" data-stock="${p.stock}">編輯</button>
+      <button class="del-product" data-id="${p.id}">刪除</button>
+    </td>
+  </tr>
+`).join("");
+
+// 綁定編輯事件
+tbl.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".edit-product");
+  if (!btn) return;
+  const id = btn.dataset.id;
+  const title = prompt("商品名稱：", btn.dataset.title);
+  const price = Number(prompt("商品價格：", btn.dataset.price));
+  const stock = Number(prompt("庫存數量：", btn.dataset.stock));
+  if (!title || !price) return alert("❌ 請輸入完整資料");
+
+  try {
+    const out = await updateProduct({ id, title, price, stock });
+    if (out?.ok) {
+      toast.textContent = "✅ 商品已更新";
+      toast.style.color = "green";
+      loadProducts();
+    } else {
+      toast.textContent = "❌ 更新商品失敗";
+      toast.style.color = "red";
+    }
+  } catch (e) {
+    console.error(e);
+    toast.textContent = "❌ 系統錯誤";
+    toast.style.color = "red";
+  }
+});
