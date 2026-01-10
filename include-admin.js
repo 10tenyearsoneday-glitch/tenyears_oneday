@@ -1,34 +1,27 @@
-// include-admin.js
-// 專門給 admin.html 使用，避免和前台購物車邏輯混在一起
-
 document.addEventListener("DOMContentLoaded", async () => {
   const tbl = document.getElementById("tbl");
   const toast = document.getElementById("toast");
 
-  // 簡單測試：先顯示一行假資料
-  if (tbl) {
-    tbl.innerHTML = `
-      <tr>
-        <th>商品名稱</th>
-        <th>價格</th>
-        <th>庫存</th>
-      </tr>
-      <tr>
-        <td>測試商品 A</td>
-        <td>NT$ 100</td>
-        <td>20</td>
-      </tr>
+  try {
+    const products = await fetchProducts();
+    let html = `
+      <tr><th>ID</th><th>名稱</th><th>價格</th><th>庫存</th></tr>
     `;
-  }
-
-  // 顯示提示訊息
-  if (toast) {
-    toast.textContent = "✅ Admin.js 已載入，表格顯示測試資料";
+    html += products.map(p => `
+      <tr>
+        <td>${p.id}</td>
+        <td>${p.title}</td>
+        <td>NT$ ${p.price}</td>
+        <td>${p.stock ?? "-"}</td>
+      </tr>
+    `).join("");
+    tbl.innerHTML = html;
+    toast.textContent = "✅ 商品清單已載入";
     toast.style.color = "green";
+  } catch (e) {
+    console.error(e);
+    tbl.innerHTML = `<tr><td colspan="4">載入失敗</td></tr>`;
+    toast.textContent = "❌ 載入商品失敗";
+    toast.style.color = "red";
   }
-
-  // TODO: 之後可以改成 fetch Google Sheet 資料
-  // const res = await fetch("你的 Google Apps Script URL");
-  // const data = await res.json();
-  // 然後用 data 填入表格
 });
