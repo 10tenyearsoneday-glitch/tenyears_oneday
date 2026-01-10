@@ -1,25 +1,29 @@
 // include-admin-coupons.js
-document.addEventListener("DOMContentLoaded", () => {
+(() => {
+  // 使用共用的 API_URL（在 include-common.js 定義）
   const $ = (id) => document.getElementById(id);
 
-  // Tabs
   const tabs = document.querySelectorAll(".tab");
   const tabSettings = $("tabSettings");
   const tabCoupons = $("tabCoupons");
 
-  // Buttons
   const btnReload = $("btnReload");
   const btnAddCoupon = $("btnAddCoupon");
-  const btnSaveSettings = $("btnSaveSettings");
 
-  // Toasts
+  // settings fields
+  const sShipEnabled = $("sShipEnabled");
+  const sShipFee = $("sShipFee");
+  const sFreeOver = $("sFreeOver");
+  const sFirstRate = $("sFirstRate");
+  const sBdayRate = $("sBdayRate");
+  const btnSaveSettings = $("btnSaveSettings");
   const toastSettings = $("toastSettings");
+
+  // coupons
+  const tblCoupons = $("tblCoupons");
   const toastCoupons = $("toastCoupons");
 
-  // Coupons table
-  const tblCoupons = $("tblCoupons");
-
-  // Modal
+  // modal
   const modal = $("modal");
   const modalTitle = $("modalTitle");
   const modalHint = $("modalHint");
@@ -27,7 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnDelete = $("btnDelete");
   const btnSave = $("btnSave");
 
-  // Coupon fields
   const cCode = $("cCode");
   const cEnabled = $("cEnabled");
   const cType = $("cType");
@@ -40,77 +43,55 @@ document.addEventListener("DOMContentLoaded", () => {
   const cMaxUses = $("cMaxUses");
   const cNote = $("cNote");
 
-  // Settings fields
-  const sShipEnabled = $("sShipEnabled");
-  const sShipFee = $("sShipFee");
-  const sFreeOver = $("sFreeOver");
-  const sFirstRate = $("sFirstRate");
-  const sBdayRate = $("sBdayRate");
-
   let COUPONS = [];
   let editingCode = null;
 
-  // Helpers
   function toast(el, msg, ok = true) {
+    if (!el) return;
     el.textContent = msg || "";
     el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
   }
 
-  function switchTab(key) {
-    tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === key));
-    tabSettings.style.display = (key === "settings") ? "" : "none";
-    tabCoupons.style.display = (key === "coupons") ? "" : "none";
+  function toISOFromLocal(v) {
+    const s = String(v || "").trim();
+    if (!s) return "";
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return "";
+    return d.toISOString();
   }
 
-  function closeModal() {
-    modal.classList.remove("open");
+  function toLocalFromAny(v) {
+    const s = String(v || "").trim();
+    if (!s) return "";
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return "";
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  // Events
-  tabs.forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
+  async function gasPost(path, method, body, id = "") {
+    const url =
+      `${API_URL}?path=${encodeURIComponent(path)}` +
+      `&key=${encodeURIComponent(ADMIN_KEY)}` +
+      (method ? `&method=${encodeURIComponent(method)}` : "") +
+      (id ? `&id=${encodeURIComponent(id)}` : "");
 
-  if (btnReload) {
-    btnReload.addEventListener("click", async () => {
-      await loadSettings();
-      await loadCoupons();
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(body || {})
     });
+
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok || out?.error) throw new Error(out?.error || "GAS_WRITE_FAILED");
+    return out;
   }
 
-  if (btnAddCoupon) {
-    btnAddCoupon.addEventListener("click", () => openModal("add", null));
-  }
-
-  if (btnSaveSettings) {
-    btnSaveSettings.addEventListener("click", saveSettings);
-  }
-
-  if (btnCancel) {
-    btnCancel.addEventListener("click", closeModal);
-  }
-
-  if (btnSave) {
-    btnSave.addEventListener("click", saveCoupon);
-  }
-
-  if (btnDelete) {
-    btnDelete.addEventListener("click", deleteCoupon);
-  }
-
-  if (modal) {
-    modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-  }
-
-  // Init
-  (async () => {
-    await loadSettings();
-    await loadCoupons();
-  })();
-
-  // ---------------- API Functions ----------------
+  // -------------------- Settings --------------------
   async function loadSettings() {
     toast(toastSettings, "載入設定中…");
     try {
-      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
+      const res = await fetch(`${API_URL}?path=settings`, { cache: "no-store" });
       const s = await res.json().catch(() => ({}));
 
       sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true"));
@@ -122,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
       toast(toastSettings, "設定已載入 ✅");
     } catch (e) {
       console.error(e);
-      toast(toastSettings, "載入設定失敗", false);
+      toast(toastSettings, "載入設定失敗（請看 Console / 檢查 GAS）", false);
     }
   }
 
@@ -136,26 +117,48 @@ document.addEventListener("DOMContentLoaded", () => {
         first_purchase_discount: Number(sFirstRate.value || 1),
         birthday_discount: Number(sBdayRate.value || 1),
       };
+
       await gasPost("settings_update", "", payload);
       toast(toastSettings, "已儲存 ✅");
     } catch (e) {
       console.error(e);
-      toast(toastSettings, "儲存失敗", false);
+      toast(toastSettings, "儲存失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
     }
   }
 
-  async function loadCoupons() {
-    toast(toastCoupons, "載入優惠碼中…");
-    try {
-      const res = await fetch(`${GAS_PRODUCTS_URL}?path=coupons`, { cache: "no-store" });
-      const data = await res.json().catch(() => ([]));
-      COUPONS = Array.isArray(data) ? data : [];
-      renderCoupons();
-      toast(toastCoupons, `載入完成：${COUPONS.length} 組`);
-    } catch (e) {
-      console.error(e);
-      toast(toastCoupons, "載入失敗", false);
-    }
+  // -------------------- Coupons --------------------
+  function pillEnabled(x) {
+    const on = !!(x.enabled === true || x.enabled === "TRUE" || x.enabled === "true");
+    return `<span class="pill ${on ? "on" : "off"}">${on ? "啟用" : "停用"}</span>`;
+  }
+
+  function rowCouponHtml(c) {
+    const code = String(c.code || "").toUpperCase();
+    const type = String(c.type || "");
+    const rate = Number(c.rate || 0);
+    const amount = Number(c.amount || 0);
+    const minSpend = Number(c.minSpend || 0);
+
+    const display =
+      type === "rate" ? `打折 ${rate || ""}` :
+      type === "amount" ? `折抵 ${amount || ""}` : type;
+
+    return `
+      <tr class="row">
+        <td style="width:150px;">
+          <div style="font-weight:800;letter-spacing:.03em;">${code}</div>
+          <div class="mini">${pillEnabled(c)}</div>
+        </td>
+        <td>
+          <div class="mini">類型：${display}</div>
+          <div class="mini">門檻：${minSpend > 0 ? ("滿 " + minSpend) : "無"}</div>
+          <div class="mini">期限：${c.startAt ? "有" : "無"} ～ ${c.endAt ? "有" : "無"}</div>
+        </td>
+        <td style="width:120px;text-align:right;">
+          <button class="btn2 secondary" type="button" data-edit="${code}">編輯</button>
+        </td>
+      </tr>
+    `;
   }
 
   function renderCoupons() {
@@ -173,38 +176,31 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function rowCouponHtml(c) {
-    const code = String(c.code || "").toUpperCase();
-    const type = String(c.type || "");
-    const rate = Number(c.rate || 0);
-    const amount = Number(c.amount || 0);
-    const minSpend = Number(c.minSpend || 0);
-    const display = type === "rate" ? `打折 ${rate}` : type === "amount" ? `折抵 ${amount}` : type;
-    return `
-      <tr class="row">
-        <td style="width:150px;">
-          <div style="font-weight:800;">${code}</div>
-          <div class="mini">${c.enabled ? "啟用" : "停用"}</div>
-        </td>
-        <td>
-          <div class="mini">類型：${display}</div>
-          <div class="mini">門檻：${minSpend > 0 ? ("滿 " + minSpend) : "無"}</div>
-        </td>
-        <td style="width:120px;text-align:right;">
-          <button class="btn2 secondary" type="button" data-edit="${code}">編輯</button>
-        </td>
-      </tr>
-    `;
+  async function loadCoupons() {
+    toast(toastCoupons, "載入優惠碼中…");
+    try {
+      const res = await fetch(`${API_URL}?path=coupons`, { cache: "no-store" });
+      const data = await res.json().catch(() => ([]));
+      COUPONS = Array.isArray(data) ? data : [];
+      renderCoupons();
+      toast(toastCoupons, `載入完成：${COUPONS.length} 組`);
+    } catch (e) {
+      console.error(e);
+      toast(toastCoupons, "載入失敗（請看 Console / 檢查 GAS）", false);
+    }
   }
 
+  // -------------------- Modal --------------------
   function openModal(mode, item) {
     modal.classList.add("open");
+
     if (mode === "add") {
       editingCode = null;
       modalTitle.textContent = "新增優惠碼";
       btnDelete.style.display = "none";
       modalHint.textContent = "新增時 code 不可重複。";
       cCode.disabled = false;
+
       cCode.value = "";
       cEnabled.value = "true";
       cType.value = "rate";
@@ -214,28 +210,31 @@ document.addEventListener("DOMContentLoaded", () => {
       cStartAt.value = "";
       cEndAt.value = "";
       cOnce.value = "false";
-      cMaxUses.value = 0;
+            cMaxUses.value = 0;
       cNote.value = "";
+
     } else {
       editingCode = String(item.code || "").toUpperCase();
       modalTitle.textContent = `編輯優惠碼：${editingCode}`;
       btnDelete.style.display = "inline-flex";
-      modalHint.textContent = "編輯時不建議改 code。";
+      modalHint.textContent = "編輯時不建議改 code（如需改，建議新增一組再刪除舊的）。";
       cCode.disabled = true;
+
       cCode.value = editingCode;
-      cEnabled.value = String(item.enabled);
+      cEnabled.value = String(!!(item.enabled === true || item.enabled === "TRUE" || item.enabled === "true"));
       cType.value = String(item.type || "rate");
       cRate.value = Number(item.rate ?? 0);
       cAmount.value = Number(item.amount ?? 0);
       cMinSpend.value = Number(item.minSpend ?? 0);
       cStartAt.value = toLocalFromAny(item.startAt);
-      cEndAt.value = toLocalFrom
-            cEndAt.value = toLocalFromAny(item.endAt);
-      cOnce.value = String(item.oncePerMember);
+      cEndAt.value = toLocalFromAny(item.endAt);
+      cOnce.value = String(!!(item.oncePerMember === true || item.oncePerMember === "TRUE" || item.oncePerMember === "true"));
       cMaxUses.value = Number(item.maxUses ?? 0);
       cNote.value = String(item.note || "");
     }
   }
+
+  function closeModal() { modal.classList.remove("open"); }
 
   function buildCouponPayload() {
     const code = String(cCode.value || "").trim().toUpperCase();
@@ -284,7 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (e) {
       console.error(e);
-      toast(toastCoupons, "儲存失敗（請檢查 ADMIN_KEY / GAS 寫入）", false);
+      toast(toastCoupons, "儲存失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
     }
   }
 
@@ -300,27 +299,35 @@ document.addEventListener("DOMContentLoaded", () => {
       toast(toastCoupons, "刪除成功 ✅");
     } catch (e) {
       console.error(e);
-      toast(toastCoupons, "刪除失敗（請檢查 ADMIN_KEY / GAS 寫入）", false);
+      toast(toastCoupons, "刪除失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
     }
   }
 
-  // 日期轉換工具
-  function toISOFromLocal(v) {
-    const s = String(v || "").trim();
-    if (!s) return "";
-    const d = new Date(s);
-    if (isNaN(d.getTime())) return "";
-    return d.toISOString();
+  function switchTab(key) {
+    tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === key));
+    tabSettings.style.display = (key === "settings") ? "" : "none";
+    tabCoupons.style.display = (key === "coupons") ? "" : "none";
   }
 
-  function toLocalFromAny(v) {
-    const s = String(v || "").trim();
-    if (!s) return "";
-    const d = new Date(s);
-    if (isNaN(d.getTime())) return "";
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
+  // -------------------- Events --------------------
+  tabs.forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
 
-  // ---------------- End ----------------
-});
+  btnReload.addEventListener("click", async () => {
+    await loadSettings();
+    await loadCoupons();
+  });
+  btnAddCoupon.addEventListener("click", () => openModal("add", null));
+  btnSaveSettings.addEventListener("click", saveSettings);
+
+  btnCancel.addEventListener("click", closeModal);
+  btnSave.addEventListener("click", saveCoupon);
+  btnDelete.addEventListener("click", deleteCoupon);
+
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+  // -------------------- Init --------------------
+  (async () => {
+    await loadSettings();
+    await loadCoupons();
+  })();
+})();
