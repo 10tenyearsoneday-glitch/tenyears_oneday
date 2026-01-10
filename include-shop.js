@@ -1,25 +1,22 @@
 // include-shop.js
-const API_URL = "https://script.google.com/macros/s/你的部署ID/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
-// -------------------- 商品 --------------------
+// -------------------- API --------------------
 async function fetchProducts() {
   const res = await fetch(`${API_URL}?path=products`, { cache: "no-store" });
   return res.json();
 }
 
-// -------------------- 設定（運費 / 折扣） --------------------
 async function fetchSettings() {
   const res = await fetch(`${API_URL}?path=settings`, { cache: "no-store" });
   return res.json();
 }
 
-// -------------------- 優惠碼 --------------------
 async function fetchCoupons() {
   const res = await fetch(`${API_URL}?path=coupons`, { cache: "no-store" });
   return res.json();
 }
 
-// -------------------- 建立訂單 --------------------
 async function createOrder(orderData) {
   const res = await fetch(`${API_URL}?path=order_create`, {
     method: "POST",
@@ -28,7 +25,7 @@ async function createOrder(orderData) {
   return res.json();
 }
 
-// -------------------- 購物車操作 --------------------
+// -------------------- 購物車 --------------------
 let CART = [];
 
 function addToCart(product, qty = 1) {
@@ -53,8 +50,48 @@ function clearCart() {
   CART = [];
 }
 
-function getCartTotal() {
+function getCartSubtotal() {
   return CART.reduce((sum, p) => sum + p.price * p.qty, 0);
+}
+
+// -------------------- 折扣與運費計算 --------------------
+function calculateTotal(settings, coupons, appliedCouponCode, isFirstPurchase, isBirthdayMonth) {
+  let subtotal = getCartSubtotal();
+  let discount = 0;
+
+  // 首購折扣
+  if (isFirstPurchase && settings.first_purchase_discount) {
+    discount += subtotal * (1 - Number(settings.first_purchase_discount));
+  }
+
+  // 生日月折扣
+  if (isBirthdayMonth && settings.birthday_discount) {
+    discount += subtotal * (1 - Number(settings.birthday_discount));
+  }
+
+  // 優惠碼折扣
+  if (appliedCouponCode) {
+    const coupon = coupons.find(c => String(c.code).toUpperCase() === String(appliedCouponCode).toUpperCase());
+    if (coupon && coupon.enabled) {
+      if (coupon.type === "rate") {
+        discount += subtotal * (1 - Number(coupon.rate));
+      } else if (coupon.type === "amount") {
+        discount += Number(coupon.amount);
+      }
+    }
+  }
+
+  // 運費
+  let shippingFee = 0;
+  if (settings.shipping_enabled) {
+    shippingFee = Number(settings.shipping_fee || 0);
+    if (subtotal - discount >= Number(settings.free_shipping_threshold || 0)) {
+      shippingFee = 0; // 達免運門檻
+    }
+  }
+
+  const total = subtotal - discount + shippingFee;
+  return { subtotal, discount, shippingFee, total };
 }
 
 // -------------------- Toast --------------------
