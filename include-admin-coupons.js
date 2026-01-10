@@ -57,3 +57,36 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 初始載入
   loadCoupons();
 });
+// 在載入優惠碼清單時，為每一列加上刪除按鈕
+html += coupons.map(c => `
+  <tr>
+    <td>${c.code}</td>
+    <td>${c.discount}</td>
+    <td>${c.note ?? ""}</td>
+    <td><button class="del-coupon" data-code="${c.code}">刪除</button></td>
+  </tr>
+`).join("");
+
+// 綁定刪除事件
+tbl.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".del-coupon");
+  if (!btn) return;
+  const code = btn.dataset.code;
+  if (!confirm(`確定要刪除優惠碼 ${code} 嗎？`)) return;
+
+  try {
+    const out = await deleteCoupon(code);
+    if (out?.ok) {
+      toast.textContent = "✅ 優惠碼已刪除";
+      toast.style.color = "green";
+      loadCoupons();
+    } else {
+      toast.textContent = "❌ 刪除優惠碼失敗";
+      toast.style.color = "red";
+    }
+  } catch (e) {
+    console.error(e);
+    toast.textContent = "❌ 系統錯誤";
+    toast.style.color = "red";
+  }
+});
