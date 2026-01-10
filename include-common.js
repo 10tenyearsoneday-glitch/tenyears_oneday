@@ -1,6 +1,6 @@
 // include-common.js
 const API_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-const ADMIN_KEY = "10years1day911321"; // 後台管理密鑰
+
 
 // -------------------- Products --------------------
 async function fetchProducts() {
