@@ -1,111 +1,203 @@
 // include-admin.js
-document.addEventListener("DOMContentLoaded", async () => {
-  const tbl = document.getElementById("tbl");
-  const toast = document.getElementById("toast");
+document.addEventListener("DOMContentLoaded", () => {
+  const $ = (id) => document.getElementById(id);
 
+  // Buttons
+  const btnReload = $("btnReload");
+  const btnAddProduct = $("btnAddProduct");
+
+  // Toast
+  const toastProducts = $("toastProducts");
+
+  // Products table
+  const tblProducts = $("tblProducts");
+
+  // Modal
+  const modal = $("modal");
+  const modalTitle = $("modalTitle");
+  const modalHint = $("modalHint");
+  const btnCancel = $("btnCancel");
+  const btnDelete = $("btnDelete");
+  const btnSave = $("btnSave");
+
+  // Product fields
+  const pId = $("pId");
+  const pName = $("pName");
+  const pPrice = $("pPrice");
+  const pStock = $("pStock");
+  const pDesc = $("pDesc");
+
+  let PRODUCTS = [];
+  let editingId = null;
+
+  // Helpers
+  function toast(el, msg, ok = true) {
+    el.textContent = msg || "";
+    el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
+  }
+
+  function closeModal() {
+    modal.classList.remove("open");
+  }
+
+  // Events
+  if (btnReload) {
+    btnReload.addEventListener("click", async () => {
+      await loadProducts();
+    });
+  }
+
+  if (btnAddProduct) {
+    btnAddProduct.addEventListener("click", () => openModal("add", null));
+  }
+
+  if (btnCancel) {
+    btnCancel.addEventListener("click", closeModal);
+  }
+
+  if (btnSave) {
+    btnSave.addEventListener("click", saveProduct);
+  }
+
+  if (btnDelete) {
+    btnDelete.addEventListener("click", deleteProduct);
+  }
+
+  if (modal) {
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+  }
+
+  // Init
+  (async () => {
+    await loadProducts();
+  })();
+
+  // ---------------- API Functions ----------------
   async function loadProducts() {
+    toast(toastProducts, "載入商品中…");
     try {
-      const products = await fetchProducts();
-      console.log("API 回傳:", products);
-
-      let html = `<tr><th>ID</th><th>名稱</th><th>價格</th><th>庫存</th><th>操作</th></tr>`;
-      if (Array.isArray(products)) {
-        html += products.map(rowHtml).join("");
-      } else if (products && Array.isArray(products.data)) {
-        html += products.data.map(rowHtml).join("");
-      } else {
-        console.error("products 格式錯誤:", products);
-        html += `<tr><td colspan="5">載入失敗</td></tr>`;
-      }
-      tbl.innerHTML = html;
-      toast.textContent = "✅ 商品清單已載入";
-      toast.style.color = "green";
+      const res = await fetch(`${GAS_PRODUCTS_URL}?path=products`, { cache: "no-store" });
+      const data = await res.json().catch(() => ([]));
+      PRODUCTS = Array.isArray(data) ? data : [];
+      renderProducts();
+      toast(toastProducts, `載入完成：${PRODUCTS.length} 件商品`);
     } catch (e) {
       console.error(e);
-      tbl.innerHTML = `<tr><td colspan="5">載入失敗</td></tr>`;
-      toast.textContent = "❌ 載入商品失敗";
-      toast.style.color = "red";
+      toast(toastProducts, "載入失敗", false);
     }
   }
 
-  function rowHtml(p) {
+  function renderProducts() {
+    if (!PRODUCTS.length) {
+      tblProducts.innerHTML = `<tr><td class="muted">目前沒有商品</td></tr>`;
+      return;
+    }
+    tblProducts.innerHTML = PRODUCTS.map(rowProductHtml).join("");
+    tblProducts.querySelectorAll("[data-edit]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-edit");
+        const item = PRODUCTS.find(x => String(x.id) === String(id));
+        if (item) openModal("edit", item);
+      });
+    });
+  }
+
+  function rowProductHtml(p) {
+    const id = String(p.id || "");
+    const name = String(p.name || "");
+    const price = Number(p.price || 0);
+    const stock = Number(p.stock || 0);
     return `
-      <tr>
-        <td>${p.id}</td>
-        <td>${p.title}</td>
-        <td>NT$ ${p.price}</td>
-        <td>${p.stock ?? "-"}</td>
+      <tr class="row">
+        <td style="width:150px;">
+          <div style="font-weight:800;">${name}</div>
+          <div class="mini">ID：${id}</div>
+        </td>
         <td>
-          <button class="edit-product" 
-            data-id="${p.id}" 
-            data-title="${p.title}" 
-            data-price="${p.price}" 
-            data-stock="${p.stock}">編輯</button>
-          <button class="del-product" data-id="${p.id}">刪除</button>
+          <div class="mini">價格：${price}</div>
+          <div class="mini">庫存：${stock}</div>
+        </td>
+        <td style="width:120px;text-align:right;">
+          <button class="btn2 secondary" type="button" data-edit="${id}">編輯</button>
         </td>
       </tr>
     `;
   }
 
-  // 新增商品
-  document.querySelector("button.add-product")?.addEventListener("click", () => {
-    openModal("新增商品", [
-      { label: "商品名稱", type: "text", name: "title" },
-      { label: "價格", type: "number", name: "price" },
-      { label: "庫存", type: "number", name: "stock" }
-    ], async (data) => {
-      const out = await addProduct(data);
-      if (out?.ok) {
-        toast.textContent = "✅ 商品已新增";
-        toast.style.color = "green";
-        loadProducts();
-      } else {
-        toast.textContent = "❌ 新增商品失敗";
-        toast.style.color = "red";
-      }
-    });
-  });
-
-  // 刪除商品
-  tbl.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".del-product");
-    if (!btn) return;
-    const id = btn.dataset.id;
-    const out = await deleteProduct(id);
-    if (out?.ok) {
-      toast.textContent = "✅ 商品已刪除";
-      toast.style.color = "green";
-      loadProducts();
+  function openModal(mode, item) {
+    modal.classList.add("open");
+    if (mode === "add") {
+      editingId = null;
+      modalTitle.textContent = "新增商品";
+      btnDelete.style.display = "none";
+      modalHint.textContent = "新增時 ID 不可重複。";
+      pId.disabled = false;
+      pId.value = "";
+      pName.value = "";
+      pPrice.value = 0;
+      pStock.value = 0;
+      pDesc.value = "";
     } else {
-      toast.textContent = "❌ 刪除商品失敗";
-      toast.style.color = "red";
+      editingId = String(item.id || "");
+      modalTitle.textContent = `編輯商品：${editingId}`;
+      btnDelete.style.display = "inline-flex";
+      modalHint.textContent = "編輯時不建議改 ID。";
+      pId.disabled = true;
+      pId.value = editingId;
+      pName.value = String(item.name || "");
+      pPrice.value = Number(item.price ?? 0);
+      pStock.value = Number(item.stock ?? 0);
+      pDesc.value = String(item.desc || "");
     }
-  });
+  }
 
-  // 編輯商品
-  tbl.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".edit-product");
-    if (!btn) return;
-    openModal("編輯商品", [
-      { label: "商品名稱", type: "text", name: "title", value: btn.dataset.title },
-      { label: "價格", type: "number", name: "price", value: btn.dataset.price },
-      { label: "庫存", type: "number", name: "stock", value: btn.dataset.stock }
-    ], async (data) => {
-      const out = await updateProduct({ id: btn.dataset.id, ...data });
-      if (out?.ok) {
-        toast.textContent = "✅ 商品已更新";
-        toast.style.color = "green";
-        loadProducts();
-      } else {
-        toast.textContent = "❌ 更新商品失敗";
-        toast.style.color = "red";
+  function buildProductPayload() {
+    return {
+      id: String(pId.value || "").trim(),
+      name: String(pName.value || "").trim(),
+      price: Number(pPrice.value || 0),
+      stock: Number(pStock.value || 0),
+      desc: String(pDesc.value || "")
+    };
+  }
+
+  async function saveProduct() {
+    toast(toastProducts, "");
+    try {
+      const payload = buildProductPayload();
+      if (!payload.id || !payload.name) {
+        toast(toastProducts, "請填商品 ID 和名稱", false);
+        return;
       }
-    });
-  });
+      if (editingId === null) {
+        await gasPost("products", "POST", payload);
+        closeModal();
+        await loadProducts();
+        toast(toastProducts, "新增成功 ✅");
+      } else {
+        await gasPost("products", "PUT", payload, editingId);
+        closeModal();
+        await loadProducts();
+        toast(toastProducts, "儲存成功 ✅");
+      }
+    } catch (e) {
+      console.error(e);
+      toast(toastProducts, "儲存失敗", false);
+    }
+  }
 
-  // 綁定「重新載入」按鈕
-  document.querySelector("button.reload")?.addEventListener("click", loadProducts);
-
-  // 初始載入
-  loadProducts();
+  async function deleteProduct() {
+    if (!editingId) return;
+    const ok = confirm(`確定刪除商品 ${editingId} 嗎？`);
+    if (!ok) return;
+    try {
+      await gasPost("products", "DELETE", {}, editingId);
+      closeModal();
+      await loadProducts();
+      toast(toastProducts, "刪除成功 ✅");
+    } catch (e) {
+      console.error(e);
+      toast(toastProducts, "刪除失敗", false);
+    }
+  }
 });
