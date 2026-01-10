@@ -75,7 +75,7 @@
   // ===== API =====
   async function register(payload) {
     const data = await jsonp({
-      action: "member_register",
+      path: "register",
       memberId: payload.memberId || getMemberId(),
       phone: payload.phone || "",
       pw: payload.pw || "",
@@ -89,7 +89,7 @@
 
   async function login(phone, pw) {
     const data = await jsonp({
-      action: "member_login",
+      path: "login",
       phone: phone || "",
       pw: pw || ""
     });
