@@ -36,7 +36,7 @@
     return `NT$ ${n}`;
   }
 
-  function getMemberId() {
+  function getId() {
     let id = localStorage.getItem(MEMBER_KEY);
     if (!id) {
       id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
@@ -361,7 +361,7 @@
   }
 
   async function validateCoupon(code, subtotal) {
-    const memberId = getMemberId();
+    const memberId = getId();
     const url =
       `${GAS_PRODUCTS_URL}?path=coupon_validate` +
       `&code=${encodeURIComponent(code)}` +
@@ -571,7 +571,7 @@
 
       const payload = {
         orderId: "O-" + Date.now(),
-        memberId: getMemberId(),
+        memberId: getId(),
         couponCode: String(window.TEN_APPLIED?.code || ""),
         items: cart2,
         subtotal: cart2.reduce((s, it) => s + it.price * it.qty, 0),
