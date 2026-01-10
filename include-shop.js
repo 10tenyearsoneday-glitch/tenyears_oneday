@@ -8,6 +8,12 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 });
+const header = document.getElementById("header");
+if (header) {
+  header.addEventListener("click", () => {
+    // ...
+  });
+}
 
 
 // include-shop.js
