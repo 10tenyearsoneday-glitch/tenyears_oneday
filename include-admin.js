@@ -1,283 +1,293 @@
 // include-admin.js
-// 後台管理商品用
+(() => {
+  const $ = (id) => document.getElementById(id);
 
-// 使用共用的 API_URL（在 include-common.js 定義）
-const $ = (id) => document.getElementById(id);
+  const tbl = $("tbl");
+  const toast = $("toast");
 
-const tbl = $("tbl");
-const toast = $("toast");
+  const modal = $("modal");
+  const modalTitle = $("modalTitle");
+  const modalHint = $("modalHint");
 
-const modal = $("modal");
-const modalTitle = $("modalTitle");
-const modalHint = $("modalHint");
+  const fId = $("fId");
+  const fStatus = $("fStatus");
+  const fTitle = $("fTitle");
+  const fCategory = $("fCategory");
+  const fSeries = $("fSeries");
+  const fPrice = $("fPrice");
+  const fImage = $("fImage");
+  const fDesc = $("fDesc");
+  const fImages = $("fImages");
 
-const fId = $("fId");
-const fStatus = $("fStatus");
-const fTitle = $("fTitle");
-const fCategory = $("fCategory");
-const fSeries = $("fSeries");
-const fPrice = $("fPrice");
-const fImage = $("fImage");
-const fDesc = $("fDesc");
-const fImages = $("fImages");
+  const imgFile = $("imgFile");
+  const imgSlug = $("imgSlug");
+  const imgUrl  = $("imgUrl");
+  const imgPreview = $("imgPreview");
+  const copySlug = $("copySlug");
+  const copyUrl  = $("copyUrl");
 
-const imgFile = $("imgFile");
-const imgSlug = $("imgSlug");
-const imgUrl  = $("imgUrl");
-const imgPreview = $("imgPreview");
-const copySlug = $("copySlug");
-const copyUrl  = $("copyUrl");
+  const btnReload = $("btnReload");
+  const btnAdd = $("btnAdd");
+  const btnCancel = $("btnCancel");
+  const btnDelete = $("btnDelete");
+  const btnSave = $("btnSave");
 
-const btnReload = $("btnReload");
-const btnAdd = $("btnAdd");
-const btnCancel = $("btnCancel");
-const btnDelete = $("btnDelete");
-const btnSave = $("btnSave");
+  let PRODUCTS = [];
+  let editingId = null;
 
-let PRODUCTS = [];
-let editingId = null;
+  // -------------------- Toast --------------------
+  function showToast(msg, ok = true) {
+    const el = document.getElementById("toast");
+    if (!el) return;
+    el.textContent = msg || "";
+    el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
+  }
 
-// -------------------- Toast --------------------
-function showToast(msg, ok = true) {
-  const el = document.getElementById("toast");
-  if (!el) return; // 防止 null
-  el.textContent = msg || "";
-  el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
-}
+  // -------------------- 工具函式 --------------------
+  function safeFileName(name) {
+    return String(name).trim().replace(/[^\w.\-]+/g, "-");
+  }
 
-// -------------------- 工具函式 --------------------
-function safeFileName(name) {
-  return String(name).trim().replace(/[^\w.\-]+/g, "-");
-}
+  function updateImageUrlFromSlug() {
+    const fileName = safeFileName(imgSlug.value || "");
+    const full = fileName ? (API_URL + "/assets/products/" + encodeURIComponent(fileName)) : "";
+    imgUrl.value = full;
+    fImage.value = full;
+  }
 
-function updateImageUrlFromSlug() {
-  const fileName = safeFileName(imgSlug.value || "");
-  const full = fileName ? (API_URL + "/assets/products/" + encodeURIComponent(fileName)) : "";
-  imgUrl.value = full;
-  fImage.value = full;
-}
+  // -------------------- 圖片事件 --------------------
+  imgFile?.addEventListener("change", () => {
+    const f = imgFile.files?.[0];
+    if (!f) return;
 
-// -------------------- 圖片事件 --------------------
-imgFile?.addEventListener("change", () => {
-  const f = imgFile.files?.[0];
-  if (!f) return;
+    const id = (fId.value || "").trim();
+    const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
+    const fileName = safeFileName((id ? id : f.name.replace(/\.[^.]+$/, "")) + "." + ext);
 
-  const id = (fId.value || "").trim();
-  const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
-  const fileName = safeFileName((id ? id : f.name.replace(/\.[^.]+$/, "")) + "." + ext);
+    imgSlug.value = fileName;
+    updateImageUrlFromSlug();
 
-  imgSlug.value = fileName;
-  updateImageUrlFromSlug();
+    const url = URL.createObjectURL(f);
+    imgPreview.src = url;
+    imgPreview.style.display = "block";
+  });
 
-  const url = URL.createObjectURL(f);
-  imgPreview.src = url;
-  imgPreview.style.display = "block";
-});
+  imgSlug?.addEventListener("input", updateImageUrlFromSlug);
+  imgUrl?.addEventListener("input", () => { fImage.value = imgUrl.value.trim(); });
 
-imgSlug?.addEventListener("input", updateImageUrlFromSlug);
-imgUrl?.addEventListener("input", () => { fImage.value = imgUrl.value.trim(); });
+  copySlug?.addEventListener("click", async () => {
+    if (!imgSlug.value) return;
+    await navigator.clipboard.writeText(imgSlug.value);
+    showToast("已複製檔名");
+  });
 
-copySlug?.addEventListener("click", async () => {
-  if (!imgSlug.value) return;
-  await navigator.clipboard.writeText(imgSlug.value);
-  showToast("已複製檔名");
-});
+  copyUrl?.addEventListener("click", async () => {
+    if (!imgUrl.value) return;
+    await navigator.clipboard.writeText(imgUrl.value);
+    showToast("已複製圖片網址");
+  });
 
-copyUrl?.addEventListener("click", async () => {
-  if (!imgUrl.value) return;
-  await navigator.clipboard.writeText(imgUrl.value);
-  showToast("已複製圖片網址");
-});
+  // -------------------- Modal --------------------
+  function openModal(mode, item) {
+    modal.classList.add("open");
 
-// -------------------- Modal --------------------
-function openModal(mode, item) {
-  modal.classList.add("open");
+    if (mode === "add") {
+      editingId = null;
+      modalTitle.textContent = "新增商品";
+      btnDelete.style.display = "none";
+      modalHint.textContent = "新增時 id 不可重複。";
+      fId.disabled = false;
 
-  if (mode === "add") {
-    editingId = null;
-    modalTitle.textContent = "新增商品";
-    btnDelete.style.display = "none";
-    modalHint.textContent = "新增時 id 不可重複。";
-    fId.disabled = false;
-
-    fId.value = "";
-    fStatus.value = "上架";
-    fTitle.value = "";
-    fCategory.value = "其他";
-    fSeries.value = "全系列";
-    fPrice.value = 0;
-    fImage.value = "";
-    fDesc.value = "";
-    imgSlug.value = "";
-    imgUrl.value = "";
-    imgPreview.style.display = "none";
-    fImages.value = "";
-
-  } else {
-    editingId = item.id;
-    modalTitle.textContent = `編輯商品：${item.id}`;
-    btnDelete.style.display = "inline-block";
-    modalHint.textContent = "編輯時 id 不建議改（如需改 id，建議新增一筆再刪除舊的）。";
-    fId.disabled = true;
-
-    fId.value = item.id || "";
-    fStatus.value = item.status || "上架";
-    fTitle.value = item.title || "";
-    fCategory.value = item.category || "其他";
-    fSeries.value = item.series || "全系列";
-    fPrice.value = Number(item.price || 0);
-    fImage.value = item.image || "";
-    fDesc.value = item.desc || "";
-    fImages.value = Array.isArray(item.images) ? item.images.join("\n") : String(item.images || "").trim();
-
-    imgUrl.value = item.image || "";
-    imgSlug.value = (item.image || "").split("/").pop() || "";
-    if (item.image) {
-      imgPreview.src = item.image;
-      imgPreview.style.display = "block";
-    } else {
+      fId.value = "";
+      fStatus.value = "上架";
+      fTitle.value = "";
+      fCategory.value = "其他";
+      fSeries.value = "全系列";
+      fPrice.value = 0;
+      fImage.value = "";
+      fDesc.value = "";
+      imgSlug.value = "";
+      imgUrl.value = "";
       imgPreview.style.display = "none";
-    }
-  }
-}
+      fImages.value = "";
 
-function closeModal() { modal.classList.remove("open"); }
-
-// -------------------- Render --------------------
-function rowHtml(p) {
-  const img = p.image || "assets/placeholder.png";
-  const st = p.status || "上架";
-  const stClass = (st === "上架") ? "pill on" : "pill off";
-  return `
-    <tr class="row">
-      <td style="width:76px;">
-        <div class="thumb-sm"><img src="${img}" alt="" loading="lazy"></div>
-      </td>
-      <td>
-        <div style="font-weight:600;letter-spacing:.03em;">${p.title || "（未命名）"}</div>
-        <div class="mini">${p.series || "全系列"}｜${p.category || "其他"}｜<span class="${stClass}">${st}</span></div>
-        <div class="mini">ID：${p.id}</div>
-      </td>
-      <td style="width:120px;text-align:right;font-weight:700;color:#6c7f67;">
-        NT$ ${Number(p.price || 0)}
-      </td>
-      <td style="width:90px;text-align:right;">
-        <button class="btn2 secondary" data-edit="${p.id}" type="button">編輯</button>
-      </td>
-    </tr>
-  `;
-}
-
-function render() {
-  tbl.innerHTML = PRODUCTS.map(rowHtml).join("");
-  tbl.querySelectorAll("[data-edit]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-edit");
-      const item = PRODUCTS.find(x => String(x.id) === String(id));
-      if (item) openModal("edit", item);
-    });
-  });
-}
-
-// -------------------- API --------------------
-async function loadProducts() {
-  showToast("載入商品中...");
-  try {
-    const res = await fetch(`${API_URL}?path=products`, { cache: "no-store" });
-    const data = await res.json();
-    PRODUCTS = Array.isArray(data) ? data : [];
-    render();
-    showToast(`載入完成：${PRODUCTS.length} 件商品`);
-  } catch (e) {
-    console.error(e);
-    showToast("載入失敗，請確認 GAS 是否正常", false);
-  }
-}
-
-function buildPayload() {
-  return {
-    id: fId.value.trim(),
-    status: fStatus.value,
-    title: fTitle.value.trim(),
-    category: fCategory.value,
-    series: fSeries.value,
-    price: Number(fPrice.value || 0),
-    image: fImage.value.trim(),
-    images: (fImages.value || "").trim(),
-    desc: fDesc.value.trim()
-  };
-}
-
-async function gasWrite(method, payload, id = "") {
-  const url =
-    `${API_URL}?path=products` +
-    (id ? `&id=${encodeURIComponent(id)}` : "") +
-    `&key=${encodeURIComponent(ADMIN_KEY)}` +
-    `&method=${encodeURIComponent(method)}`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload || {})
-  });
-
-  const out = await res.json().catch(() => ({}));
-  if (!res.ok || out?.error) throw new Error(out?.error || "GAS_WRITE_FAILED");
-  return out;
-}
-
-async function saveProduct() {
-  const payload = buildPayload();
-
-  if (!payload.title) {
-    showToast("請填商品名稱", false);
-    return;
-  }
-  if (editingId === null && !payload.id) {
-    showToast("新增商品必須填 id", false);
-    return;
-  }
-
-  try {
-    if (editingId === null) {
-      await gasWrite("POST", payload, "");
-      closeModal();
-      await loadProducts();
-      showToast("新增成功");
     } else {
-      await gasWrite("PUT", payload, editingId);
+      editingId = item.id;
+      modalTitle.textContent = `編輯商品：${item.id}`;
+      btnDelete.style.display = "inline-block";
+      modalHint.textContent = "編輯時 id 不建議改（如需改 id，建議新增一筆再刪除舊的）。";
+      fId.disabled = true;
+
+      fId.value = item.id || "";
+      fStatus.value = item.status || "上架";
+      fTitle.value = item.title || "";
+      fCategory.value = item.category || "其他";
+      fSeries.value = item.series || "全系列";
+      fPrice.value = Number(item.price || 0);
+      fImage.value = item.image || "";
+      fDesc.value = item.desc || "";
+      fImages.value = Array.isArray(item.images) ? item.images.join("\n") : String(item.images || "").trim();
+
+      imgUrl.value = item.image || "";
+      imgSlug.value = (item.image || "").split("/").pop() || "";
+      if (item.image) {
+        imgPreview.src = item.image;
+        imgPreview.style.display = "block";
+      } else {
+        imgPreview.style.display = "none";
+      }
+    }
+  }
+
+  function closeModal() { modal.classList.remove("open"); }
+
+  // -------------------- Render --------------------
+  function rowHtml(p) {
+    const img = p.image || "assets/placeholder.png";
+    const st = p.status || "上架";
+    const stClass = (st === "上架") ? "pill on" : "pill off";
+    return `
+      <tr class="row">
+        <td style="width:76px;">
+          <div class="thumb-sm"><img src="${img}" alt="" loading="lazy"></div>
+        </td>
+        <td>
+          <div style="font-weight:600;letter-spacing:.03em;">${p.title || "（未命名）"}</div>
+          <div class="mini">${p.series || "全系列"}｜${p.category || "其他"}｜<span class="${stClass}">${st}</span></div>
+          <div class="mini">ID：${p.id}</div>
+        </td>
+        <td style="width:120px;text-align:right;font-weight:700;color:#6c7f67;">
+          NT$ ${Number(p.price || 0)}
+        </td>
+        <td style="width:90px;text-align:right;">
+          <button class="btn2 secondary" data-edit="${p.id}" type="button">編輯</button>
+        </td>
+      </tr>
+    `;
+  }
+
+  function render() {
+    tbl.innerHTML = PRODUCTS.map(rowHtml).join("");
+    tbl.querySelectorAll("[data-edit]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-edit");
+        const item = PRODUCTS.find(x => String(x.id) === String(id));
+        if (item) openModal("edit", item);
+      });
+    });
+  }
+
+  // -------------------- API --------------------
+  async function loadProducts() {
+    showToast("載入商品中...");
+    try {
+      const res = await fetch(`${API_URL}?path=products`, { cache: "no-store" });
+      const data = await res.json();
+      PRODUCTS = Array.isArray(data) ? data : [];
+      render();
+      showToast(`載入完成：${PRODUCTS.length} 件商品`);
+    } catch (e) {
+      console.error(e);
+      showToast("載入失敗，請確認 GAS 是否正常", false);
+    }
+  }
+
+  function buildPayload() {
+    return {
+      id: fId.value.trim(),
+      status: fStatus.value,
+      title: fTitle.value.trim(),
+      category: fCategory.value,
+      series: fSeries.value,
+      price: Number(fPrice.value || 0),
+      image: fImage.value.trim(),
+      images: (fImages.value || "").trim(),
+      desc: fDesc.value.trim()
+    };
+  }
+
+  async function gasWrite(method, payload, id = "") {
+    try {
+      const url =
+        `${API_URL}?path=products` +
+        (id ? `&id=${encodeURIComponent(id)}` : "") +
+        `&key=${encodeURIComponent(ADMIN_KEY)}` +
+        `&method=${encodeURIComponent(method)}`;
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload || {})
+      });
+
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || out?.error) throw new Error(out?.error || "GAS_WRITE_FAILED");
+      return out;
+    } catch (e) {
+      console.error(e);
+      showToast("GAS 寫入失敗", false);
+      throw e;
+    }
+  }
+
+  async function saveProduct() {
+    const payload = buildPayload();
+
+    if (!payload.title) {
+      showToast("請填商品名稱", false);
+      return;
+    }
+       if (editingId === null && !payload.id) {
+      showToast("新增商品必須填 id", false);
+      return;
+    }
+
+    try {
+      if (editingId === null) {
+        await gasWrite("POST", payload, "");
+        closeModal();
+        await loadProducts();
+        showToast("新增成功");
+      } else {
+        await gasWrite("PUT", payload, editingId);
+        closeModal();
+        await loadProducts();
+        showToast("儲存成功");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("儲存失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
+    }
+  }
+
+  async function deleteProduct() {
+    if (!editingId) return;
+    const ok = confirm(`確定刪除商品 ${editingId} 嗎？`);
+    if (!ok) return;
+
+    try {
+      await gasWrite("DELETE", {}, editingId);
       closeModal();
       await loadProducts();
-      showToast("儲存成功");
+      showToast("刪除成功");
+    } catch (e) {
+      console.error(e);
+      showToast("刪除失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
     }
-async function deleteProduct() {
-  if (!editingId) return;
-  const ok = confirm(`確定刪除商品 ${editingId} 嗎？`);
-  if (!ok) return;
-
-  try {
-    await gasWrite("DELETE", {}, editingId);
-    closeModal();
-    await loadProducts();
-    showToast("刪除成功");
-  } catch (e) {
-    console.error(e);
-    showToast("刪除失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
   }
-}
 
-// -------------------- Events --------------------
-btnReload.addEventListener("click", loadProducts);
-btnAdd.addEventListener("click", () => openModal("add", null));
-btnCancel.addEventListener("click", closeModal);
-btnSave.addEventListener("click", saveProduct);
-btnDelete.addEventListener("click", deleteProduct);
+  // -------------------- Events --------------------
+  btnReload?.addEventListener("click", loadProducts);
+  btnAdd?.addEventListener("click", () => openModal("add", null));
+  btnCancel?.addEventListener("click", closeModal);
+  btnSave?.addEventListener("click", saveProduct);
+  btnDelete?.addEventListener("click", deleteProduct);
 
-modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+  modal?.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
-// -------------------- Init --------------------
-document.addEventListener("DOMContentLoaded", () => {
-  loadProducts();
-});
+  // -------------------- Init --------------------
+  document.addEventListener("DOMContentLoaded", () => {
+    loadProducts();
+  });
 
-    })();  
+})();   // ← 檔案收尾，避免「Unexpected end of input」或「Missing catch/finally」錯誤
