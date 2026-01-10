@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const tblShipping = document.getElementById("tblShipping");
   const toast = document.getElementById("toast");
 
+  // 載入優惠碼
   async function loadCoupons() {
     try {
       const coupons = await fetchCoupons();
@@ -38,6 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
   }
 
+  // 載入運費設定
   async function loadShipping() {
     try {
       const shipping = await fetchShipping();
@@ -73,24 +75,126 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // 綁定新增優惠碼
-  document.querySelector("button.add-coupon")?.addEventListener("click", () => {
-    openModal("新增優惠碼", [
-      { label: "代碼", type: "text", name: "code" },
-      { label: "折扣", type: "number", name: "discount" }
+  const btnAddCoupon = document.querySelector("button.add-coupon");
+  if (btnAddCoupon) {
+    btnAddCoupon.addEventListener("click", () => {
+      openModal("新增優惠碼", [
+        { label: "代碼", type: "text", name: "code" },
+        { label: "折扣", type: "number", name: "discount" }
+      ], async (data) => {
+        const out = await addCoupon(data);
+        if (out?.ok) {
+          toast.textContent = "✅ 優惠碼已新增";
+          toast.style.color = "green";
+          loadCoupons();
+        } else {
+          toast.textContent = "❌ 新增優惠碼失敗";
+          toast.style.color = "red";
+        }
+      });
+    });
+  }
+
+  // 綁定新增運費
+  const btnAddShipping = document.querySelector("button.add-shipping");
+  if (btnAddShipping) {
+    btnAddShipping.addEventListener("click", () => {
+      openModal("新增運費設定", [
+        { label: "地區", type: "text", name: "region" },
+        { label: "運費", type: "number", name: "fee" }
+      ], async (data) => {
+        const out = await addShipping(data);
+        if (out?.ok) {
+          toast.textContent = "✅ 運費已新增";
+          toast.style.color = "green";
+          loadShipping();
+        } else {
+          toast.textContent = "❌ 新增運費失敗";
+          toast.style.color = "red";
+        }
+      });
+    });
+  }
+
+  // 刪除優惠碼
+  tblCoupons.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".del-coupon");
+    if (!btn) return;
+    const code = btn.dataset.code;
+    const out = await deleteCoupon(code);
+    if (out?.ok) {
+      toast.textContent = "✅ 優惠碼已刪除";
+      toast.style.color = "green";
+      loadCoupons();
+    } else {
+      toast.textContent = "❌ 刪除優惠碼失敗";
+      toast.style.color = "red";
+    }
+  });
+
+  // 編輯優惠碼
+  tblCoupons.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".edit-coupon");
+    if (!btn) return;
+    openModal("編輯優惠碼", [
+      { label: "代碼", type: "text", name: "code", value: btn.dataset.code },
+      { label: "折扣", type: "number", name: "discount", value: btn.dataset.discount }
     ], async (data) => {
-      const out = await addCoupon(data);
+      const out = await updateCoupon(data);
       if (out?.ok) {
-        toast.textContent = "✅ 優惠碼已新增";
+        toast.textContent = "✅ 優惠碼已更新";
         toast.style.color = "green";
         loadCoupons();
       } else {
-        toast.textContent = "❌ 新增優惠碼失敗";
+        toast.textContent = "❌ 更新優惠碼失敗";
         toast.style.color = "red";
       }
     });
   });
 
-  // 綁定新增運費
-  document.querySelector("button.add-shipping")?.addEventListener("click", () => {
-    openModal("新增運費設定", [
-      { label: "地區",
+  // 刪除運費
+  tblShipping.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".del-shipping");
+    if (!btn) return;
+    const region = btn.dataset.region;
+    const out = await deleteShipping(region);
+    if (out?.ok) {
+      toast.textContent = "✅ 運費已刪除";
+      toast.style.color = "green";
+      loadShipping();
+    } else {
+      toast.textContent = "❌ 刪除運費失敗";
+      toast.style.color = "red";
+    }
+  });
+
+  // 編輯運費
+  tblShipping.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".edit-shipping");
+    if (!btn) return;
+    openModal("編輯運費", [
+      { label: "地區", type: "text", name: "region", value: btn.dataset.region },
+      { label: "運費", type: "number", name: "fee", value: btn.dataset.fee }
+    ], async (data) => {
+      const out = await updateShipping(data);
+      if (out?.ok) {
+        toast.textContent = "✅ 運費已更新";
+        toast.style.color = "green";
+        loadShipping();
+      } else {
+        toast.textContent = "❌ 更新運費失敗";
+        toast.style.color = "red";
+      }
+    });
+  });
+
+  // 綁定重新載入
+  document.querySelector("button.reload")?.addEventListener("click", () => {
+    loadCoupons();
+    loadShipping();
+  });
+
+  // 初始載入
+  loadCoupons();
+  loadShipping();
+});
