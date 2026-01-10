@@ -9,7 +9,6 @@
 
   // ========= Config =========
   const CART_KEY = "ten_cart";
-  const MEMBER_KEY = "ten_member_id";
   const APPLIED_KEY = "ten_applied_coupon_v1";
 
   window.TEN_CONFIG = window.TEN_CONFIG || {
@@ -36,14 +35,12 @@
     return `NT$ ${n}`;
   }
 
-  function getId() {
-    let id = localStorage.getItem(MEMBER_KEY);
-    if (!id) {
-      id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
-      localStorage.setItem(MEMBER_KEY, id);
-    }
-    return id;
-  }
+function getId() {
+  // 由 include-member.js 負責寫入
+  const member = JSON.parse(localStorage.getItem("ten_member") || "null");
+  return member?.memberId || "";
+}
+
 
   // ========= Cart Storage =========
   function readCart() {
