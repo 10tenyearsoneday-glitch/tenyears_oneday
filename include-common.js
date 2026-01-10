@@ -50,3 +50,22 @@ async function deleteCoupon(code) {
   });
   return res.json();
 }
+// 編輯商品
+async function updateProduct(product) {
+  const res = await fetch(`${GAS_PRODUCTS_URL}?path=product_update&key=${encodeURIComponent(ADMIN_KEY)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(product)
+  });
+  return res.json();
+}
+
+// 編輯優惠碼
+async function updateCoupon(coupon) {
+  const res = await fetch(`${GAS_PRODUCTS_URL}?path=coupon_update&key=${encodeURIComponent(ADMIN_KEY)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(coupon)
+  });
+  return res.json();
+}
