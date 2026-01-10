@@ -1,68 +1,54 @@
 // include-admin.js
-// 專門給 admin.html 使用，商品管理（新增 / 編輯 / 刪除）
-
 document.addEventListener("DOMContentLoaded", async () => {
   const tbl = document.getElementById("tbl");
   const toast = document.getElementById("toast");
 
   // 載入商品清單
- async function loadProducts() {
-  try {
-    const products = await fetchProducts();
-    console.log("API 回傳:", products);
+  async function loadProducts() {
+    try {
+      const products = await fetchProducts();
+      console.log("API 回傳:", products);
 
-    let html = `<tr><th>ID</th><th>名稱</th><th>價格</th><th>庫存</th><th>操作</th></tr>`;
+      let html = `<tr><th>ID</th><th>名稱</th><th>價格</th><th>庫存</th><th>操作</th></tr>`;
 
-    if (Array.isArray(products)) {
-      html += products.map(p => `
-        <tr>
-          <td>${p.id}</td>
-          <td>${p.title}</td>
-          <td>NT$ ${p.price}</td>
-          <td>${p.stock ?? "-"}</td>
-          <td>
-            <button class="edit-product" 
-              data-id="${p.id}" 
-              data-title="${p.title}" 
-              data-price="${p.price}" 
-              data-stock="${p.stock}">編輯</button>
-            <button class="del-product" data-id="${p.id}">刪除</button>
-          </td>
-        </tr>
-      `).join("");
-    } else if (Array.isArray(products.data)) {
-      html += products.data.map(p => `
-        <tr>
-          <td>${p.id}</td>
-          <td>${p.title}</td>
-          <td>NT$ ${p.price}</td>
-          <td>${p.stock ?? "-"}</td>
-          <td>
-            <button class="edit-product" 
-              data-id="${p.id}" 
-              data-title="${p.title}" 
-              data-price="${p.price}" 
-              data-stock="${p.stock}">編輯</button>
-            <button class="del-product" data-id="${p.id}">刪除</button>
-          </td>
-        </tr>
-      `).join("");
-    } else {
-      console.error("products 格式錯誤:", products);
-      html += `<tr><td colspan="5">載入失敗</td></tr>`;
+      if (Array.isArray(products)) {
+        html += products.map(rowHtml).join("");
+      } else if (products && Array.isArray(products.data)) {
+        html += products.data.map(rowHtml).join("");
+      } else {
+        console.error("products 格式錯誤:", products);
+        html += `<tr><td colspan="5">載入失敗</td></tr>`;
+      }
+
+      tbl.innerHTML = html;
+      toast.textContent = "✅ 商品清單已載入";
+      toast.style.color = "green";
+    } catch (e) {
+      console.error(e);
+      tbl.innerHTML = `<tr><td colspan="5">載入失敗</td></tr>`;
+      toast.textContent = "❌ 載入商品失敗";
+      toast.style.color = "red";
     }
-
-    tbl.innerHTML = html;
-    toast.textContent = "✅ 商品清單已載入";
-    toast.style.color = "green";
-  } catch (e) {
-    console.error(e);
-    tbl.innerHTML = `<tr><td colspan="5">載入失敗</td></tr>`;
-    toast.textContent = "❌ 載入商品失敗";
-    toast.style.color = "red";
   }
-}
 
+  function rowHtml(p) {
+    return `
+      <tr>
+        <td>${p.id}</td>
+        <td>${p.title}</td>
+        <td>NT$ ${p.price}</td>
+        <td>${p.stock ?? "-"}</td>
+        <td>
+          <button class="edit-product" 
+            data-id="${p.id}" 
+            data-title="${p.title}" 
+            data-price="${p.price}" 
+            data-stock="${p.stock}">編輯</button>
+          <button class="del-product" data-id="${p.id}">刪除</button>
+        </td>
+      </tr>
+    `;
+  }
 
   // 新增商品
   document.querySelector("button.add-product")?.addEventListener("click", () => {
