@@ -1,101 +1,200 @@
 // include-admin-coupons.js
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   const tblCoupons = document.getElementById("tblCoupons");
   const tblShipping = document.getElementById("tblShipping");
   const toast = document.getElementById("toast");
 
-  // 載入優惠碼
+  // -------------- Data loaders --------------
   async function loadCoupons() {
     try {
-      const coupons = await fetchCoupons();
-      console.log("API 回傳:", coupons);
+      const coupons = await fetchCoupons(); // from include-common.js
+      console.log("coupons API:", coupons);
 
-      let html = `<tr><th>代碼</th><th>折扣</th><th>操作</th></tr>`;
+      let rows = [];
       if (Array.isArray(coupons)) {
-        html += coupons.map(couponHtml).join("");
+        rows = coupons;
       } else if (coupons && Array.isArray(coupons.data)) {
-        html += coupons.data.map(couponHtml).join("");
-      } else {
-        console.error("coupons 格式錯誤:", coupons);
-        html += `<tr><td colspan="3">載入失敗</td></tr>`;
+        rows = coupons.data;
+      } else if (coupons && coupons.ok === false) {
+        // backend error surface
+        showToast(`❌ 載入優惠碼失敗：${coupons.error || "UNKNOWN"}`, "red");
       }
-      tblCoupons.innerHTML = html;
-    } catch (e) {
-      console.error(e);
-      tblCoupons.innerHTML = `<tr><td colspan="3">載入失敗</td></tr>`;
+
+      const header = `
+        <tr>
+          <th>代碼</th>
+          <th>類型</th>
+          <th>折扣</th>
+          <th>最低消費</th>
+          <th>啟用</th>
+          <th>一次每人</th>
+          <th>操作</th>
+        </tr>
+      `;
+      const body = rows.map(couponHtml).join("");
+      tblCoupons.innerHTML = header + body;
+      if (!rows.length) {
+        tblCoupons.insertAdjacentHTML("beforeend", `<tr><td colspan="7">（沒有資料）</td></tr>`);
+      }
+    } catch (err) {
+      console.error(err);
+      tblCoupons.innerHTML = `<tr><td colspan="7">載入失敗</td></tr>`;
+      showToast("❌ 載入優惠碼失敗", "red");
     }
   }
 
   function couponHtml(c) {
+    const type = c.type ?? (c.rate != null ? "rate" : (c.amount != null ? "amount" : "-"));
+    const discountText = type === "rate"
+      ? `${Math.round(Number(c.rate ?? 1) * 100)}%`
+      : `NT$ ${Number(c.amount ?? 0)}`;
     return `
       <tr>
-        <td>${c.code}</td>
-        <td>${c.discount}</td>
+        <td>${escapeHtml(c.code)}</td>
+        <td>${escapeHtml(type)}</td>
+        <td>${discountText}</td>
+        <td>${Number(c.minSpend ?? 0)}</td>
+        <td>${c.enabled ? "✅" : "—"}</td>
+        <td>${c.oncePerMember ? "✅" : "—"}</td>
         <td>
-          <button class="edit-coupon" data-code="${c.code}" data-discount="${c.discount}">編輯</button>
-          <button class="del-coupon" data-code="${c.code}">刪除</button>
+          <button class="edit-coupon"
+                  data-code="${escapeAttr(c.code)}"
+                  data-type="${escapeAttr(type)}"
+                  data-rate="${escapeAttr(c.rate)}"
+                  data-amount="${escapeAttr(c.amount)}"
+                  data-minspend="${escapeAttr(c.minSpend)}"
+                  data-enabled="${escapeAttr(c.enabled)}"
+                  data-once="${escapeAttr(c.oncePerMember)}">編輯</button>
+          <button class="del-coupon" data-code="${escapeAttr(c.code)}">刪除</button>
         </td>
       </tr>
     `;
   }
 
-  // 載入運費設定
   async function loadShipping() {
     try {
-      const shipping = await fetchShipping();
-      console.log("API 回傳:", shipping);
+      const shipping = await fetchShipping(); // from include-common.js
+      console.log("shipping API:", shipping);
 
-      let html = `<tr><th>地區</th><th>運費</th><th>操作</th></tr>`;
+      let rows = [];
       if (Array.isArray(shipping)) {
-        html += shipping.map(shippingHtml).join("");
+        rows = shipping;
       } else if (shipping && Array.isArray(shipping.data)) {
-        html += shipping.data.map(shippingHtml).join("");
-      } else {
-        console.error("shipping 格式錯誤:", shipping);
-        html += `<tr><td colspan="3">載入失敗</td></tr>`;
+        rows = shipping.data;
+      } else if (shipping && shipping.ok === false) {
+        showToast(`❌ 載入運費失敗：${shipping.error || "UNKNOWN"}`, "red");
       }
-      tblShipping.innerHTML = html;
-    } catch (e) {
-      console.error(e);
+
+      const header = `
+        <tr>
+          <th>地區</th>
+          <th>運費</th>
+          <th>操作</th>
+        </tr>
+      `;
+      const body = rows.map(shippingHtml).join("");
+      tblShipping.innerHTML = header + body;
+      if (!rows.length) {
+        tblShipping.insertAdjacentHTML("beforeend", `<tr><td colspan="3">（沒有資料）</td></tr>`);
+      }
+    } catch (err) {
+      console.error(err);
       tblShipping.innerHTML = `<tr><td colspan="3">載入失敗</td></tr>`;
+      showToast("❌ 載入運費失敗", "red");
     }
   }
 
   function shippingHtml(s) {
     return `
       <tr>
-        <td>${s.region}</td>
-        <td>${s.fee}</td>
+        <td>${escapeHtml(s.region)}</td>
+        <td>${Number(s.fee ?? 0)}</td>
         <td>
-          <button class="edit-shipping" data-region="${s.region}" data-fee="${s.fee}">編輯</button>
-          <button class="del-shipping" data-region="${s.region}">刪除</button>
+          <button class="edit-shipping"
+                  data-region="${escapeAttr(s.region)}"
+                  data-fee="${escapeAttr(s.fee)}">編輯</button>
+          <button class="del-shipping"
+                  data-region="${escapeAttr(s.region)}">刪除</button>
         </td>
       </tr>
     `;
   }
 
-  // 綁定新增優惠碼
+  // -------------- Actions: coupons --------------
   const btnAddCoupon = document.querySelector("button.add-coupon");
   if (btnAddCoupon) {
     btnAddCoupon.addEventListener("click", () => {
       openModal("新增優惠碼", [
         { label: "代碼", type: "text", name: "code" },
-        { label: "折扣", type: "number", name: "discount" }
+        { label: "類型（rate 或 amount）", type: "text", name: "type", value: "rate" },
+        { label: "折扣率（0~1，type=rate）", type: "number", name: "rate", step: "0.01" },
+        { label: "折扣金額（type=amount）", type: "number", name: "amount" },
+        { label: "最低消費", type: "number", name: "minSpend", value: 0 },
+        { label: "啟用", type: "checkbox", name: "enabled", value: true },
+        { label: "一次每人", type: "checkbox", name: "oncePerMember", value: false }
       ], async (data) => {
-        const out = await addCoupon(data);
+        normalizeCouponPayload(data);
+        const out = await addCoupon(data); // from include-common.js
         if (out?.ok) {
-          toast.textContent = "✅ 優惠碼已新增";
-          toast.style.color = "green";
+          showToast("✅ 優惠碼已新增", "green");
           loadCoupons();
         } else {
-          toast.textContent = "❌ 新增優惠碼失敗";
-          toast.style.color = "red";
+          showToast(`❌ 新增優惠碼失敗：${out?.error || ""}`, "red");
         }
       });
     });
   }
 
-  // 綁定新增運費
+  tblCoupons.addEventListener("click", async (e) => {
+    const delBtn = e.target.closest(".del-coupon");
+    if (delBtn) {
+      const code = delBtn.dataset.code;
+      if (!code) return;
+      const ok = confirm(`確定刪除優惠碼「${code}」？`);
+      if (!ok) return;
+      const out = await deleteCoupon(code); // from include-common.js
+      if (out?.ok) {
+        showToast("✅ 優惠碼已刪除", "green");
+        loadCoupons();
+      } else {
+        showToast(`❌ 刪除優惠碼失敗：${out?.error || ""}`, "red");
+      }
+      return;
+    }
+
+    const editBtn = e.target.closest(".edit-coupon");
+    if (editBtn) {
+      const payload = {
+        code: editBtn.dataset.code,
+        type: editBtn.dataset.type,
+        rate: editBtn.dataset.rate,
+        amount: editBtn.dataset.amount,
+        minSpend: editBtn.dataset.minspend,
+        enabled: editBtn.dataset.enabled === "true",
+        oncePerMember: editBtn.dataset.once === "true"
+      };
+      openModal("編輯優惠碼", [
+        { label: "代碼", type: "text", name: "code", value: payload.code },
+        { label: "類型（rate 或 amount）", type: "text", name: "type", value: payload.type },
+        { label: "折扣率（0~1，type=rate）", type: "number", name: "rate", step: "0.01", value: payload.rate },
+        { label: "折扣金額（type=amount）", type: "number", name: "amount", value: payload.amount },
+        { label: "最低消費", type: "number", name: "minSpend", value: payload.minSpend },
+        { label: "啟用", type: "checkbox", name: "enabled", value: payload.enabled },
+        { label: "一次每人", type: "checkbox", name: "oncePerMember", value: payload.oncePerMember }
+      ], async (data) => {
+        normalizeCouponPayload(data);
+        const out = await updateCoupon(data); // from include-common.js
+        if (out?.ok) {
+          showToast("✅ 優惠碼已更新", "green");
+          loadCoupons();
+        } else {
+          showToast(`❌ 更新優惠碼失敗：${out?.error || ""}`, "red");
+        }
+      });
+    }
+  });
+
+  // -------------- Actions: shipping --------------
   const btnAddShipping = document.querySelector("button.add-shipping");
   if (btnAddShipping) {
     btnAddShipping.addEventListener("click", () => {
@@ -103,98 +202,98 @@ document.addEventListener("DOMContentLoaded", async () => {
         { label: "地區", type: "text", name: "region" },
         { label: "運費", type: "number", name: "fee" }
       ], async (data) => {
-        const out = await addShipping(data);
+        data.region = String(data.region || "").trim();
+        data.fee = Number(data.fee || 0);
+        const out = await addShipping(data); // from include-common.js
         if (out?.ok) {
-          toast.textContent = "✅ 運費已新增";
-          toast.style.color = "green";
+          showToast("✅ 運費已新增", "green");
           loadShipping();
         } else {
-          toast.textContent = "❌ 新增運費失敗";
-          toast.style.color = "red";
+          showToast(`❌ 新增運費失敗：${out?.error || ""}`, "red");
         }
       });
     });
   }
 
-  // 刪除優惠碼
-  tblCoupons.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".del-coupon");
-    if (!btn) return;
-    const code = btn.dataset.code;
-    const out = await deleteCoupon(code);
-    if (out?.ok) {
-      toast.textContent = "✅ 優惠碼已刪除";
-      toast.style.color = "green";
-      loadCoupons();
-    } else {
-      toast.textContent = "❌ 刪除優惠碼失敗";
-      toast.style.color = "red";
-    }
-  });
-
-  // 編輯優惠碼
-  tblCoupons.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".edit-coupon");
-    if (!btn) return;
-    openModal("編輯優惠碼", [
-      { label: "代碼", type: "text", name: "code", value: btn.dataset.code },
-      { label: "折扣", type: "number", name: "discount", value: btn.dataset.discount }
-    ], async (data) => {
-      const out = await updateCoupon(data);
-      if (out?.ok) {
-        toast.textContent = "✅ 優惠碼已更新";
-        toast.style.color = "green";
-        loadCoupons();
-      } else {
-        toast.textContent = "❌ 更新優惠碼失敗";
-        toast.style.color = "red";
-      }
-    });
-  });
-
-  // 刪除運費
   tblShipping.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".del-shipping");
-    if (!btn) return;
-    const region = btn.dataset.region;
-    const out = await deleteShipping(region);
-    if (out?.ok) {
-      toast.textContent = "✅ 運費已刪除";
-      toast.style.color = "green";
-      loadShipping();
-    } else {
-      toast.textContent = "❌ 刪除運費失敗";
-      toast.style.color = "red";
-    }
-  });
-
-  // 編輯運費
-  tblShipping.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".edit-shipping");
-    if (!btn) return;
-    openModal("編輯運費", [
-      { label: "地區", type: "text", name: "region", value: btn.dataset.region },
-      { label: "運費", type: "number", name: "fee", value: btn.dataset.fee }
-    ], async (data) => {
-      const out = await updateShipping(data);
+    const delBtn = e.target.closest(".del-shipping");
+    if (delBtn) {
+      const region = delBtn.dataset.region;
+      if (!region) return;
+      const ok = confirm(`確定刪除地區「${region}」的運費設定？`);
+      if (!ok) return;
+      const out = await deleteShipping(region); // from include-common.js
       if (out?.ok) {
-        toast.textContent = "✅ 運費已更新";
-        toast.style.color = "green";
+        showToast("✅ 運費已刪除", "green");
         loadShipping();
       } else {
-        toast.textContent = "❌ 更新運費失敗";
-        toast.style.color = "red";
+        showToast(`❌ 刪除運費失敗：${out?.error || ""}`, "red");
       }
-    });
+      return;
+    }
+
+    const editBtn = e.target.closest(".edit-shipping");
+    if (editBtn) {
+      const payload = {
+        region: editBtn.dataset.region,
+        fee: Number(editBtn.dataset.fee || 0)
+      };
+      openModal("編輯運費", [
+        { label: "地區", type: "text", name: "region", value: payload.region },
+        { label: "運費", type: "number", name: "fee", value: payload.fee }
+      ], async (data) => {
+        data.region = String(data.region || "").trim();
+        data.fee = Number(data.fee || 0);
+        const out = await updateShipping(data); // from include-common.js
+        if (out?.ok) {
+          showToast("✅ 運費已更新", "green");
+          loadShipping();
+        } else {
+          showToast(`❌ 更新運費失敗：${out?.error || ""}`, "red");
+        }
+      });
+    }
   });
 
-  // 綁定重新載入
+  // -------------- Reload + init --------------
   document.querySelector("button.reload")?.addEventListener("click", () => {
     loadCoupons();
     loadShipping();
   });
 
-  // 初始載入
   loadCoupons();
   loadShipping();
+
+  // -------------- helpers --------------
+  function showToast(text, color = "inherit") {
+    if (!toast) return;
+    toast.textContent = text;
+    toast.style.color = color;
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+  function escapeAttr(s) {
+    return String(s ?? "").replace(/"/g, "&quot;");
+  }
+
+  function normalizeCouponPayload(data) {
+    data.code = String(data.code || "").trim().toUpperCase();
+    data.type = String(data.type || "").trim();
+    // Only one of rate/amount should matter based on type
+    if (data.type === "rate") {
+      data.rate = Number(data.rate || 0);
+      data.amount = undefined;
+    } else if (data.type === "amount") {
+      data.amount = Number(data.amount || 0);
+      data.rate = undefined;
+    }
+    data.minSpend = Number(data.minSpend || 0);
+    data.enabled = !!data.enabled;
+    data.oncePerMember = !!data.oncePerMember;
+  }
 });
