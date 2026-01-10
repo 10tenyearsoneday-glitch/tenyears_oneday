@@ -232,7 +232,8 @@
       toast(regToastEl, "送出中…");
 
       const name = String($("regName")?.value || "").trim();
-      const phone = String($("regPhone")?.value || "").trim();
+      let phone = String($("regPhone")?.value || "").trim();
+      phone = normalizePhone(phone);
       const email = String($("regEmail")?.value || "").trim();
       const pw = String($("regPw")?.value || "").trim();
       const pw2 = String($("regPw2")?.value || "").trim();
@@ -264,7 +265,8 @@
     btnLogin.addEventListener("click", async (e) => {
       e.preventDefault();
       toast(loginToastEl, "登入中…");
-      const phone = String($("loginPhone")?.value || "").trim();
+      let phone = String($("loginPhone")?.value || "").trim();
+      phone = normalizePhone(phone);
       const pw = String($("loginPw")?.value || "").trim();
       if (!phone) return toast(loginToastEl, "請輸入手機", false);
       if (!pw) return toast(loginToastEl, "請輸入密碼", false);
@@ -361,3 +363,11 @@
     initProfilePage();
   });
 })();
+
+  function normalizePhone(phone){
+    phone = String(phone||"").trim().replace(/[\s-]/g,"");
+    phone = phone.replace(/^\+886/,"0");
+    if (/^9\d{8}$/.test(phone)) phone = "0"+phone;
+    return phone;
+  }
+
