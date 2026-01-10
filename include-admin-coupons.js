@@ -1,6 +1,6 @@
 // include-admin-coupons.js
 (() => {
-  // 使用共用的 API_URL（在 include-common.js 定義）
+  // Assumes API_URL and ADMIN_KEY are defined in include-common.js
   const $ = (id) => document.getElementById(id);
 
   const tabs = document.querySelectorAll(".tab");
@@ -19,7 +19,7 @@
   const btnSaveSettings = $("btnSaveSettings");
   const toastSettings = $("toastSettings");
 
-  // coupons
+  // coupons list
   const tblCoupons = $("tblCoupons");
   const toastCoupons = $("toastCoupons");
 
@@ -94,11 +94,11 @@
       const res = await fetch(`${API_URL}?path=settings`, { cache: "no-store" });
       const s = await res.json().catch(() => ({}));
 
-      sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true"));
-      sShipFee.value = Number(s.shipping_fee ?? 0);
-      sFreeOver.value = Number(s.free_shipping_threshold ?? 0);
-      sFirstRate.value = Number(s.first_purchase_discount ?? 1);
-      sBdayRate.value = Number(s.birthday_discount ?? 1);
+      sShipEnabled && (sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true")));
+      sShipFee && (sShipFee.value = Number(s.shipping_fee ?? 0));
+      sFreeOver && (sFreeOver.value = Number(s.free_shipping_threshold ?? 0));
+      sFirstRate && (sFirstRate.value = Number(s.first_purchase_discount ?? 1));
+      sBdayRate && (sBdayRate.value = Number(s.birthday_discount ?? 1));
 
       toast(toastSettings, "設定已載入 ✅");
     } catch (e) {
@@ -111,11 +111,11 @@
     toast(toastSettings, "儲存中…");
     try {
       const payload = {
-        shipping_enabled: (sShipEnabled.value === "true"),
-        shipping_fee: Number(sShipFee.value || 0),
-        free_shipping_threshold: Number(sFreeOver.value || 0),
-        first_purchase_discount: Number(sFirstRate.value || 1),
-        birthday_discount: Number(sBdayRate.value || 1),
+        shipping_enabled: (sShipEnabled?.value === "true"),
+        shipping_fee: Number(sShipFee?.value || 0),
+        free_shipping_threshold: Number(sFreeOver?.value || 0),
+        first_purchase_discount: Number(sFirstRate?.value || 1),
+        birthday_discount: Number(sBdayRate?.value || 1),
       };
 
       await gasPost("settings_update", "", payload);
@@ -162,6 +162,7 @@
   }
 
   function renderCoupons() {
+    if (!tblCoupons) return;
     if (!COUPONS.length) {
       tblCoupons.innerHTML = `<tr><td class="muted">目前沒有優惠碼</td></tr>`;
       return;
@@ -192,64 +193,65 @@
 
   // -------------------- Modal --------------------
   function openModal(mode, item) {
+    if (!modal) return;
     modal.classList.add("open");
 
     if (mode === "add") {
       editingCode = null;
-      modalTitle.textContent = "新增優惠碼";
-      btnDelete.style.display = "none";
-      modalHint.textContent = "新增時 code 不可重複。";
-      cCode.disabled = false;
+      modalTitle && (modalTitle.textContent = "新增優惠碼");
+      btnDelete && (btnDelete.style.display = "none");
+      modalHint && (modalHint.textContent = "新增時 code 不可重複。");
+      cCode && (cCode.disabled = false);
 
-      cCode.value = "";
-      cEnabled.value = "true";
-      cType.value = "rate";
-      cRate.value = 0.9;
-      cAmount.value = 0;
-      cMinSpend.value = 0;
-      cStartAt.value = "";
-      cEndAt.value = "";
-      cOnce.value = "false";
-            cMaxUses.value = 0;
-      cNote.value = "";
+      cCode && (cCode.value = "");
+      cEnabled && (cEnabled.value = "true");
+      cType && (cType.value = "rate");
+      cRate && (cRate.value = 0.9);
+      cAmount && (cAmount.value = 0);
+      cMinSpend && (cMinSpend.value = 0);
+      cStartAt && (cStartAt.value = "");
+      cEndAt && (cEndAt.value = "");
+      cOnce && (cOnce.value = "false");
+      cMaxUses && (cMaxUses.value = 0);
+      cNote && (cNote.value = "");
 
     } else {
       editingCode = String(item.code || "").toUpperCase();
-      modalTitle.textContent = `編輯優惠碼：${editingCode}`;
-      btnDelete.style.display = "inline-flex";
-      modalHint.textContent = "編輯時不建議改 code（如需改，建議新增一組再刪除舊的）。";
-      cCode.disabled = true;
+      modalTitle && (modalTitle.textContent = `編輯優惠碼：${editingCode}`);
+      btnDelete && (btnDelete.style.display = "inline-flex");
+      modalHint && (modalHint.textContent = "編輯時不建議改 code（如需改，建議新增一組再刪除舊的）。");
+      cCode && (cCode.disabled = true);
 
-      cCode.value = editingCode;
-      cEnabled.value = String(!!(item.enabled === true || item.enabled === "TRUE" || item.enabled === "true"));
-      cType.value = String(item.type || "rate");
-      cRate.value = Number(item.rate ?? 0);
-      cAmount.value = Number(item.amount ?? 0);
-      cMinSpend.value = Number(item.minSpend ?? 0);
-      cStartAt.value = toLocalFromAny(item.startAt);
-      cEndAt.value = toLocalFromAny(item.endAt);
-      cOnce.value = String(!!(item.oncePerMember === true || item.oncePerMember === "TRUE" || item.oncePerMember === "true"));
-      cMaxUses.value = Number(item.maxUses ?? 0);
-      cNote.value = String(item.note || "");
+      cCode && (cCode.value = editingCode);
+      cEnabled && (cEnabled.value = String(!!(item.enabled === true || item.enabled === "TRUE" || item.enabled === "true")));
+      cType && (cType.value = String(item.type || "rate"));
+      cRate && (cRate.value = Number(item.rate ?? 0));
+      cAmount && (cAmount.value = Number(item.amount ?? 0));
+      cMinSpend && (cMinSpend.value = Number(item.minSpend ?? 0));
+      cStartAt && (cStartAt.value = toLocalFromAny(item.startAt));
+      cEndAt && (cEndAt.value = toLocalFromAny(item.endAt));
+      cOnce && (cOnce.value = String(!!(item.oncePerMember === true || item.oncePerMember === "TRUE" || item.oncePerMember === "true")));
+      cMaxUses && (cMaxUses.value = Number(item.maxUses ?? 0));
+      cNote && (cNote.value = String(item.note || ""));
     }
   }
 
-  function closeModal() { modal.classList.remove("open"); }
+  function closeModal() { modal && modal.classList.remove("open"); }
 
   function buildCouponPayload() {
-    const code = String(cCode.value || "").trim().toUpperCase();
+    const code = String(cCode?.value || "").trim().toUpperCase();
     return {
       code,
-      enabled: (cEnabled.value === "true"),
-      type: String(cType.value || "rate"),
-      rate: Number(cRate.value || 0),
-      amount: Number(cAmount.value || 0),
-      minSpend: Number(cMinSpend.value || 0),
-      startAt: toISOFromLocal(cStartAt.value),
-      endAt: toISOFromLocal(cEndAt.value),
-      oncePerMember: (cOnce.value === "true"),
-      maxUses: Number(cMaxUses.value || 0),
-      note: String(cNote.value || "")
+      enabled: (cEnabled?.value === "true"),
+      type: String(cType?.value || "rate"),
+      rate: Number(cRate?.value || 0),
+      amount: Number(cAmount?.value || 0),
+      minSpend: Number(cMinSpend?.value || 0),
+      startAt: toISOFromLocal(cStartAt?.value),
+      endAt: toISOFromLocal(cEndAt?.value),
+      oncePerMember: (cOnce?.value === "true"),
+      maxUses: Number(cMaxUses?.value || 0),
+      note: String(cNote?.value || "")
     };
   }
 
@@ -305,29 +307,32 @@
 
   function switchTab(key) {
     tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === key));
-    tabSettings.style.display = (key === "settings") ? "" : "none";
-    tabCoupons.style.display = (key === "coupons") ? "" : "none";
+    if (tabSettings) tabSettings.style.display = (key === "settings") ? "" : "none";
+    if (tabCoupons) tabCoupons.style.display = (key === "coupons") ? "" : "none";
   }
 
   // -------------------- Events --------------------
-  tabs.forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
+  document.addEventListener("DOMContentLoaded", () => {
+    tabs.forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
 
-  btnReload.addEventListener("click", async () => {
-    await loadSettings();
-    await loadCoupons();
+    btnReload && btnReload.addEventListener("click", async () => {
+      await loadSettings();
+      await loadCoupons();
+    });
+    btnAddCoupon && btnAddCoupon.addEventListener("click", () => openModal("add", null));
+    btnSaveSettings && btnSaveSettings.addEventListener("click", saveSettings);
+
+    btnCancel && btnCancel.addEventListener("click", closeModal);
+    btnSave && btnSave.addEventListener("click", saveCoupon);
+    btnDelete && btnDelete.addEventListener("click", deleteCoupon);
+
+    modal && modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+    // Init
+    (async () => {
+      await loadSettings();
+      await loadCoupons();
+      switchTab("settings"); // default tab
+    })();
   });
-  btnAddCoupon.addEventListener("click", () => openModal("add", null));
-  btnSaveSettings.addEventListener("click", saveSettings);
-
-  btnCancel.addEventListener("click", closeModal);
-  btnSave.addEventListener("click", saveCoupon);
-  btnDelete.addEventListener("click", deleteCoupon);
-
-  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-
-  // -------------------- Init --------------------
-  (async () => {
-    await loadSettings();
-    await loadCoupons();
-  })();
 })();
