@@ -110,7 +110,12 @@ async function loadSettings() {
 }
 
 
-      const s = await res.json().catch(() => ({}));
+      const s = res.json()
+  .catch(() => ({}))
+  .then(s => {
+    console.log(s);
+  });
+
 
       sShipEnabled && (sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true")));
       sShipFee && (sShipFee.value = Number(s.shipping_fee ?? 0));
