@@ -289,7 +289,7 @@
   body: "{}",
   cache: "no-store"
 });
-;
+
       const s = await res.json().catch(()=> ({}));
 
       sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true"));
