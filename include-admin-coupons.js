@@ -103,32 +103,23 @@ async function loadSettings() {
       body: "{}",
       cache: "no-store"
     });
-    // 後續處理...
-  } catch (err) {
-    console.error(err);
+
+    const s = await res.json().catch(() => ({}));
+
+    // 將設定值寫入 DOM
+    sShipEnabled && (sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true")));
+    sShipFee && (sShipFee.value = Number(s.shipping_fee ?? 0));
+    sFreeOver && (sFreeOver.value = Number(s.free_shipping_threshold ?? 0));
+    sFirstRate && (sFirstRate.value = Number(s.first_purchase_discount ?? 1));
+    sBdayRate && (sBdayRate.value = Number(s.birthday_discount ?? 1));
+
+    toast(toastSettings, "設定已載入 ✅");
+  } catch (e) {
+    console.error(e);
+    toast(toastSettings, "載入設定失敗（請看 Console / 檢查 GAS）", false);
   }
 }
 
-
-      const s = res.json()
-  .catch(() => ({}))
-  .then(s => {
-    console.log(s);
-  });
-
-
-      sShipEnabled && (sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true")));
-      sShipFee && (sShipFee.value = Number(s.shipping_fee ?? 0));
-      sFreeOver && (sFreeOver.value = Number(s.free_shipping_threshold ?? 0));
-      sFirstRate && (sFirstRate.value = Number(s.first_purchase_discount ?? 1));
-      sBdayRate && (sBdayRate.value = Number(s.birthday_discount ?? 1));
-
-      toast(toastSettings, "設定已載入 ✅");
-    } catch (e) {
-      console.error(e);
-      toast(toastSettings, "載入設定失敗（請看 Console / 檢查 GAS）", false);
-    }
-  }
 
   async function saveSettings() {
     toast(toastSettings, "儲存中…");
