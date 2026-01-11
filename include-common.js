@@ -87,3 +87,9 @@ function toast(el, msg, ok = true) {
   el.textContent = msg || "";
   el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
 }
+function showToast(msg, ok = true) {
+  const el = document.getElementById("toast");
+  if (!el) return; // 如果元素不存在就直接跳出
+  el.textContent = msg || "";
+  el.style.color = ok ? "rgba(47,58,44,.85)" : "#8a3b3b";
+}
