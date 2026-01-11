@@ -375,7 +375,7 @@ if (Array.isArray(item.images)) {
   async function loadProducts(){
     showToast("載入商品中...");
     try{
-      const res = await fetch(`${GAS_URL}?path=products`, { cache: "no-store" })
+      const res = await fetch(${GAS_URL}?path=products, { cache: "no-store" });
       const data = await res.json();
       PRODUCTS = Array.isArray(data) ? data : [];
       render();
