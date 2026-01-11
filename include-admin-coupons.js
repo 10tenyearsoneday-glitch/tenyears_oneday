@@ -91,7 +91,14 @@
   async function loadSettings() {
     toast(toastSettings, "載入設定中…");
     try {
-      const res = await fetch(${GAS_PRODUCTS_URL}?path=settings, { cache: "no-store" });
+      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "text/plain;charset=utf-8"
+  },
+  body: "{}",
+  cache: "no-store"
+});
 
       const s = await res.json().catch(() => ({}));
 
