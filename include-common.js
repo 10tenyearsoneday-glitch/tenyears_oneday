@@ -11,7 +11,7 @@
  */
 
 /* ===== 基本設定（請確認這兩個） ===== */
-const API_URL = "https://script.google.com/macros/s/你的正式GASID/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 const ADMIN_KEY = "10years1day911321";
 
 /* ===== 共用工具 ===== */
