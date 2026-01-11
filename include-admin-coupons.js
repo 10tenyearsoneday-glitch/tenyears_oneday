@@ -88,17 +88,27 @@
   }
 
   // -------------------- Settings --------------------
-  async function loadSettings() {
-    toast(toastSettings, "載入設定中…");
-    try {
-      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "text/plain;charset=utf-8"
-  },
-  body: "{}",
-  cache: "no-store"
-});
+async function loadSettings() {
+  toast(toastSettings, "載入設定中…");
+  try {
+    const url = (typeof GAS_PRODUCTS_URL !== "undefined")
+      ? `${GAS_PRODUCTS_URL}?path=settings`
+      : "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec?path=settings";
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: "{}",
+      cache: "no-store"
+    });
+    // 後續處理...
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 
       const s = await res.json().catch(() => ({}));
 
