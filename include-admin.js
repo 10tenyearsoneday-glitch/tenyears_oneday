@@ -1,11 +1,3 @@
-太好了 🙌  
-這裡我幫你整理一份 **完整可用的 `include-admin.js`**，你可以直接放到專案裡，搭配 `include-common.js` 使用。這份程式碼避免了重複宣告、未定義變數的問題，並且只專注在後台商品管理的邏輯。
-
----
-
-## ✅ 完整版 `include-admin.js`
-
-```js
 // include-admin.js
 // 後台管理專用：商品 CRUD 與表單控制
 // ⚠️ 請確認 admin.html 已經先載入 include-common.js
