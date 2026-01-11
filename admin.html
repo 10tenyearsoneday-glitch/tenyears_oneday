@@ -3,213 +3,163 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>十年一日｜後台管理（商品）</title>
+  <title>十年一日｜後台管理</title>
 
-  <!-- 你的站台共用樣式 -->
+  <!-- 你剛剛自己驗證過：少了這個樣式就會壞 -->
   <link rel="stylesheet" href="assets/style.css">
-
-  <style>
-    /* 只補一點後台需要的基本樣式（不影響你原本的 style.css） */
-    body{background:#F8F9F7}
-    .adm-wrap{max-width:1180px;margin:0 auto;padding:18px 14px 40px}
-    .adm-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .adm-title{font-weight:900;letter-spacing:.08em}
-    .adm-sub{opacity:.7;font-size:.92rem;margin-top:6px}
-    .adm-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .btn{border:1px solid rgba(0,0,0,.14);background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer;font-weight:700}
-    .btn.primary{background:#8ea08e;border-color:#8ea08e;color:#fff}
-    .btn.danger{background:#8a3b3b;border-color:#8a3b3b;color:#fff}
-    .btn:disabled{opacity:.5;cursor:not-allowed}
-
-    .card{margin-top:14px;background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.08);border-radius:16px;box-shadow:0 10px 26px rgba(0,0,0,.06)}
-    .card-hd{padding:12px 14px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .card-hd input,.card-hd select{padding:10px 12px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:#fff;outline:none}
-    .card-bd{padding:0}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px 10px;border-bottom:1px solid rgba(0,0,0,.06);vertical-align:top;font-size:.95rem}
-    th{font-weight:900;opacity:.8;text-align:left;white-space:nowrap}
-    .muted{opacity:.7}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.10);font-size:.85rem;background:#fff}
-    .img-sm{width:54px;height:54px;border-radius:12px;object-fit:cover;border:1px solid rgba(0,0,0,.10);background:#fff}
-    .row-actions{display:flex;gap:6px;flex-wrap:wrap}
-    .mini{padding:8px 10px;border-radius:10px;font-size:.9rem}
-
-    /* Modal */
-    .bd{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}
-    .bd.open{display:flex}
-    .modal{width:min(860px,100%);background:#fff;border-radius:18px;border:1px solid rgba(0,0,0,.10);box-shadow:0 18px 55px rgba(0,0,0,.18);overflow:hidden}
-    .modal-hd{padding:12px 14px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center}
-    .modal-hd strong{font-weight:900;letter-spacing:.06em}
-    .modal-bd{padding:14px}
-    .grid{display:grid;gap:12px}
-    .grid.two{grid-template-columns:1fr 1fr}
-    @media (max-width:820px){.grid.two{grid-template-columns:1fr}}
-    label{display:block;font-weight:800;opacity:.85;margin-bottom:6px}
-    input,select,textarea{width:100%;padding:12px;border-radius:14px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.96);outline:none}
-    textarea{resize:vertical}
-    .help{font-size:.85rem;opacity:.7;margin-top:6px}
-    .preview{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-    .toast{padding:10px 12px}
-  </style>
-
-  <script>
-    // 你可以在任何頁先定義 window.TEN_CONFIG，這裡提供保底
-    window.TEN_CONFIG = window.TEN_CONFIG || {
-      products_gas_url: "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec"
-    };
-    // 前端會曝光（暫時沿用你現況）
-    window.TEN_ADMIN_KEY = window.TEN_ADMIN_KEY || "10years1day911321";
-  </script>
 </head>
 
 <body>
-  <div class="adm-wrap">
-    <div class="adm-top">
-      <div>
-        <div class="adm-title">後台管理｜商品</div>
-        <div class="adm-sub">資料欄位：id / title / series / category / price / status / image / images / desc / updatedAt</div>
-      </div>
-      <div class="adm-actions">
-        <button class="btn" id="btnReload">重新載入</button>
-        <button class="btn primary" id="btnOpenCreate">＋新增商品</button>
+  <!-- 可選：上方標題區 -->
+  <div class="admin-wrap" style="max-width:1100px;margin:0 auto;padding:18px 14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
+      <h1 style="margin:0;font-size:18px;letter-spacing:.08em;">後台｜商品管理</h1>
+      <div style="display:flex;gap:8px;">
+        <a class="btn" href="./admin-coupons.html">優惠碼</a>
+        <button class="btn primary" id="btnOpenCreate">＋ 新增商品</button>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-hd">
-        <input id="q" placeholder="搜尋（id / 名稱 / 系列 / 分類）" />
-        <select id="fSeriesFilter">
-          <option value="">全部系列</option>
-          <option value="全系列">全系列</option>
-          <option value="純銀飾品">純銀飾品</option>
-          <option value="韓系飾品">韓系飾品</option>
-        </select>
-        <select id="fStatusFilter">
-          <option value="">全部狀態</option>
-          <option value="ON">上架 ON</option>
-          <option value="OFF">下架 OFF</option>
-        </select>
-        <span class="pill">總數：<b id="count">0</b></span>
-        <span class="pill muted" id="syncState">尚未載入</span>
-      </div>
-
-      <div class="card-bd">
-        <table>
-          <thead>
-            <tr>
-              <th>圖片</th>
-              <th>id / 名稱</th>
-              <th>系列 / 分類</th>
-              <th>價格</th>
-              <th>狀態</th>
-              <th>更新</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="productsTbody">
-            <tr><td colspan="7" class="muted" style="padding:14px;">載入中…</td></tr>
-          </tbody>
-        </table>
+    <!-- 篩選列 -->
+    <div class="card" style="padding:12px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px;">
+        <div>
+          <label>系列</label>
+          <select id="filterSeries">
+            <option value="">全部</option>
+            <option value="韓系飾品">韓系飾品</option>
+            <option value="純銀飾品">純銀飾品</option>
+          </select>
+        </div>
+        <div>
+          <label>分類</label>
+          <select id="filterCategory">
+            <option value="">全部</option>
+            <option value="項鍊">項鍊</option>
+            <option value="手鏈">手鏈</option>
+            <option value="耳環">耳環</option>
+            <option value="戒指">戒指</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div>
+          <label>狀態</label>
+          <select id="filterStatus">
+            <option value="">全部</option>
+            <option value="上架">上架</option>
+            <option value="下架">下架</option>
+          </select>
+        </div>
+        <div>
+          <label>搜尋</label>
+          <input id="filterQ" placeholder="輸入 id / title" />
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Modal -->
-  <div class="bd" id="modalBd" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true">
-      <div class="modal-hd">
-        <strong id="modalTitle">新增商品</strong>
-        <button class="btn mini" id="btnCloseModal" type="button">關閉</button>
-      </div>
-      <div class="modal-bd">
-        <form id="prodForm">
-          <div class="grid two">
-            <div>
-              <label>商品 ID（唯一）</label>
-              <input id="fId" placeholder="例如 P-001（必填）" />
-              <div class="help">id 不可重複；同 id 再送出會變成「更新」。</div>
-            </div>
-            <div>
-              <label>商品名稱</label>
-              <input id="fTitle" placeholder="例如：純銀愛心項鍊（必填）" />
-            </div>
-          </div>
-
-          <div class="grid two" style="margin-top:12px;">
-            <div>
-              <label>分類</label>
-              <select id="fCategory">
-                <option value="項鍊">項鍊</option>
-                <option value="手鏈">手鏈</option>
-                <option value="耳環">耳環</option>
-                <option value="戒指">戒指</option>
-                <option value="其他">其他</option>
-              </select>
-            </div>
-            <div>
-              <label>系列</label>
-              <select id="fSeries">
-                <option value="全系列">全系列</option>
-                <option value="韓系飾品">韓系飾品</option>
-                <option value="純銀飾品">純銀飾品</option>
-              </select>
-              <div class="help">你要「純銀頁面」出現，就把系列選「純銀飾品」。</div>
-            </div>
-          </div>
-
-          <div class="grid two" style="margin-top:12px;">
-            <div>
-              <label>價格</label>
-              <input id="fPrice" inputmode="numeric" placeholder="例如 520（必填）" />
-            </div>
-            <div>
-              <label>狀態</label>
-              <select id="fStatus">
-                <option value="ON">ON（上架）</option>
-                <option value="OFF">OFF（下架）</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid" style="margin-top:12px;">
-            <div>
-              <label>主圖 image（網址）</label>
-              <input id="fImage" placeholder="https://...jpg（建議用網址）" />
-              <div class="help">你也可以用下面「選檔」把圖片轉成 base64 一起送出（若 GAS 沒處理 base64 就會忽略，不會壞）。</div>
-              <input id="fImageFile" type="file" accept="image/*" style="margin-top:8px;">
-              <div class="preview" id="prevMain"></div>
-            </div>
-
-            <div>
-              <label>更多圖片 images（多張網址，用逗號分隔）</label>
-              <input id="fImages" placeholder="https://...1.jpg, https://...2.jpg" />
-              <input id="fImagesFiles" type="file" accept="image/*" multiple style="margin-top:8px;">
-              <div class="preview" id="prevMore"></div>
-            </div>
-
-            <div>
-              <label>描述 desc</label>
-              <textarea id="fDesc" rows="5" placeholder="商品描述…"></textarea>
-            </div>
-          </div>
-
-          <!-- hidden: optional base64 -->
-          <input type="hidden" id="fImageData">
-          <input type="hidden" id="fImagesData">
-
-          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;">
-            <button class="btn danger" id="btnDelete" type="button" style="display:none;">刪除</button>
-            <button class="btn" id="btnCancel" type="button">取消</button>
-            <button class="btn primary" id="btnSave" type="submit">儲存</button>
-          </div>
-
-          <div class="toast" id="toast"></div>
-        </form>
-      </div>
+    <!-- 列表 -->
+    <div class="card" style="overflow:auto;">
+      <table class="admin-table" style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="min-width:110px;">id</th>
+            <th style="min-width:160px;">title</th>
+            <th style="min-width:110px;">series</th>
+            <th style="min-width:90px;">category</th>
+            <th style="min-width:90px;">price</th>
+            <th style="min-width:90px;">status</th>
+            <th style="min-width:180px;">image</th>
+            <th style="min-width:140px;">updatedAt</th>
+            <th style="min-width:140px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="productTbody"></tbody>
+      </table>
     </div>
   </div>
 
-<script src="./include-common.js"></script>
+  <!-- ✅ 新增/編輯：彈窗（按下才出現，不佔版面） -->
+  <div id="pModalBd" class="modal-bd" hidden></div>
+  <div id="pModal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div id="pModalTitle" class="modal-title">新增商品</div>
+        <button id="pModalClose" class="modal-x" type="button">✕</button>
+      </div>
+
+      <form id="pForm" class="modal-body">
+        <div class="grid2">
+          <div>
+            <label>商品ID *</label>
+            <input id="fId" placeholder="例如: P001" required />
+          </div>
+          <div>
+            <label>名稱 *</label>
+            <input id="fTitle" placeholder="商品名稱" required />
+          </div>
+
+          <div>
+            <label>系列 *</label>
+            <select id="fSeries" required>
+              <option value="韓系飾品">韓系飾品</option>
+              <option value="純銀飾品">純銀飾品</option>
+            </select>
+            <div style="font-size:12px;opacity:.7;margin-top:4px;">選「純銀飾品」就會出現在純銀頁面（前台是用 series 過濾）。</div>
+          </div>
+
+          <div>
+            <label>分類 *</label>
+            <select id="fCategory" required>
+              <option value="項鍊">項鍊</option>
+              <option value="手鏈">手鏈</option>
+              <option value="耳環">耳環</option>
+              <option value="戒指">戒指</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+
+          <div>
+            <label>價格 *</label>
+            <input id="fPrice" type="number" min="0" step="1" placeholder="0" required />
+          </div>
+
+          <div>
+            <label>狀態 *</label>
+            <select id="fStatus" required>
+              <option value="上架">上架</option>
+              <option value="下架">下架</option>
+            </select>
+          </div>
+
+          <div style="grid-column:1/-1;">
+            <label>主圖網址（image）</label>
+            <input id="fImage" placeholder="https://...jpg" />
+          </div>
+
+          <div style="grid-column:1/-1;">
+            <label>多圖網址（images，用逗號分隔）</label>
+            <textarea id="fImages" rows="2" placeholder="https://...1.jpg, https://...2.jpg"></textarea>
+          </div>
+
+          <div style="grid-column:1/-1;">
+            <label>描述（desc）</label>
+            <textarea id="fDesc" rows="4" placeholder="商品描述..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn" id="btnDelete">刪除</button>
+          <div style="flex:1"></div>
+          <button type="button" class="btn" id="btnCancel">取消</button>
+          <button type="submit" class="btn primary" id="btnSave">儲存</button>
+        </div>
+
+        <div id="pToast" class="toast"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ✅ 你可以不接 include-common.js；這版 include-admin.js 會自帶必需工具 -->
   <script src="./include-admin.js"></script>
 </body>
 </html>
