@@ -77,10 +77,23 @@
           <div class="form">
             <input id="fId" placeholder="商品 ID（留空=自動產生）">
             <input id="fTitle" placeholder="商品標題 *">
-            <div class="row2">
-              <input id="fSeries" placeholder="系列（例如：韓系飾品）">
-              <input id="fCategory" placeholder="分類（例如：耳環）">
-            </div>
+            <div>
+          <label>分類</label>
+          <select id="fCategory">
+            <option value="項鍊">項鍊</option>
+            <option value="手鏈">手鏈</option>
+            <option value="耳環">耳環</option>
+            <option value="戒指">戒指</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div>
+          <label>系列</label>
+          <select id="fSeries">
+            <option value="全系列">全系列</option>
+            <option value="純銀飾品">純銀飾品</option>
+          </select>
+        </div>
             <div class="row2">
               <input id="fPrice" placeholder="價格 *" inputmode="numeric">
               <select id="fStatus">
@@ -88,8 +101,35 @@
                 <option value="off">下架</option>
               </select>
             </div>
-            <input id="fImage" placeholder="主圖 URL（image）">
-            <textarea id="fImages" placeholder="更多圖片 URL（images，多張用逗號或換行分隔）"></textarea>
+           <div class="full">
+          <div class="label">商品圖（上傳到 assets/products/）</div>
+          <input id="imgFile" type="file" accept="image/*">
+
+          <div class="hint">選檔後會產生「建議檔名」與「圖片網址」。你把檔案丟到 GitHub assets/products/ 即可。</div>
+
+          <div class="rowline">
+            <input id="imgSlug" type="text" placeholder="建議檔名（例如 O-D.jpg）">
+            <button id="copySlug" type="button" class="btn-mini">複製檔名</button>
+          </div>
+
+          <div class="rowline">
+            <input id="imgUrl" type="text" placeholder="圖片網址（會自動填）">
+            <button id="copyUrl" type="button" class="btn-mini">複製網址</button>
+          </div>
+
+          <img id="imgPreview" alt="預覽" style="max-width:220px;border-radius:12px;display:none;margin-top:10px;">
+        </div>
+
+        <div class="full">
+          <label>圖片網址（image）</label>
+          <input id="fImage" placeholder="https://...jpg">
+        </div>
+<div class="full">
+  <label>多圖網址（images）</label>
+  <textarea id="fImages" placeholder="一行一個網址&#10;https://.../O-D-1.jpg&#10;https://.../O-D-2.jpg"></textarea>
+  <div class="hint">一行一個網址；前台之後可做縮圖輪播</div>
+</div>
+
             <textarea id="fDesc" placeholder="商品描述（desc）"></textarea>
 
             <div class="btns">
@@ -103,6 +143,9 @@
       </div>
     </div>
   </div>
+  <script>
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+</script>
 
   <script src="./include-common.js"></script>
   <script src="./include-admin.js"></script>
