@@ -248,7 +248,6 @@ async function saveProduct(){
     console.error(e);
     showToast("儲存失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
   }
-}
 
 // 刪除商品
 async function deleteProduct(){
