@@ -1,196 +1,110 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>後台管理｜十年一日</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>十年一日｜後台管理</title>
   <link rel="stylesheet" href="assets/style.css">
   <style>
-    .admin-wrap{max-width:980px;margin:auto;padding:18px;}
-    .admin-top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:10px 0 14px;}
-    .admin-title{font-size:1.15rem;letter-spacing:.08em;color:rgba(47,58,44,.85)}
-    .admin-actions{display:flex;gap:10px;flex-wrap:wrap}
-    .btn2{border:none;border-radius:999px;padding:10px 14px;background:#5d6b59;color:#fff;cursor:pointer}
-    .btn2.secondary{background:rgba(0,0,0,.08);color:rgba(47,58,44,.9)}
-    .btn2.danger{background:#8a3b3b}
-    .hint{font-size:.85rem;opacity:.7}
-    .table{width:100%;border-collapse:separate;border-spacing:0 10px;}
-    .row{background:rgba(255,255,255,.70);border:1px solid rgba(0,0,0,.06);box-shadow:0 10px 30px rgba(0,0,0,.06);border-radius:14px;overflow:hidden}
-    .row td{padding:12px 12px;vertical-align:middle}
-    .mini{font-size:.85rem;opacity:.75}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.06);font-size:.82rem;white-space:nowrap}
-    .pill.on{background:rgba(93,107,89,.18);color:rgba(47,58,44,.9)}
-    .pill.off{background:rgba(138,59,59,.12);color:#8a3b3b}
-    .thumb-sm{width:56px;height:42px;border-radius:10px;overflow:hidden;background:rgba(0,0,0,.06)}
-    .thumb-sm img{width:100%;height:100%;object-fit:cover;display:block}
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.35);
-  display:none;
-  align-items:flex-start;        /* 不硬置中，避免上面被切 */
-  justify-content:center;
-  padding:18px;
-  overflow:auto;                 /* 超出就可以捲 */
-  z-index:9999;
-}
-.modal.open{display:flex}
-
-.panel{
-  width:min(720px,100%);
-  background:rgba(255,255,255,.92);
-  backdrop-filter:blur(10px);
-  border-radius:18px;
-  padding:16px 16px 14px;
-  border:1px solid rgba(0,0,0,.08);
-
-  max-height: calc(100vh - 36px); /* 不超出視窗 */
-  overflow:auto;                  /* 內容超過就捲 */
-}
-
-.panel-actions{
-  position: sticky;               /* ✅ 按鈕永遠黏在底部 */
-  bottom: 0;
-  background: rgba(255,255,255,.92);
-  padding: 12px 0 4px;
-  display:flex;
-  gap:10px;
-  justify-content:flex-end;
-  flex-wrap:wrap;
-  border-top: 1px solid rgba(0,0,0,.06);
-}
-    .form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.form .full{grid-column:1/-1}
-label{display:block;font-size:.82rem;opacity:.75;margin:2px 0 6px}
-input, select, textarea{
-  width:100%;
-  padding:10px 10px;
-  border-radius:12px;
-  border:1px solid rgba(0,0,0,.12);
-  background:rgba(255,255,255,.85);
-  outline:none;
-}
-textarea{min-height:110px;resize:vertical}
-
-
-    .toast{margin-top:10px;font-size:.9rem}
-    .rowline{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
-    .btn-mini{border:none;border-radius:999px;padding:8px 12px;background:rgba(0,0,0,.08);cursor:pointer}
-    .label{font-size:.82rem;opacity:.75;margin:2px 0 6px}
+    .admin-wrap{max-width:1100px;margin:24px auto;padding:0 14px}
+    .admin-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+    @media (max-width:960px){.admin-grid{grid-template-columns:1fr}}
+    .card{background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.08);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+    .card-h{padding:14px 14px 10px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center}
+    .card-b{padding:14px}
+    .muted{opacity:.65}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px 8px;border-bottom:1px solid rgba(0,0,0,.06);font-size:14px}
+    th{text-align:left;opacity:.8;font-weight:800}
+    tr:hover{background:rgba(0,0,0,.02)}
+    .form{display:grid;gap:10px}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:14px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.92);outline:none}
+    textarea{min-height:92px;resize:vertical}
+    .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+    .btn{border:none;border-radius:14px;padding:10px 12px;font-weight:900;letter-spacing:.06em;cursor:pointer}
+    .btn-primary{background:#8ea08e;color:#fff}
+    .btn-ghost{background:rgba(0,0,0,.06)}
+    .btn-danger{background:#8a3b3b;color:#fff}
+    .toast{margin-top:8px;font-size:13px}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.05);font-size:12px}
+    .topbar{display:flex;gap:10px;align-items:center}
   </style>
 </head>
 <body>
-
-  <main class="admin-wrap">
-    <div class="admin-top">
-      <div>
-        <div class="admin-title">後台管理（商品）</div>
-        <div class="hint">這版直接寫入 Google Sheet（需要 ADMIN_KEY）。</div>
-      </div>
-      <div class="admin-actions">
-        <button class="btn2 secondary" id="btnReload" type="button">重新載入</button>
-        <button class="btn2" id="btnAdd" type="button">新增商品</button>
-      </div>
+  <!-- header 由 include-shop.js 才會注入；後台這頁不需要 header -->
+  <div class="admin-wrap">
+    <div class="topbar" style="margin-bottom:12px;">
+      <div style="font-weight:900;letter-spacing:.08em;">後台｜商品管理</div>
+      <span class="pill muted">products</span>
+      <a class="muted" href="./admin-coupons.html" style="margin-left:auto;text-decoration:none;">優惠碼管理 →</a>
     </div>
 
-    <table class="table" id="tbl"></table>
-    <div class="toast" id="toast"></div>
-  </main>
-
-  <!-- modal -->
-  <div class="modal" id="modal">
-    <div class="panel">
-      <h3 id="modalTitle">編輯商品</h3>
-
-      <div class="form">
-        <div>
-          <label>商品編號（id）</label>
-          <input id="fId" placeholder="例如：O-D">
-        </div>
-        <div>
-          <label>狀態</label>
-          <select id="fStatus">
-            <option value="上架">上架</option>
-            <option value="下架">下架</option>
-          </select>
-        </div>
-
-        <div class="full">
-          <label>商品名稱</label>
-          <input id="fTitle" placeholder="例如：吊飾 D">
-        </div>
-
-        <div>
-          <label>分類</label>
-          <select id="fCategory">
-            <option value="項鍊">項鍊</option>
-            <option value="手鏈">手鏈</option>
-            <option value="耳環">耳環</option>
-            <option value="戒指">戒指</option>
-            <option value="其他">其他</option>
-          </select>
-        </div>
-        <div>
-          <label>系列</label>
-          <select id="fSeries">
-            <option value="全系列">全系列</option>
-            <option value="純銀飾品">純銀飾品</option>
-          </select>
-        </div>
-
-        <div>
-          <label>金額（NT$）</label>
-          <input id="fPrice" type="number" min="0" step="1" placeholder="例如：420">
-        </div>
-
-        <div class="full">
-          <div class="label">商品圖（上傳到 assets/products/）</div>
-          <input id="imgFile" type="file" accept="image/*">
-
-          <div class="hint">選檔後會產生「建議檔名」與「圖片網址」。你把檔案丟到 GitHub assets/products/ 即可。</div>
-
-          <div class="rowline">
-            <input id="imgSlug" type="text" placeholder="建議檔名（例如 O-D.jpg）">
-            <button id="copySlug" type="button" class="btn-mini">複製檔名</button>
+    <div class="admin-grid">
+      <div class="card">
+        <div class="card-h">
+          <div>
+            <div style="font-weight:900;">商品列表</div>
+            <div class="muted" style="font-size:12px;">點列表可載入到右邊表單</div>
           </div>
-
-          <div class="rowline">
-            <input id="imgUrl" type="text" placeholder="圖片網址（會自動填）">
-            <button id="copyUrl" type="button" class="btn-mini">複製網址</button>
-          </div>
-
-          <img id="imgPreview" alt="預覽" style="max-width:220px;border-radius:12px;display:none;margin-top:10px;">
+          <button class="btn btn-ghost" id="reload" type="button">重新載入</button>
         </div>
-
-        <div class="full">
-          <label>圖片網址（image）</label>
-          <input id="fImage" placeholder="https://...jpg">
-        </div>
-<div class="full">
-  <label>多圖網址（images）</label>
-  <textarea id="fImages" placeholder="一行一個網址&#10;https://.../O-D-1.jpg&#10;https://.../O-D-2.jpg"></textarea>
-  <div class="hint">一行一個網址；前台之後可做縮圖輪播</div>
-</div>
-
-        <div class="full">
-          <label>商品說明（desc）</label>
-          <textarea id="fDesc" placeholder="例如：極簡風吊飾，日常百搭。"></textarea>
+        <div class="card-b">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:120px;">ID</th>
+                <th>標題</th>
+                <th style="width:110px;">價格</th>
+                <th style="width:110px;">狀態</th>
+              </tr>
+            </thead>
+            <tbody id="tbl"></tbody>
+          </table>
+          <div id="listToast" class="toast muted"></div>
         </div>
       </div>
 
-      <div class="panel-actions">
-        <button class="btn2 secondary" id="btnCancel" type="button">取消</button>
-        <button class="btn2 danger" id="btnDelete" type="button" style="display:none;">刪除</button>
-        <button class="btn2" id="btnSave" type="button">儲存</button>
-      </div>
+      <div class="card">
+        <div class="card-h">
+          <div>
+            <div style="font-weight:900;">新增 / 編輯商品</div>
+            <div class="muted" style="font-size:12px;">存檔需要 key（前端會帶）</div>
+          </div>
+          <button class="btn btn-ghost" id="btnNew" type="button">新增</button>
+        </div>
+        <div class="card-b">
+          <div class="form">
+            <input id="fId" placeholder="商品 ID（留空=自動產生）">
+            <input id="fTitle" placeholder="商品標題 *">
+            <div class="row2">
+              <input id="fSeries" placeholder="系列（例如：韓系飾品）">
+              <input id="fCategory" placeholder="分類（例如：耳環）">
+            </div>
+            <div class="row2">
+              <input id="fPrice" placeholder="價格 *" inputmode="numeric">
+              <select id="fStatus">
+                <option value="on">上架</option>
+                <option value="off">下架</option>
+              </select>
+            </div>
+            <input id="fImage" placeholder="主圖 URL（image）">
+            <textarea id="fImages" placeholder="更多圖片 URL（images，多張用逗號或換行分隔）"></textarea>
+            <textarea id="fDesc" placeholder="商品描述（desc）"></textarea>
 
-      <div class="hint" id="modalHint" style="margin-top:10px;"></div>
+            <div class="btns">
+              <button class="btn btn-primary" id="save" type="button">儲存</button>
+              <button class="btn btn-danger" id="del" type="button">刪除</button>
+              <button class="btn btn-ghost" id="clear" type="button">清空</button>
+            </div>
+            <div id="formToast" class="toast"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-
-  <script defer src="./include-common.js"></script>
-  <script defer src="./include-admin.js"></script>
-
+  <script src="./include-common.js"></script>
+  <script src="./include-admin.js"></script>
 </body>
 </html>

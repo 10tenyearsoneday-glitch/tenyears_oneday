@@ -228,19 +228,23 @@
     toastEl = $("toast") || $("adminToast") || null;
 
     tbl = $("tbl");
-    pid = $("pid");
-    title = $("title");
-    series = $("series");
-    category = $("category");
-    price = $("price");
-    status = $("status");
-    image = $("image");
-    images = $("images");
-    desc = $("desc");
-    btnSave = $("save");
-    btnDel = $("del");
-    btnClear = $("clear");
-    btnReload = $("reload");
+
+// === accept both old ids and your current admin.html ids ===
+pid      = $("pid")      || $("fId");
+title    = $("title")    || $("fTitle");
+series   = $("series")   || $("fSeries");
+category = $("category") || $("fCategory");
+price    = $("price")    || $("fPrice");
+status   = $("status")   || $("fStatus");
+image    = $("image")    || $("fImage");
+images   = $("images")   || $("fImages");
+desc     = $("desc")     || $("fDesc");
+
+// buttons
+btnSave   = $("save")   || $("btnSave");
+btnDel    = $("del")    || $("btnDel") || $("btnDelete");
+btnClear  = $("clear")  || $("btnClear") || $("btnNew");   // use New as "clear form"
+btnReload = $("reload") || $("btnReload");
 
     // If key DOM missing, fail softly (avoid page crash)
     if (!tbl || !pid || !title) {
