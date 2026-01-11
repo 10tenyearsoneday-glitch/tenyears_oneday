@@ -2,7 +2,7 @@
 // 共用設定：前台與後台都會用到
 
 // ⚠️ 請改成你自己的 Google Apps Script 部署網址
-const API_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
 // 後台管理需要的密鑰（建議只在後台頁面使用，前台不要暴露）
 const ADMIN_KEY = "10years1day911321";
