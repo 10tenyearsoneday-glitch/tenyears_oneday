@@ -295,4 +295,4 @@ $("cartTotal") && (
     renderCartBadge();
     renderDrawer();
   });
-})();
+}();
