@@ -91,53 +91,43 @@
 async function loadSettings() {
   toast(toastSettings, "載入設定中…");
   try {
-    const url = (typeof GAS_PRODUCTS_URL !== "undefined")
-      ? `${GAS_PRODUCTS_URL}?path=settings`
-      : "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec?path=settings";
+    // ✅ 直接用 gasPost（會自動帶 &key=ADMIN_KEY）
+    const raw = await gasPost("settings", "", {});
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
-      body: "{}",
-      cache: "no-store"
-    });
+    // ✅ 兼容：物件 / 陣列 / 包一層 data
+    let s = raw;
 
-  const raw = await res.json().catch(() => ({}));
+    if (s && typeof s === "object" && !Array.isArray(s) && "data" in s) {
+      s = s.data;
+    }
 
-// ✅ 兼容：物件 / 陣列 / 包一層 data
-let s = raw;
+    if (Array.isArray(s)) {
+      const obj = {};
+      for (const row of s) {
+        const k = row?.key ?? row?.name ?? row?.[0];
+        const v = row?.value ?? row?.val ?? row?.[1];
+        if (k != null) obj[String(k).trim()] = v;
+      }
+      s = obj;
+    }
 
-// 1) 如果是 { data: ... } 包一層
-if (s && typeof s === "object" && !Array.isArray(s) && "data" in s) {
-  s = s.data;
-}
+    if (!s || typeof s !== "object" || Array.isArray(s)) s = {};
 
-// 2) 如果是陣列（例如 settings sheet 轉出來的 key/value 列表）
-if (Array.isArray(s)) {
-  const obj = {};
-  for (const row of s) {
-    // 兼容不同欄位命名：key/value、name/value、或 [key,value]
-    const k = row?.key ?? row?.name ?? row?.[0];
-    const v = row?.value ?? row?.val ?? row?.[1];
-    if (k != null) obj[String(k).trim()] = v;
-  }
-  s = obj;
-}
+    console.log("settings raw =>", raw);
+    console.log("settings normalized =>", s);
 
-// 3) 保底：如果還不是物件就給空物件
-if (!s || typeof s !== "object" || Array.isArray(s)) s = {};
-
-console.log("settings raw =>", raw);
-console.log("settings normalized =>", s);
-
-    // 將設定值寫入 DOM
-    sShipEnabled && (sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true")));
-    sShipFee && (sShipFee.value = Number(s.shipping_fee ?? 0));
-    sFreeOver && (sFreeOver.value = Number(s.free_shipping_threshold ?? 0));
-    sFirstRate && (sFirstRate.value = Number(s.first_purchase_discount ?? 1));
-    sBdayRate && (sBdayRate.value = Number(s.birthday_discount ?? 1));
+    // ✅ 將設定值寫入 DOM
+    if (sShipEnabled) {
+      sShipEnabled.value = String(!!(
+        s.shipping_enabled === true ||
+        s.shipping_enabled === "TRUE" ||
+        s.shipping_enabled === "true"
+      ));
+    }
+    if (sShipFee)   sShipFee.value   = Number(s.shipping_fee ?? 0);
+    if (sFreeOver)  sFreeOver.value  = Number(s.free_shipping_threshold ?? 0);
+    if (sFirstRate) sFirstRate.value = Number(s.first_purchase_discount ?? 1);
+    if (sBdayRate)  sBdayRate.value  = Number(s.birthday_discount ?? 1);
 
     toast(toastSettings, "設定已載入 ✅");
   } catch (e) {
@@ -145,26 +135,6 @@ console.log("settings normalized =>", s);
     toast(toastSettings, "載入設定失敗（請看 Console / 檢查 GAS）", false);
   }
 }
-
-
-  async function saveSettings() {
-    toast(toastSettings, "儲存中…");
-    try {
-      const payload = {
-        shipping_enabled: (sShipEnabled?.value === "true"),
-        shipping_fee: Number(sShipFee?.value || 0),
-        free_shipping_threshold: Number(sFreeOver?.value || 0),
-        first_purchase_discount: Number(sFirstRate?.value || 1),
-        birthday_discount: Number(sBdayRate?.value || 1),
-      };
-
-      await gasPost("settings_update", "", payload);
-      toast(toastSettings, "已儲存 ✅");
-    } catch (e) {
-      console.error(e);
-      toast(toastSettings, "儲存失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
-    }
-  }
 
   // -------------------- Coupons --------------------
   function pillEnabled(x) {
