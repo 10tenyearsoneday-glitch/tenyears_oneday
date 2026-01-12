@@ -225,27 +225,23 @@ async function getSettings() {
   // === 運費（來自 settings，顯示用） ===
   const settings = await getSettings();
 
-const fee = Number(settings.shipping_fee || 0);
-const freeThRaw = settings.free_shipping_th;
-const freeTh = Number(String(freeThRaw).trim());
-
-let shipping = 0;
-if (String(settings.shipping_enable).toUpperCase() === "TRUE") {
-  if (!Number.isFinite(freeTh) || freeTh <= 0) {
-    shipping = fee;
-  } else {
+  let shipping = 0;
+  if (settings.shipping_enable) {
+    const fee = Number(settings.shipping_fee || 0);
+    const freeTh = Number(settings.free_shipping_th || 0);
     shipping = subtotal >= freeTh ? 0 : fee;
   }
+
+  $("cartShipping") && (
+    $("cartShipping").textContent =
+      shipping === 0 ? "免運" : money(shipping)
+  );
+
+  // 合計（只算運費，不含任何折扣）
+  $("cartTotal") && (
+    $("cartTotal").textContent = money(subtotal + shipping)
+  );
 }
-
-$("cartShipping") && (
-  $("cartShipping").textContent =
-    shipping === 0 ? "免運" : money(shipping)
-);
-
-$("cartTotal") && (
-  $("cartTotal").textContent = money(subtotal + shipping)
-);
 
 
   /* =========================
@@ -295,4 +291,4 @@ $("cartTotal") && (
     renderCartBadge();
     renderDrawer();
   });
-}();
+})();
