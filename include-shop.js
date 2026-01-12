@@ -1,21 +1,10 @@
-// include-shop.js — STABLE FINAL (safe guard)
+// include-shop.js — SHOP ONLY / STABLE
 (() => {
-  if (window.__TEN_SHOP_LOADED__) return;
-  window.__TEN_SHOP_LOADED__ = true;
+  if (window.TEN_SHOP_LOADED) return;
+  window.TEN_SHOP_LOADED = true;
 
   /* =========================
-     DOM guard（更寬鬆）
-  ========================= */
-  const hasCartDOM = () =>
-    document.getElementById("cartSubtotal") ||
-    document.getElementById("cartTotal") ||
-    document.getElementById("cartShipping") ||
-    document.getElementById("cartDiscount");
-
-  if (!hasCartDOM()) return;
-
-  /* =========================
-     基本設定
+     基本設定（純前台）
   ========================= */
   const CART_KEY = "ten_cart";
   const APPLIED_KEY = "ten_applied_coupon_v1";
@@ -28,22 +17,27 @@
   const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
 
   /* =========================
-     購物車
+     Cart storage
   ========================= */
-  const readCart = () => {
+  function readCart() {
     try {
       const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
       return Array.isArray(arr) ? arr : [];
     } catch {
       return [];
     }
-  };
+  }
+
+  function writeCart(items) {
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+    window.dispatchEvent(new Event("cart:changed"));
+  }
 
   /* =========================
-     Settings
+     Settings（只讀）
   ========================= */
   async function fetchSettings() {
-    if (window.__TEN_SETTINGS__) return window.__TEN_SETTINGS__;
+    if (window.TEN_SETTINGS) return window.TEN_SETTINGS;
 
     const res = await fetch(`${GAS_URL}?path=settings`, { cache: "no-store" });
     const raw = await res.json().catch(() => ({}));
@@ -61,38 +55,41 @@
     }
     if (!s || typeof s !== "object") s = {};
 
-    window.__TEN_SETTINGS__ = {
+    window.TEN_SETTINGS = {
       shipping_enabled: s.shipping_enabled === true || s.shipping_enabled === "true",
       shipping_fee: Number(s.shipping_fee || 0),
       free_shipping_threshold: Number(s.free_shipping_threshold || 0),
       first_purchase_discount: Number(s.first_purchase_discount || 1),
     };
-    return window.__TEN_SETTINGS__;
+    return window.TEN_SETTINGS;
   }
 
-  const calcShipping = (subtotal, s) => {
+  /* =========================
+     計算
+  ========================= */
+  function calcShipping(subtotal, s) {
     if (!s.shipping_enabled) return 0;
     if (s.free_shipping_threshold > 0 && subtotal >= s.free_shipping_threshold) return 0;
     return Math.max(0, s.shipping_fee);
-  };
+  }
 
-  const calcFirstPurchase = (subtotal, s) => {
+  function calcFirstPurchase(subtotal, s) {
     if (localStorage.getItem(HAS_PURCHASE_KEY) === "1") return 0;
     const r = s.first_purchase_discount;
     if (!(r > 0 && r < 1)) return 0;
     return Math.round(subtotal * (1 - r));
-  };
+  }
 
   /* =========================
      優惠碼
   ========================= */
-  const readApplied = () => {
+  function readApplied() {
     try {
       return JSON.parse(localStorage.getItem(APPLIED_KEY) || "{}");
     } catch {
       return {};
     }
-  };
+  }
 
   async function validateCoupon(code, subtotal) {
     const url =
@@ -105,14 +102,15 @@
   }
 
   /* =========================
-     結算
+     Drawer 計算顯示
   ========================= */
   async function renderCart() {
     const cart = readCart();
-    const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
+    if (!cart.length && !$("cartSubtotal")) return;
 
-    const settings = await fetchSettings();
+    const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
     const applied = readApplied();
+    const settings = await fetchSettings();
 
     const firstDiscount = calcFirstPurchase(subtotal, settings);
     const couponDiscount = Math.min(subtotal, Number(applied.discount || 0));
@@ -128,14 +126,15 @@
       ($("cartFirstDiscount").textContent = `- ${money(firstDiscount)}`);
     $("cartDiscount") &&
       ($("cartDiscount").textContent = `- ${money(couponDiscount)}`);
-    $("cartShipping") && ($("cartShipping").textContent = money(shipping));
+    $("cartShipping") &&
+      ($("cartShipping").textContent = money(shipping));
     $("cartTotal") && ($("cartTotal").textContent = money(total));
   }
 
   /* =========================
      套用優惠碼
   ========================= */
-  $("drawerCouponApply")?.addEventListener("click", async () => {
+  $("drawerApplyCoupon")?.addEventListener("click", async () => {
     const code = $("drawerCouponCode")?.value.trim();
     if (!code) return;
 
