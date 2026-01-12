@@ -266,7 +266,7 @@ function applyFilter(f){
     .then(r=>r.json())
     .then(d=>{
       ALL_PRODUCTS = Array.isArray(d) ? d : [];
-      applyFilter("純銀");
+      applyFilter("全部");
     })
     .catch(()=>{ grid.innerHTML = `<div class="note">載入商品失敗，請稍後再試。</div>`; });
 })();
