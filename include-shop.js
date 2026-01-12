@@ -267,40 +267,19 @@ function normalizeSettings(data) {
     $("cartSubtotal") && ($("cartSubtotal").textContent = money(subtotal));
 
     // settings 尚未載入：顯示「計算中…」避免誤顯示免運
-    const shippingEl = $("cartShipping");
-    const totalEl = $("cartTotal");
+   const settings = await getSettings();
 
-    if (!__TEN_SETTINGS) {
-      shippingEl && (shippingEl.textContent = "計算中…");
-      totalEl && (totalEl.textContent = money(subtotal));
-      return;
-    }
-
-    const s = __TEN_SETTINGS || {};
-    console.log("SETTINGS =", s);
- const shippingEnabled = truthy(s.shipping_enabled);   // ✅ 對齊
-const fee = num(s.shipping_fee, 0);                   // ✅ 本來就對
-const freeTh = num(s.free_shipping_threshold, 0);     // ✅ 對齊
-
-    let shipping = 0;
-
-    if (shippingEnabled) {
-      if (fee <= 0) {
-        shipping = 0;
-      } else if (freeTh > 0) {
-        shipping = subtotal >= freeTh ? 0 : fee;
-      } else {
-        // 門檻沒設定就一律收運費
-        shipping = fee;
-      }
-      shippingEl && (shippingEl.textContent = shipping === 0 ? "免運" : money(shipping));
-      totalEl && (totalEl.textContent = money(subtotal + shipping));
-    } else {
-      // 沒開運費：顯示 0，不要顯示「免運」
-      shippingEl && (shippingEl.textContent = money(0));
-      totalEl && (totalEl.textContent = money(subtotal));
-    }
+  let shipping = 0;
+  if (settings.shipping_enable) {
+    const fee = Number(settings.shipping_fee || 0);
+    const freeTh = Number(settings.free_shipping_th || 0);
+    shipping = subtotal >= freeTh ? 0 : fee;
   }
+
+  $("cartShipping") && (
+    $("cartShipping").textContent =
+      shipping === 0 ? "免運" : money(shipping)
+  );
 
   /* =========================
      Drawer events（補回！）
