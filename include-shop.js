@@ -13,27 +13,31 @@
   const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
 
   /* =========================
-     工具
+     Settings（只抓一次）
   ========================= */
   let __TEN_SETTINGS = null;
 
-async function getSettings() {
-  if (__TEN_SETTINGS) return __TEN_SETTINGS;
-  try {
-    const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, {
-      cache: "no-store"
-    });
-    const out = await res.json().catch(() => null);
-    if (out?.ok && out.data) {
-      __TEN_SETTINGS = out.data;
-      return out.data;
+  async function getSettings() {
+    if (__TEN_SETTINGS) return __TEN_SETTINGS;
+    try {
+      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, {
+        cache: "no-store",
+      });
+      const out = await res.json().catch(() => null);
+      if (out?.ok && out.data) {
+        __TEN_SETTINGS = out.data;
+        return out.data;
+      }
+    } catch (e) {
+      console.warn("getSettings failed", e);
     }
-  } catch (e) {
-    console.warn("getSettings failed", e);
+    __TEN_SETTINGS = {};
+    return {};
   }
-  return {};
-}
 
+  /* =========================
+     工具
+  ========================= */
   function normalizeQty(n) {
     n = Number(n || 1);
     if (!Number.isFinite(n) || n < 1) n = 1;
@@ -92,7 +96,7 @@ async function getSettings() {
       cart.push({
         id: pid,
         title: product.title || "",
-        price: Number(product.price || 0),
+        price: Number(String(product.price).replace(/[^\d.-]/g, "")) || 0,
         image: product.image || "",
         qty: normalizeQty(qty),
       });
@@ -182,113 +186,74 @@ async function getSettings() {
   }
 
   /* =========================
-     Drawer render（對齊你原本 CSS）
+     Drawer render（最終穩定版）
   ========================= */
- async function renderDrawer() {
-  const list = $("cartItems");
-  if (!list) return;
+  function renderDrawer() {
+    const list = $("cartItems");
+    if (!list) return;
 
-  const cart = readCart();
-
-  // 空購物車
-  if (!cart.length) {
-    list.innerHTML = `<div class="muted">購物車是空的</div>`;
-    $("cartSubtotal") && ($("cartSubtotal").textContent = money(0));
-    $("cartShipping") && ($("cartShipping").textContent = money(0));
-    $("cartTotal") && ($("cartTotal").textContent = money(0));
-    return;
-  }
-
-  // 商品列表（對齊你原本 CSS）
-  list.innerHTML = cart.map(it => `
-    <div class="d-item">
-      <div class="d-thumb">
-        <img src="${it.image || "assets/placeholder.png"}">
-      </div>
-      <div class="d-info">
-        <div class="d-name">${escapeHtml(it.title)}</div>
-        <div class="d-meta">${money(it.price)}</div>
-      </div>
-      <div class="d-qty">
-        <button data-dec="${escapeAttr(it.id)}">-</button>
-        <input type="number" min="1" value="${it.qty}" data-qty="${escapeAttr(it.id)}">
-        <button data-inc="${escapeAttr(it.id)}">+</button>
-      </div>
-      <button class="d-del" data-del="${escapeAttr(it.id)}">移除</button>
-    </div>
-  `).join("");
-
-  // 小計
-  const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
-  $("cartSubtotal") && ($("cartSubtotal").textContent = money(subtotal));
-
-  // === 運費（來自 settings，顯示用） ===
-  const settings = await getSettings();
-
-// settings 可能是 TRUE/true/"TRUE"/"true"
-const shippingEnabled = String(settings.shipping_enable).toUpperCase() === "TRUE";
-
-const fee = Number(String(settings.shipping_fee ?? "0").trim());
-
-// free_shipping_th 可能是 "2000" / 2000 / "" / null
-const freeTh = Number(String(settings.free_shipping_th ?? "").trim());
-
-let shipping = 0;
-
-if (shippingEnabled) {
-  if (!Number.isFinite(fee) || fee < 0) {
-    shipping = 0;
-  } else if (!Number.isFinite(freeTh) || freeTh <= 0) {
-    // 門檻不合法：就視為「沒有免運門檻」→ 一律收運費
-    shipping = fee;
-  } else {
-    shipping = subtotal >= freeTh ? 0 : fee;
-  }
-}
-
-if ($("cartShipping")) {
-  $("cartShipping").textContent = (shipping === 0 ? "免運" : money(shipping));
-}
-
-if ($("cartTotal")) {
-  $("cartTotal").textContent = money(subtotal + shipping);
-}
-
-
-
-  /* =========================
-     Drawer events
-  ========================= */
-  document.addEventListener("click", (e) => {
-    const inc = e.target.closest("[data-inc]");
-    const dec = e.target.closest("[data-dec]");
-    const del = e.target.closest("[data-del]");
-
-    let cart = readCart();
-
-    if (inc) {
-      const i = cart.find(x => x.id === inc.dataset.inc);
-      if (i) i.qty++;
-    }
-    if (dec) {
-      const i = cart.find(x => x.id === dec.dataset.dec);
-      if (i && i.qty > 1) i.qty--;
-    }
-    if (del) {
-      cart = cart.filter(x => x.id !== del.dataset.del);
-    }
-
-    writeCart(cart);
-  });
-
-  document.addEventListener("change", (e) => {
-    const inp = e.target.closest("[data-qty]");
-    if (!inp) return;
     const cart = readCart();
-    const i = cart.find(x => x.id === inp.dataset.qty);
-    if (i) i.qty = normalizeQty(inp.value);
-    writeCart(cart);
-  });
+
+    if (!cart.length) {
+      list.innerHTML = `<div class="muted">購物車是空的</div>`;
+      $("cartSubtotal").textContent = money(0);
+      $("cartShipping").textContent = money(0);
+      $("cartTotal").textContent = money(0);
+      return;
+    }
+
+    list.innerHTML = cart.map(it => `
+      <div class="d-item">
+        <div class="d-thumb">
+          <img src="${it.image || "assets/placeholder.png"}">
+        </div>
+        <div class="d-info">
+          <div class="d-name">${escapeHtml(it.title)}</div>
+          <div class="d-meta">${money(it.price)}</div>
+        </div>
+        <div class="d-qty">
+          <button data-dec="${escapeAttr(it.id)}">-</button>
+          <input type="number" min="1" value="${it.qty}" data-qty="${escapeAttr(it.id)}">
+          <button data-inc="${escapeAttr(it.id)}">+</button>
+        </div>
+        <button class="d-del" data-del="${escapeAttr(it.id)}">移除</button>
+      </div>
+    `).join("");
+
+    // 小計（型別安全）
+    const subtotal = cart.reduce(
+      (s, it) => s + Number(it.price) * Number(it.qty),
+      0
+    );
+    $("cartSubtotal").textContent = money(subtotal);
+
+    // === 運費（同步、穩定）===
+    const settings = __TEN_SETTINGS || {};
+
+    const shippingEnabled =
+      settings.shipping_enable === true ||
+      settings.shipping_enable === "TRUE" ||
+      settings.shipping_enable === "true" ||
+      settings.shipping_enable === 1 ||
+      settings.shipping_enable === "1";
+
+    const fee = Number(String(settings.shipping_fee ?? "0").replace(/[^\d.-]/g, ""));
+    const freeTh = Number(String(settings.free_shipping_th ?? "").replace(/[^\d.-]/g, ""));
+
+    let shipping = 0;
+    if (shippingEnabled) {
+      if (!Number.isFinite(fee) || fee <= 0) {
+        shipping = 0;
+      } else if (!Number.isFinite(freeTh) || freeTh <= 0) {
+        shipping = fee;
+      } else {
+        shipping = subtotal >= freeTh ? 0 : fee;
+      }
+    }
+
+    $("cartShipping").textContent = shipping === 0 ? "免運" : money(shipping);
+    $("cartTotal").textContent = money(subtotal + shipping);
+  }
 
   /* =========================
      Global listeners
@@ -299,6 +264,7 @@ if ($("cartTotal")) {
   });
 
   window.addEventListener("DOMContentLoaded", async () => {
+    await getSettings();      // ⭐ 先抓 settings
     await loadHeader();
     renderCartBadge();
     renderDrawer();
