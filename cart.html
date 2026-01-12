@@ -4,73 +4,150 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>購物車｜十年一日 TEN YEARS ONE DAY</title>
-  <link rel="stylesheet" href="assets/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700&display=swap');
-    html, body { height: 100%; }
-    body { font-family: 'Noto Serif TC', serif; background: linear-gradient(135deg, #F8F9F7 0%, #D4E7D1 45%, #B8C9A8 100%); }
-
-    .wrap { max-width: 980px; margin: 0 auto; padding: 18px 14px 44px; }
-    .cp-card { background: rgba(255,255,255,.86); border: 1px solid rgba(0,0,0,.08); border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,.08); overflow: hidden; }
-    .cp-head { display:flex; align-items:center; justify-content:space-between; padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,.06); }
-    .cp-h1 { font-weight: 900; letter-spacing: .12em; }
-    .cp-clear { font-size: .9rem; padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.75); }
-    .cp-list { padding: 8px 10px; }
-    .cp-row { display:flex; gap: 10px; align-items:center; padding: 10px 8px; border-bottom: 1px dashed rgba(0,0,0,.1); }
-    .cp-left { flex: 1 1 auto; display:flex; gap: 10px; align-items:center; min-width: 0; }
-    .cp-img { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; border: 1px solid rgba(0,0,0,.08); background: rgba(255,255,255,.9); }
-    .cp-info { min-width: 0; }
-    .cp-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .cp-price { font-size: .9rem; opacity: .75; margin-top: 2px; }
-
-    .cp-qty { display:flex; align-items:center; gap: 6px; }
-    .cp-btn { width: 34px; height: 34px; border-radius: 12px; border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.8); font-weight: 900; }
-    .cp-input { width: 56px; height: 34px; border-radius: 12px; border: 1px solid rgba(0,0,0,.12); text-align: center; background: rgba(255,255,255,.9); }
-
-    .cp-right { width: 120px; text-align: right; }
-    .cp-line { font-weight: 800; }
-    .cp-remove { margin-top: 6px; font-size: .85rem; padding: 6px 10px; border-radius: 12px; border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.75); }
-
-    .cp-coupon { padding: 12px 16px; display:flex; gap: 8px; align-items:center; border-top: 1px solid rgba(0,0,0,.06); }
-    .cp-coupon input { flex: 1 1 auto; height: 40px; padding: 0 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.92); outline: none; }
-    .cp-coupon button { height: 40px; padding: 0 14px; border-radius: 14px; border: none; background: #8ea08e; color: #fff; font-weight: 900; letter-spacing: .08em; }
-    .cp-toast { font-size: .9rem; opacity: .85; }
-
-    .cp-sum { padding: 12px 16px 8px; border-top: 1px solid rgba(0,0,0,.06); }
-    .cp-sum > div { display:flex; justify-content:space-between; line-height: 2; }
-    .cp-total { font-size: 1.05rem; font-weight: 900; }
-
-    .cp-actions { padding: 14px 16px 16px; display:flex; gap: 10px; justify-content: space-between; }
-    .cp-back { padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.75); }
-    .cp-next { padding: 12px 14px; border-radius: 14px; border: none; background: #2f3a2c; color: #fff; font-weight: 900; letter-spacing: .08em; }
-    .cp-next[disabled] { opacity: .5; cursor: not-allowed; }
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700;900&display=swap');
+    body{font-family: 'Noto Serif TC', serif;}
+    .card{background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.08);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+    .thumb{width:72px;height:72px;border-radius:16px;overflow:hidden;background:rgba(0,0,0,.04)}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .qtybtn{width:34px;height:34px;border-radius:10px;border:1px solid rgba(0,0,0,.12);background:#fff}
+    .qtyinp{width:54px;height:34px;border-radius:10px;border:1px solid rgba(0,0,0,.12);text-align:center}
   </style>
 </head>
 
-<body>
-  <main class="wrap">
-    <div id="cartPageApp"></div>
+<body class="min-h-screen bg-gradient-to-br from-[#F8F9F7] to-[#D4E7D1]">
+  <!-- header.html will be injected -->
+  <main class="max-w-3xl mx-auto px-4 pt-28 pb-16">
+    <div class="card p-5">
+      <div class="flex items-center justify-between gap-3">
+        <h1 class="text-xl font-black tracking-widest">購物車</h1>
+        <button id="btnClear" class="text-sm px-3 py-2 rounded-xl border border-black/10 bg-white hover:bg-black/5">清空</button>
+      </div>
+
+      <div id="cartList" class="mt-4"></div>
+
+      <div class="mt-4 pt-4 border-t border-black/10 text-sm space-y-2">
+        <div class="flex justify-between"><span>小計</span><strong id="sumSubtotal">NT$ 0</strong></div>
+        <div class="flex justify-between"><span>合計</span><strong id="sumTotal">NT$ 0</strong></div>
+      </div>
+
+      <div class="mt-5 flex flex-col sm:flex-row gap-3">
+        <a href="./all.html" class="w-full sm:w-auto text-center px-4 py-3 rounded-2xl border border-black/10 bg-white hover:bg-black/5">繼續逛</a>
+        <button id="btnCheckout" class="w-full sm:flex-1 px-4 py-3 rounded-2xl bg-[#8ea08e] text-white font-black tracking-widest">前往結帳（下一步接金流）</button>
+      </div>
+
+      <div id="toast" class="mt-3 text-sm"></div>
+    </div>
   </main>
-<footer>
-  <div class="footer-row">
-    <div class="col">💎 精選材質<small>不含鉛，安心佩戴</small></div>
-    <div class="col center">✨ 獨特設計<small>韓日歐美風格齊聚</small></div>
-    <div class="col right">🚚 便利配送<small>超商取貨、宅配到府</small></div>
-  </div>
 
-  <div class="footer-brand">
-    <div class="t">十年一日</div>
-    <div class="s">tenyears_oneday</div>
-  </div>
-
-  <div class="footer-links">
-    <a href="https://www.instagram.com/tenyears_oneday" target="_blank" rel="noopener">Instagram</a>
-    <span>｜</span>
-    <a href="https://line.me/R/ti/p/@396kwrga" target="_blank" rel="noopener">LINE</a>
-  </div>
-</footer>
-  <!-- Shop include: header + drawer + cart page logic -->
   <script src="./include-shop.js"></script>
+  <script>
+    const CART_KEY = "ten_cart";
+
+    function money(n){
+      n = Math.round(Number(n||0));
+      return `NT$ ${n}`;
+    }
+    function normalizeQty(n){
+      n = Number(n||1);
+      if (!Number.isFinite(n) || n < 1) n = 1;
+      return Math.floor(n);
+    }
+    function readCart(){
+      try{
+        const arr = JSON.parse(localStorage.getItem(CART_KEY)||"[]");
+        return Array.isArray(arr)?arr:[];
+      }catch{ return []; }
+    }
+    function writeCart(items){
+      localStorage.setItem(CART_KEY, JSON.stringify(items));
+      window.dispatchEvent(new Event("cart:changed"));
+    }
+
+    function render(){
+      const list = document.getElementById("cartList");
+      const cart = readCart();
+      if (!cart.length){
+        list.innerHTML = `<div class="text-sm opacity-70 py-8 text-center">購物車是空的。</div>`;
+        document.getElementById("sumSubtotal").textContent = money(0);
+        document.getElementById("sumTotal").textContent = money(0);
+        return;
+      }
+
+      list.innerHTML = cart.map((it, idx) => {
+        const img = it.image || "assets/placeholder.png";
+        const title = it.title || it.id;
+        const price = Number(it.price||0);
+        const qty = normalizeQty(it.qty);
+        return `
+          <div class="py-3 border-b border-black/10 flex items-center gap-3">
+            <div class="thumb"><img src="${img}" alt=""></div>
+            <div class="flex-1 min-w-0">
+              <div class="font-bold truncate">${title}</div>
+              <div class="text-sm opacity-70">${money(price)}</div>
+              <div class="text-sm font-bold mt-1">${money(price*qty)}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="qtybtn" data-dec="${idx}">-</button>
+              <input class="qtyinp" data-qty="${idx}" type="number" min="1" step="1" value="${qty}">
+              <button class="qtybtn" data-inc="${idx}">+</button>
+            </div>
+            <button class="text-sm px-3 py-2 rounded-xl border border-black/10 bg-white hover:bg-black/5" data-del="${idx}">刪除</button>
+          </div>
+        `;
+      }).join("");
+
+      const subtotal = cart.reduce((s,i)=> s + Number(i.price||0)*normalizeQty(i.qty), 0);
+      document.getElementById("sumSubtotal").textContent = money(subtotal);
+      document.getElementById("sumTotal").textContent = money(subtotal);
+    }
+
+    document.addEventListener("click", (e)=>{
+      const inc = e.target.closest("[data-inc]");
+      const dec = e.target.closest("[data-dec]");
+      const del = e.target.closest("[data-del]");
+      if (inc){
+        const idx = Number(inc.getAttribute("data-inc"));
+        const cart = readCart();
+        cart[idx].qty = normalizeQty(cart[idx].qty) + 1;
+        writeCart(cart); render();
+      }
+      if (dec){
+        const idx = Number(dec.getAttribute("data-dec"));
+        const cart = readCart();
+        cart[idx].qty = Math.max(1, normalizeQty(cart[idx].qty) - 1);
+        writeCart(cart); render();
+      }
+      if (del){
+        const idx = Number(del.getAttribute("data-del"));
+        const cart = readCart();
+        cart.splice(idx,1);
+        writeCart(cart); render();
+      }
+    });
+
+    document.addEventListener("change", (e)=>{
+      const inp = e.target.closest("[data-qty]");
+      if (!inp) return;
+      const idx = Number(inp.getAttribute("data-qty"));
+      const cart = readCart();
+      cart[idx].qty = normalizeQty(inp.value);
+      writeCart(cart); render();
+    });
+
+    document.getElementById("btnClear").addEventListener("click", ()=>{
+      if (!confirm("確定清空購物車？")) return;
+      writeCart([]); render();
+      document.getElementById("toast").textContent = "已清空購物車";
+    });
+
+    document.getElementById("btnCheckout").addEventListener("click", ()=>{
+      document.getElementById("toast").textContent = "下一步會接綠界金流。先把購物車/版面定版。";
+    });
+
+    window.addEventListener("cart:changed", render);
+    render();
+  </script>
 </body>
 </html>
