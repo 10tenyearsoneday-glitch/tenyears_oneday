@@ -1,12 +1,18 @@
-// include-shop.js — STABLE FIXED VERSION
+// include-shop.js — STABLE FINAL (safe guard)
 (() => {
-  // ===== 全站保險：已載入就不再跑 =====
   if (window.__TEN_SHOP_LOADED__) return;
   window.__TEN_SHOP_LOADED__ = true;
 
-  // ===== HARD GUARD：沒有購物車 DOM，直接退出 =====
-  // 只要不是購物車 / 結帳相關頁面，這支 JS 不會動任何東西
-  if (!document.getElementById("cartTotal")) return;
+  /* =========================
+     DOM guard（更寬鬆）
+  ========================= */
+  const hasCartDOM = () =>
+    document.getElementById("cartSubtotal") ||
+    document.getElementById("cartTotal") ||
+    document.getElementById("cartShipping") ||
+    document.getElementById("cartDiscount");
+
+  if (!hasCartDOM()) return;
 
   /* =========================
      基本設定
@@ -22,7 +28,7 @@
   const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
 
   /* =========================
-     購物車資料
+     購物車
   ========================= */
   const readCart = () => {
     try {
@@ -34,7 +40,7 @@
   };
 
   /* =========================
-     Settings（運費 / 首購）
+     Settings
   ========================= */
   async function fetchSettings() {
     if (window.__TEN_SETTINGS__) return window.__TEN_SETTINGS__;
@@ -99,7 +105,7 @@
   }
 
   /* =========================
-     結算渲染（唯一會跑的地方）
+     結算
   ========================= */
   async function renderCart() {
     const cart = readCart();
@@ -145,10 +151,6 @@
     renderCart();
   });
 
-  /* =========================
-     啟動
-  ========================= */
   window.addEventListener("cart:changed", renderCart);
   renderCart();
-
 })();
