@@ -258,6 +258,7 @@
     }
 
     const s = __TEN_SETTINGS || {};
+    console.log("SETTINGS =", s);
     const shippingEnabled = truthy(s.shipping_enable);
     const fee = num(s.shipping_fee, 0);
     const freeTh = num(s.free_shipping_th, 0);
