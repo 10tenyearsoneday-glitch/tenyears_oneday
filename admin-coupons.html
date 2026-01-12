@@ -302,6 +302,24 @@ async function loadSettings(){
 
     console.log("settings raw =>", raw);
     console.log("settings normalized =>", s);
+    // 🔧 settings key 對照修正（保險）
+const alias = {
+  shippingFee: "shipping_fee",
+  ship_fee: "shipping_fee",
+  free_shipping: "free_shipping_threshold",
+  freeShipping: "free_shipping_threshold",
+  first_discount: "first_purchase_discount",
+  firstRate: "first_purchase_discount",
+  birthdayRate: "birthday_discount",
+  birthday_month_discount: "birthday_discount",
+};
+
+for (const [from, to] of Object.entries(alias)) {
+  if (s[to] == null && s[from] != null) {
+    s[to] = s[from];
+  }
+}
+
 
     // ✅ 寫入 DOM（你原本那幾行）
     sShipEnabled && (sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true")));
