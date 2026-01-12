@@ -186,7 +186,6 @@
 </div>
 
 <script>
-(() => {
   // ✅ 改成你的
   const GAS_PRODUCTS_URL = (window.TEN_CONFIG && window.TEN_CONFIG.products_gas_url) || "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
   const $ = (id) => document.getElementById(id);
@@ -317,7 +316,7 @@ async function loadSettings(){
     toast(toastSettings, "載入設定失敗（請看 Console / 檢查 GAS）", false);
   }
 }
-}
+
 
   async function saveSettings(){
     toast(toastSettings, "儲存中…");
@@ -541,7 +540,6 @@ async function loadSettings(){
     await loadSettings();
     await loadCoupons();
   })();
-})();
 </script>
 <script src="./include-common.js"></script>
 <script src="./include-admin-coupons.js"></script>
