@@ -48,6 +48,7 @@
 </head>
 <body>
 
+<script src="include.js"></script>
 
 <main class="admin-wrap">
   <div class="admin-top">
@@ -186,8 +187,11 @@
 </div>
 
 <script>
+(() => {
   // ✅ 改成你的
   const GAS_PRODUCTS_URL = (window.TEN_CONFIG && window.TEN_CONFIG.products_gas_url) || "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+  const ADMIN_KEY = "10years1day911321";
+
   const $ = (id) => document.getElementById(id);
 
   const tabs = document.querySelectorAll(".tab");
@@ -275,66 +279,24 @@
     return out;
   }
 
-async function loadSettings(){
-  toast(toastSettings, "載入設定中…");
-  try{
-    // ✅ 用 gasPost 讀 settings（會自動帶 key）
-    const raw = await gasPost("settings", "", {});
+  async function loadSettings(){
+    toast(toastSettings, "載入設定中…");
+    try{
+      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
+      const s = await res.json().catch(()=> ({}));
 
-    // ✅ 兼容：物件 / 陣列 / 包一層 data
-    let s = raw;
+      sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true"));
+      sShipFee.value = Number(s.shipping_fee ?? 0);
+      sFreeOver.value = Number(s.free_shipping_threshold ?? 0);
+      sFirstRate.value = Number(s.first_purchase_discount ?? 1);
+      sBdayRate.value = Number(s.birthday_discount ?? 1);
 
-    if (s && typeof s === "object" && !Array.isArray(s) && "data" in s) {
-      s = s.data;
+      toast(toastSettings, "設定已載入 ✅");
+    }catch(e){
+      console.error(e);
+      toast(toastSettings, "載入設定失敗（請看 Console / 檢查 GAS）", false);
     }
-
-    if (Array.isArray(s)) {
-      const obj = {};
-      for (const row of s) {
-        const k = row?.key ?? row?.name ?? row?.[0];
-        const v = row?.value ?? row?.val ?? row?.[1];
-        if (k != null) obj[String(k).trim()] = v;
-      }
-      s = obj;
-    }
-
-    if (!s || typeof s !== "object" || Array.isArray(s)) s = {};
-
-    console.log("settings raw =>", raw);
-    console.log("settings normalized =>", s);
-    // 🔧 settings key 對照修正（保險）
-const alias = {
-  shippingFee: "shipping_fee",
-  ship_fee: "shipping_fee",
-  free_shipping: "free_shipping_threshold",
-  freeShipping: "free_shipping_threshold",
-  first_discount: "first_purchase_discount",
-  firstRate: "first_purchase_discount",
-  birthdayRate: "birthday_discount",
-  birthday_month_discount: "birthday_discount",
-};
-
-for (const [from, to] of Object.entries(alias)) {
-  if (s[to] == null && s[from] != null) {
-    s[to] = s[from];
   }
-}
-
-
-    // ✅ 寫入 DOM（你原本那幾行）
-    sShipEnabled && (sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true")));
-    sShipFee && (sShipFee.value = Number(s.shipping_fee ?? 0));
-    sFreeOver && (sFreeOver.value = Number(s.free_shipping_threshold ?? 0));
-    sFirstRate && (sFirstRate.value = Number(s.first_purchase_discount ?? 1));
-    sBdayRate && (sBdayRate.value = Number(s.birthday_discount ?? 1));
-
-    toast(toastSettings, "設定已載入 ✅");
-  }catch(e){
-    console.error(e);
-    toast(toastSettings, "載入設定失敗（請看 Console / 檢查 GAS）", false);
-  }
-}
-
 
   async function saveSettings(){
     toast(toastSettings, "儲存中…");
@@ -558,6 +520,7 @@ for (const [from, to] of Object.entries(alias)) {
     await loadSettings();
     await loadCoupons();
   })();
+})();
 </script>
 
 </body>
