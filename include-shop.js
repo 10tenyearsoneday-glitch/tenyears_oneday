@@ -29,8 +29,8 @@
       });
       const out = await res.json().catch(() => null);
       if (out?.ok && out.data) {
-        __TEN_SETTINGS = out.data;
-      } else {
+  __TEN_SETTINGS = normalizeSettings(out.data);
+} else {
         __TEN_SETTINGS = __TEN_SETTINGS || {}; // 保留舊值
       }
     } catch (e) {
