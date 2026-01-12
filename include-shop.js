@@ -15,6 +15,25 @@
   /* =========================
      工具
   ========================= */
+  let __TEN_SETTINGS = null;
+
+async function getSettings() {
+  if (__TEN_SETTINGS) return __TEN_SETTINGS;
+  try {
+    const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, {
+      cache: "no-store"
+    });
+    const out = await res.json().catch(() => null);
+    if (out?.ok && out.data) {
+      __TEN_SETTINGS = out.data;
+      return out.data;
+    }
+  } catch (e) {
+    console.warn("getSettings failed", e);
+  }
+  return {};
+}
+
   function normalizeQty(n) {
     n = Number(n || 1);
     if (!Number.isFinite(n) || n < 1) n = 1;
@@ -165,43 +184,65 @@
   /* =========================
      Drawer render（對齊你原本 CSS）
   ========================= */
-  function renderDrawer() {
-    const list = $("cartItems");
-    if (!list) return;
+ async function renderDrawer() {
+  const list = $("cartItems");
+  if (!list) return;
 
-    const cart = readCart();
-    if (!cart.length) {
-      list.innerHTML = `<div class="muted">購物車是空的</div>`;
-      $("cartSubtotal") && ($("cartSubtotal").textContent = money(0));
-      $("cartShipping") && ($("cartShipping").textContent = money(0));
-      $("cartTotal") && ($("cartTotal").textContent = money(0));
-      return;
-    }
+  const cart = readCart();
 
-    list.innerHTML = cart.map(it => `
-      <div class="d-item">
-        <div class="d-thumb">
-          <img src="${it.image || "assets/placeholder.png"}">
-        </div>
-        <div class="d-info">
-          <div class="d-name">${escapeHtml(it.title)}</div>
-          <div class="d-meta">${money(it.price)}</div>
-        </div>
-        <div class="d-qty">
-          <button data-dec="${escapeAttr(it.id)}">-</button>
-          <input type="number" min="1" value="${it.qty}" data-qty="${escapeAttr(it.id)}">
-          <button data-inc="${escapeAttr(it.id)}">+</button>
-        </div>
-        <button class="d-del" data-del="${escapeAttr(it.id)}">移除</button>
-      </div>
-    `).join("");
-
-    const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
-
-    $("cartSubtotal") && ($("cartSubtotal").textContent = money(subtotal));
-    $("cartShipping") && ($("cartShipping").textContent = "結帳頁顯示");
-    $("cartTotal") && ($("cartTotal").textContent = money(subtotal));
+  // 空購物車
+  if (!cart.length) {
+    list.innerHTML = `<div class="muted">購物車是空的</div>`;
+    $("cartSubtotal") && ($("cartSubtotal").textContent = money(0));
+    $("cartShipping") && ($("cartShipping").textContent = money(0));
+    $("cartTotal") && ($("cartTotal").textContent = money(0));
+    return;
   }
+
+  // 商品列表（對齊你原本 CSS）
+  list.innerHTML = cart.map(it => `
+    <div class="d-item">
+      <div class="d-thumb">
+        <img src="${it.image || "assets/placeholder.png"}">
+      </div>
+      <div class="d-info">
+        <div class="d-name">${escapeHtml(it.title)}</div>
+        <div class="d-meta">${money(it.price)}</div>
+      </div>
+      <div class="d-qty">
+        <button data-dec="${escapeAttr(it.id)}">-</button>
+        <input type="number" min="1" value="${it.qty}" data-qty="${escapeAttr(it.id)}">
+        <button data-inc="${escapeAttr(it.id)}">+</button>
+      </div>
+      <button class="d-del" data-del="${escapeAttr(it.id)}">移除</button>
+    </div>
+  `).join("");
+
+  // 小計
+  const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
+  $("cartSubtotal") && ($("cartSubtotal").textContent = money(subtotal));
+
+  // === 運費（來自 settings，顯示用） ===
+  const settings = await getSettings();
+
+  let shipping = 0;
+  if (settings.shipping_enable) {
+    const fee = Number(settings.shipping_fee || 0);
+    const freeTh = Number(settings.free_shipping_th || 0);
+    shipping = subtotal >= freeTh ? 0 : fee;
+  }
+
+  $("cartShipping") && (
+    $("cartShipping").textContent =
+      shipping === 0 ? "免運" : money(shipping)
+  );
+
+  // 合計（只算運費，不含任何折扣）
+  $("cartTotal") && (
+    $("cartTotal").textContent = money(subtotal + shipping)
+  );
+}
+
 
   /* =========================
      Drawer events
