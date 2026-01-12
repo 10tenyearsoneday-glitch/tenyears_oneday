@@ -139,6 +139,12 @@ textarea{min-height:110px;resize:vertical}
             <option value="純銀飾品">純銀飾品</option>
           </select>
         </div>
+<div class="full">
+  <label>
+    <input type="checkbox" id="fIsSilver">
+    純銀飾品（勾選後會歸類到「純銀飾品」系列）
+  </label>
+</div>
 
         <div>
           <label>金額（NT$）</label>
@@ -313,6 +319,7 @@ textarea{min-height:110px;resize:vertical}
       fTitle.value = item.title || "";
       fCategory.value = item.category || "其他";
       fSeries.value = item.series || "全系列";
+      document.getElementById("fIsSilver").checked = (item.series === "純銀飾品");
       fPrice.value = (typeof item.price === "number") ? item.price : Number(item.price || 0);
       fImage.value = item.image || "";
       fDesc.value = item.desc || "";
@@ -393,7 +400,9 @@ async function loadProducts() {
     status: fStatus.value,
     title: fTitle.value.trim(),
     category: fCategory.value,
-    series: fSeries.value,
+    series: document.getElementById("fIsSilver")?.checked
+  ? "純銀飾品"
+  : "全系列",
     price: Number(fPrice.value || 0),
     image: fImage.value.trim(),
     images: (fImages.value || "").trim(), // ✅ 多圖：先以「多行字串」存到 Sheet
