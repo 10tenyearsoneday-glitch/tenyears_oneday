@@ -73,6 +73,25 @@
     // TRUE / true / 1 / "1"
     return v === true || v === 1 || v === "1" || String(v).toUpperCase() === "TRUE";
   }
+function normalizeSettings(data) {
+  // 如果已經是物件，直接回傳
+  if (data && !Array.isArray(data) && typeof data === "object") {
+    return data;
+  }
+
+  // 如果是 [{key, value}, ...] 轉成 { key: value }
+  if (Array.isArray(data)) {
+    const obj = {};
+    data.forEach(row => {
+      if (row && row.key != null) {
+        obj[row.key] = row.value;
+      }
+    });
+    return obj;
+  }
+
+  return {};
+}
 
   /* =========================
      Cart storage
