@@ -372,19 +372,20 @@ if (Array.isArray(item.images)) {
     });
   }
 
-  async function loadProducts(){
-    showToast("載入商品中...");
-    try{
-      const res = await fetch(${GAS_URL}?path=products, { cache: "no-store" });
-      const data = await res.json();
-      PRODUCTS = Array.isArray(data) ? data : [];
-      render();
-      showToast(`載入完成：${PRODUCTS.length} 件商品`);
-    }catch(e){
-      console.error(e);
-      showToast("載入失敗，請確認 GAS 是否正常", false);
-    }
+async function loadProducts() {
+  showToast("載入商品中...");
+  try {
+    const res = await fetch(`${GAS_URL}?path=products`, { cache: "no-store" });
+    const data = await res.json();
+    PRODUCTS = Array.isArray(data) ? data : [];
+    render();
+    showToast(`載入完成：${PRODUCTS.length} 件商品`);
+  } catch (e) {
+    console.error(e);
+    showToast("載入失敗，請確認 GAS 是否正常", false);
   }
+}
+
 
  function buildPayload(){
   return {
