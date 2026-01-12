@@ -22,13 +22,9 @@
 
   window.TEN_CONFIG = window.TEN_CONFIG || {
     products_gas_url: "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec",
-    members_gas_url: "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec"
   };
 
   const GAS_PRODUCTS_URL = window.TEN_CONFIG.products_gas_url;
-
-  // Your existing admin key (front-end exposed; keep for now, later move to server)
-  const ADMIN_KEY = "10years1day911321";
 
   // ========= Helpers =========
   function $(id) { return document.getElementById(id); }
