@@ -225,23 +225,35 @@ async function getSettings() {
   // === 運費（來自 settings，顯示用） ===
   const settings = await getSettings();
 
-  let shipping = 0;
-  if (settings.shipping_enable) {
-    const fee = Number(settings.shipping_fee || 0);
-    const freeTh = Number(settings.free_shipping_th || 0);
+// settings 可能是 TRUE/true/"TRUE"/"true"
+const shippingEnabled = String(settings.shipping_enable).toUpperCase() === "TRUE";
+
+const fee = Number(String(settings.shipping_fee ?? "0").trim());
+
+// free_shipping_th 可能是 "2000" / 2000 / "" / null
+const freeTh = Number(String(settings.free_shipping_th ?? "").trim());
+
+let shipping = 0;
+
+if (shippingEnabled) {
+  if (!Number.isFinite(fee) || fee < 0) {
+    shipping = 0;
+  } else if (!Number.isFinite(freeTh) || freeTh <= 0) {
+    // 門檻不合法：就視為「沒有免運門檻」→ 一律收運費
+    shipping = fee;
+  } else {
     shipping = subtotal >= freeTh ? 0 : fee;
   }
-
-  $("cartShipping") && (
-    $("cartShipping").textContent =
-      shipping === 0 ? "免運" : money(shipping)
-  );
-
-  // 合計（只算運費，不含任何折扣）
-  $("cartTotal") && (
-    $("cartTotal").textContent = money(subtotal + shipping)
-  );
 }
+
+if ($("cartShipping")) {
+  $("cartShipping").textContent = (shipping === 0 ? "免運" : money(shipping));
+}
+
+if ($("cartTotal")) {
+  $("cartTotal").textContent = money(subtotal + shipping);
+}
+
 
 
   /* =========================
