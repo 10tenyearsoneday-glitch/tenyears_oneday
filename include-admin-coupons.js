@@ -129,6 +129,8 @@ if (Array.isArray(s)) {
 // 3) 保底：如果還不是物件就給空物件
 if (!s || typeof s !== "object" || Array.isArray(s)) s = {};
 
+console.log("settings raw =>", raw);
+console.log("settings normalized =>", s);
 
     // 將設定值寫入 DOM
     sShipEnabled && (sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true")));
