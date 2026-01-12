@@ -1,46 +1,25 @@
-// include-shop.js (FINAL - with shipping + first purchase + coupon stack)
+// include-shop.js — FINAL V2 (shipping + first purchase + birthday + coupon stack)
 (() => {
-  if (window.TEN_SHOP_LOADED) return;
-  window.TEN_SHOP_LOADED = true;
+  if (window.TEN_SHOP_V2) return;
+  window.TEN_SHOP_V2 = true;
 
-  // ===== guard: 不在後台跑 =====
-  const __p = (location.pathname.split('/').pop() || '').toLowerCase();
-  if (__p.includes('admin') || __p.includes('backend') || __p.includes('manage')) {
-    window.TEN_SHOP_LOADED = false;
-    return;
-  }
-
-  // ===== config =====
+  /* ========================
+     基本設定
+  ======================== */
   const CART_KEY = "ten_cart";
   const MEMBER_KEY = "ten_member_id";
   const APPLIED_KEY = "ten_applied_coupon_v1";
   const HAS_PURCHASE_KEY = "ten_has_purchase_v1";
+  const BIRTH_MONTH_KEY = "ten_member_birth_m"; // 1~12
 
-  window.TEN_CONFIG = window.TEN_CONFIG || {
-    products_gas_url: "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec"
-  };
-  const GAS_PRODUCTS_URL = window.TEN_CONFIG.products_gas_url;
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
-  // ===== helpers =====
   const $ = (id) => document.getElementById(id);
-
   const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
 
-  const normalizeQty = (n) => {
-    n = Number(n || 1);
-    return (!Number.isFinite(n) || n < 1) ? 1 : Math.floor(n);
-  };
-
-  const getMemberId = () => {
-    let id = localStorage.getItem(MEMBER_KEY);
-    if (!id) {
-      id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
-      localStorage.setItem(MEMBER_KEY, id);
-    }
-    return id;
-  };
-
-  // ===== cart storage =====
+  /* ========================
+     購物車
+  ======================== */
   const readCart = () => {
     try {
       const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
@@ -50,16 +29,25 @@
     }
   };
 
-  const writeCart = (items) => {
-    localStorage.setItem(CART_KEY, JSON.stringify(items));
-    window.dispatchEvent(new Event("cart:changed"));
+  /* ========================
+     會員
+  ======================== */
+  const getMemberId = () => {
+    let id = localStorage.getItem(MEMBER_KEY);
+    if (!id) {
+      id = "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
+      localStorage.setItem(MEMBER_KEY, id);
+    }
+    return id;
   };
 
-  // ===== settings =====
+  /* ========================
+     Settings
+  ======================== */
   async function fetchSettings() {
     if (window.TEN_SETTINGS) return window.TEN_SETTINGS;
 
-    const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
+    const res = await fetch(`${GAS_URL}?path=settings`, { cache: "no-store" });
     const raw = await res.json().catch(() => ({}));
 
     let s = raw;
@@ -80,9 +68,29 @@
       shipping_fee: Number(s.shipping_fee || 0),
       free_shipping_threshold: Number(s.free_shipping_threshold || 0),
       first_purchase_discount: Number(s.first_purchase_discount || 1),
+      birthday_discount: Number(s.birthday_discount || 1),
     };
     return window.TEN_SETTINGS;
   }
+
+  /* ========================
+     折扣計算
+  ======================== */
+  const calcFirstPurchase = (subtotal, s) => {
+    if (localStorage.getItem(HAS_PURCHASE_KEY) === "1") return 0;
+    const r = s.first_purchase_discount;
+    if (!(r > 0 && r < 1)) return 0;
+    return Math.round(subtotal * (1 - r));
+  };
+
+  const calcBirthday = (subtotal, s) => {
+    const m = Number(localStorage.getItem(BIRTH_MONTH_KEY));
+    const now = new Date().getMonth() + 1;
+    if (!m || m !== now) return 0;
+    const r = s.birthday_discount;
+    if (!(r > 0 && r < 1)) return 0;
+    return Math.round(subtotal * (1 - r));
+  };
 
   const calcShipping = (subtotal, s) => {
     if (!s.shipping_enabled) return 0;
@@ -90,26 +98,17 @@
     return Math.max(0, s.shipping_fee);
   };
 
-  const calcFirstPurchaseDiscount = (subtotal, s) => {
-    if (localStorage.getItem(HAS_PURCHASE_KEY) === "1") return 0;
-    const rate = Number(s.first_purchase_discount || 1);
-    if (!(rate > 0 && rate < 1)) return 0;
-    return Math.round(subtotal * (1 - rate));
-  };
-
-  // ===== coupon =====
+  /* ========================
+     優惠碼
+  ======================== */
   const readApplied = () => {
-    try {
-      return JSON.parse(localStorage.getItem(APPLIED_KEY) || "{}");
-    } catch {
-      return {};
-    }
+    try { return JSON.parse(localStorage.getItem(APPLIED_KEY) || "{}"); }
+    catch { return {}; }
   };
-  const writeApplied = (o) => localStorage.setItem(APPLIED_KEY, JSON.stringify(o || {}));
 
   async function validateCoupon(code, subtotal) {
     const url =
-      `${GAS_PRODUCTS_URL}?path=coupon_validate` +
+      `${GAS_URL}?path=coupon_validate` +
       `&code=${encodeURIComponent(code)}` +
       `&memberId=${encodeURIComponent(getMemberId())}` +
       `&subtotal=${encodeURIComponent(subtotal)}`;
@@ -118,47 +117,33 @@
     return await res.json().catch(() => null);
   }
 
-  // ===== drawer render =====
-  function renderDrawer() {
-    const itemsEl = $("cartItems");
-    if (!itemsEl) return;
+  /* ========================
+     Drawer 計算與顯示
+  ======================== */
+  async function renderCart() {
+    const cart = readCart();
+    const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
+    const s = await fetchSettings();
+    const applied = readApplied();
 
-    const cart = readCart().map(it => ({
-      id: String(it.id),
-      title: String(it.title),
-      price: Number(it.price),
-      qty: normalizeQty(it.qty),
-      image: it.image || ""
-    }));
+    const dFirst = calcFirstPurchase(subtotal, s);
+    const dBirth = calcBirthday(subtotal, s);
+    const dCoupon = Math.min(subtotal, Number(applied.discount || 0));
+    const shipping = calcShipping(subtotal, s);
 
-    itemsEl.innerHTML = cart.length
-      ? cart.map(it => `
-        <div class="d-item">
-          <div class="d-name">${it.title}</div>
-          <div class="d-price">${money(it.price * it.qty)}</div>
-        </div>`).join("")
-      : `<div class="muted">購物車是空的</div>`;
+    const total = Math.max(0, subtotal - dFirst - dBirth - dCoupon + shipping);
 
-    (async () => {
-      const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
-      const applied = readApplied();
-      const settings = await fetchSettings();
-
-      const shipping = calcShipping(subtotal, settings);
-      const firstDiscount = calcFirstPurchaseDiscount(subtotal, settings);
-      const couponDiscount = Math.min(subtotal, Number(applied.discount || 0));
-
-      const total = Math.max(0, subtotal + shipping - firstDiscount - couponDiscount);
-
-      $("cartSubtotal") && ($("cartSubtotal").textContent = money(subtotal));
-      $("cartShipping") && ($("cartShipping").textContent = money(shipping));
-      $("cartActivityDiscount") && ($("cartActivityDiscount").textContent = `- ${money(firstDiscount)}`);
-      $("cartDiscount") && ($("cartDiscount").textContent = `- ${money(couponDiscount)}`);
-      $("cartTotal") && ($("cartTotal").textContent = money(total));
-    })();
+    $("cartSubtotal") && ($("cartSubtotal").textContent = money(subtotal));
+    $("cartFirstDiscount") && ($("cartFirstDiscount").textContent = `- ${money(dFirst)}`);
+    $("cartBirthdayDiscount") && ($("cartBirthdayDiscount").textContent = `- ${money(dBirth)}`);
+    $("cartDiscount") && ($("cartDiscount").textContent = `- ${money(dCoupon)}`);
+    $("cartShipping") && ($("cartShipping").textContent = money(shipping));
+    $("cartTotal") && ($("cartTotal").textContent = money(total));
   }
 
-  // ===== coupon apply =====
+  /* ========================
+     優惠碼套用
+  ======================== */
   $("drawerCouponApply")?.addEventListener("click", async () => {
     const code = $("drawerCouponCode")?.value.trim();
     const cart = readCart();
@@ -169,12 +154,14 @@
       alert("優惠碼無法使用");
       return;
     }
-    writeApplied(out);
-    renderDrawer();
+    localStorage.setItem(APPLIED_KEY, JSON.stringify(out));
+    renderCart();
   });
 
-  // ===== cart events =====
-  window.addEventListener("cart:changed", renderDrawer);
-  renderDrawer();
+  /* ========================
+     監聽
+  ======================== */
+  window.addEventListener("cart:changed", renderCart);
+  renderCart();
 
 })();
