@@ -287,8 +287,32 @@
   body: "{}",
   cache: "no-store"
 });
+const raw = await res.json().catch(() => ({}));
 
-      const s = await res.json().catch(()=> ({}));
+// ✅ 兼容：物件 / 陣列 / 包一層 data
+let s = raw;
+
+// 1) 如果是 { data: ... } 包一層
+if (s && typeof s === "object" && !Array.isArray(s) && "data" in s) {
+  s = s.data;
+}
+
+// 2) 如果是陣列（例如 settings sheet 轉出來的 key/value 列表）
+if (Array.isArray(s)) {
+  const obj = {};
+  for (const row of s) {
+    // 兼容不同欄位命名：key/value、name/value、或 [key,value]
+    const k = row?.key ?? row?.name ?? row?.[0];
+    const v = row?.value ?? row?.val ?? row?.[1];
+    if (k != null) obj[String(k).trim()] = v;
+  }
+  s = obj;
+}
+
+// 3) 保底：如果還不是物件就給空物件
+if (!s || typeof s !== "object" || Array.isArray(s)) s = {};
+
+     
 
       sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true"));
       sShipFee.value = Number(s.shipping_fee ?? 0);
