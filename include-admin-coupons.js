@@ -88,53 +88,43 @@
   }
 
   // -------------------- Settings --------------------
-async function loadSettings() {
-  toast(toastSettings, "載入設定中…");
-  try {
-    // ✅ 直接用 gasPost（會自動帶 &key=ADMIN_KEY）
-    const raw = await gasPost("settings", "", {});
+  async function loadSettings() {
+    toast(toastSettings, "載入設定中…");
+    try {
+      const res = await fetch(`${API_URL}?path=settings`, { cache: "no-store" });
+      const s = await res.json().catch(() => ({}));
 
-    // ✅ 兼容：物件 / 陣列 / 包一層 data
-    let s = raw;
+      sShipEnabled && (sShipEnabled.value = String(!!(s.shipping_enabled === true || s.shipping_enabled === "TRUE" || s.shipping_enabled === "true")));
+      sShipFee && (sShipFee.value = Number(s.shipping_fee ?? 0));
+      sFreeOver && (sFreeOver.value = Number(s.free_shipping_threshold ?? 0));
+      sFirstRate && (sFirstRate.value = Number(s.first_purchase_discount ?? 1));
+      sBdayRate && (sBdayRate.value = Number(s.birthday_discount ?? 1));
 
-    if (s && typeof s === "object" && !Array.isArray(s) && "data" in s) {
-      s = s.data;
+      toast(toastSettings, "設定已載入 ✅");
+    } catch (e) {
+      console.error(e);
+      toast(toastSettings, "載入設定失敗（請看 Console / 檢查 GAS）", false);
     }
-
-    if (Array.isArray(s)) {
-      const obj = {};
-      for (const row of s) {
-        const k = row?.key ?? row?.name ?? row?.[0];
-        const v = row?.value ?? row?.val ?? row?.[1];
-        if (k != null) obj[String(k).trim()] = v;
-      }
-      s = obj;
-    }
-
-    if (!s || typeof s !== "object" || Array.isArray(s)) s = {};
-
-    console.log("settings raw =>", raw);
-    console.log("settings normalized =>", s);
-
-    // ✅ 將設定值寫入 DOM
-    if (sShipEnabled) {
-      sShipEnabled.value = String(!!(
-        s.shipping_enabled === true ||
-        s.shipping_enabled === "TRUE" ||
-        s.shipping_enabled === "true"
-      ));
-    }
-    if (sShipFee)   sShipFee.value   = Number(s.shipping_fee ?? 0);
-    if (sFreeOver)  sFreeOver.value  = Number(s.free_shipping_threshold ?? 0);
-    if (sFirstRate) sFirstRate.value = Number(s.first_purchase_discount ?? 1);
-    if (sBdayRate)  sBdayRate.value  = Number(s.birthday_discount ?? 1);
-
-    toast(toastSettings, "設定已載入 ✅");
-  } catch (e) {
-    console.error(e);
-    toast(toastSettings, "載入設定失敗（請看 Console / 檢查 GAS）", false);
   }
-}
+
+  async function saveSettings() {
+    toast(toastSettings, "儲存中…");
+    try {
+      const payload = {
+        shipping_enabled: (sShipEnabled?.value === "true"),
+        shipping_fee: Number(sShipFee?.value || 0),
+        free_shipping_threshold: Number(sFreeOver?.value || 0),
+        first_purchase_discount: Number(sFirstRate?.value || 1),
+        birthday_discount: Number(sBdayRate?.value || 1),
+      };
+
+      await gasPost("settings_update", "", payload);
+      toast(toastSettings, "已儲存 ✅");
+    } catch (e) {
+      console.error(e);
+      toast(toastSettings, "儲存失敗（請看 Console / 檢查 ADMIN_KEY / GAS 寫入）", false);
+    }
+  }
 
   // -------------------- Coupons --------------------
   function pillEnabled(x) {

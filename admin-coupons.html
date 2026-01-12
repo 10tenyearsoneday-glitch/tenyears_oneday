@@ -47,8 +47,9 @@
   </style>
 </head>
 <body>
+<script src="./include-common.js"></script>
+<script src="./include-admin-coupons.js"></script>
 
-<script src="include.js"></script>
 
 <main class="admin-wrap">
   <div class="admin-top">
@@ -190,8 +191,6 @@
 (() => {
   // ✅ 改成你的
   const GAS_PRODUCTS_URL = (window.TEN_CONFIG && window.TEN_CONFIG.products_gas_url) || "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-  const ADMIN_KEY = "10years1day911321";
-
   const $ = (id) => document.getElementById(id);
 
   const tabs = document.querySelectorAll(".tab");
