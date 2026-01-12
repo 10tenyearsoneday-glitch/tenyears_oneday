@@ -124,14 +124,16 @@
     grid.innerHTML = list.map(productCard).join("");
   }
 
-  function applyFilter(f){
-    render(
-      ALL_PRODUCTS.filter(p =>
-        (p.status||"上架")==="上架" &&
-        (f==="全部" || p.category===f)
-      )
-    );
-  }
+function applyFilter(f){
+  render(
+    ALL_PRODUCTS.filter(p =>
+      (p.status||"上架")==="上架" &&
+      p.series === "純銀飾品" &&
+      (f==="全部" || p.category===f)
+    )
+  );
+}
+
 
   chips.forEach(c=>{
     c.onclick=()=>{
