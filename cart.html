@@ -47,14 +47,6 @@
     .cp-next[disabled] { opacity: .5; cursor: not-allowed; }
   </style>
 </head>
-
-<body>
-  <main class="wrap">
-    <div id="cartPageApp"></div>
-  </main>
-
-  <!-- Shop include: header + drawer + cart page logic -->
-  <script src="./include-shop.js"></script>
 <body class="min-h-screen bg-gradient-to-br from-[#F8F9F7] to-[#D4E7D1]">
   <!-- header.html will be injected -->
   <main class="max-w-3xl mx-auto px-4 pt-28 pb-16">
@@ -79,6 +71,8 @@
       <div id="toast" class="mt-3 text-sm"></div>
     </div>
   </main>
+
+  <script src="./include-shop.js"></script>
   <script>
     const CART_KEY = "ten_cart";
 
