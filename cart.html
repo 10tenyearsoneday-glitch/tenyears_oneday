@@ -6,66 +6,59 @@
   <title>購物車｜十年一日 TEN YEARS ONE DAY</title>
   <link rel="stylesheet" href="assets/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700&display=swap');
-    html, body { height: 100%; }
-    body { font-family: 'Noto Serif TC', serif; background: linear-gradient(135deg, #F8F9F7 0%, #D4E7D1 45%, #B8C9A8 100%); }
-
-    .wrap { max-width: 980px; margin: 0 auto; padding: 18px 14px 44px; }
-    .cp-card { background: rgba(255,255,255,.86); border: 1px solid rgba(0,0,0,.08); border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,.08); overflow: hidden; }
-    .cp-head { display:flex; align-items:center; justify-content:space-between; padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,.06); }
-    .cp-h1 { font-weight: 900; letter-spacing: .12em; }
-    .cp-clear { font-size: .9rem; padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.75); }
-    .cp-list { padding: 8px 10px; }
-    .cp-row { display:flex; gap: 10px; align-items:center; padding: 10px 8px; border-bottom: 1px dashed rgba(0,0,0,.1); }
-    .cp-left { flex: 1 1 auto; display:flex; gap: 10px; align-items:center; min-width: 0; }
-    .cp-img { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; border: 1px solid rgba(0,0,0,.08); background: rgba(255,255,255,.9); }
-    .cp-info { min-width: 0; }
-    .cp-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .cp-price { font-size: .9rem; opacity: .75; margin-top: 2px; }
-
-    .cp-qty { display:flex; align-items:center; gap: 6px; }
-    .cp-btn { width: 34px; height: 34px; border-radius: 12px; border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.8); font-weight: 900; }
-    .cp-input { width: 56px; height: 34px; border-radius: 12px; border: 1px solid rgba(0,0,0,.12); text-align: center; background: rgba(255,255,255,.9); }
-
-    .cp-right { width: 120px; text-align: right; }
-    .cp-line { font-weight: 800; }
-    .cp-remove { margin-top: 6px; font-size: .85rem; padding: 6px 10px; border-radius: 12px; border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.75); }
-
-    .cp-coupon { padding: 12px 16px; display:flex; gap: 8px; align-items:center; border-top: 1px solid rgba(0,0,0,.06); }
-    .cp-coupon input { flex: 1 1 auto; height: 40px; padding: 0 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.92); outline: none; }
-    .cp-coupon button { height: 40px; padding: 0 14px; border-radius: 14px; border: none; background: #8ea08e; color: #fff; font-weight: 900; letter-spacing: .08em; }
-    .cp-toast { font-size: .9rem; opacity: .85; }
-
-    .cp-sum { padding: 12px 16px 8px; border-top: 1px solid rgba(0,0,0,.06); }
-    .cp-sum > div { display:flex; justify-content:space-between; line-height: 2; }
-    .cp-total { font-size: 1.05rem; font-weight: 900; }
-
-    .cp-actions { padding: 14px 16px 16px; display:flex; gap: 10px; justify-content: space-between; }
-    .cp-back { padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.75); }
-    .cp-next { padding: 12px 14px; border-radius: 14px; border: none; background: #2f3a2c; color: #fff; font-weight: 900; letter-spacing: .08em; }
-    .cp-next[disabled] { opacity: .5; cursor: not-allowed; }
-  </style>
 </head>
+
 <body class="min-h-screen bg-gradient-to-br from-[#F8F9F7] to-[#D4E7D1]">
-  <!-- header.html will be injected -->
+  <!-- header.html will be injected by include-shop.js -->
+
   <main class="max-w-3xl mx-auto px-4 pt-28 pb-16">
     <div class="card p-5">
       <div class="flex items-center justify-between gap-3">
         <h1 class="text-xl font-black tracking-widest">購物車</h1>
-        <button id="btnClear" class="text-sm px-3 py-2 rounded-xl border border-black/10 bg-white hover:bg-black/5">清空</button>
+        <button id="btnClear"
+          class="text-sm px-3 py-2 rounded-xl border border-black/10 bg-white hover:bg-black/5">
+          清空
+        </button>
       </div>
 
       <div id="cartList" class="mt-4"></div>
 
+      <!-- coupon -->
+      <div class="mt-4 flex gap-2 items-center">
+        <input id="couponInput" placeholder="輸入優惠碼"
+          class="flex-1 h-10 px-3 rounded-xl border border-black/10 bg-white">
+        <button id="btnApplyCoupon"
+          class="h-10 px-4 rounded-xl bg-[#8ea08e] text-white font-bold">
+          套用
+        </button>
+      </div>
+      <div id="couponMsg" class="mt-1 text-sm opacity-80"></div>
+
+      <!-- summary -->
       <div class="mt-4 pt-4 border-t border-black/10 text-sm space-y-2">
-        <div class="flex justify-between"><span>小計</span><strong id="sumSubtotal">NT$ 0</strong></div>
-        <div class="flex justify-between"><span>合計</span><strong id="sumTotal">NT$ 0</strong></div>
+        <div class="flex justify-between">
+          <span>小計</span><strong id="sumSubtotal">NT$ 0</strong>
+        </div>
+        <div class="flex justify-between">
+          <span>折扣</span><strong id="sumDiscount">NT$ 0</strong>
+        </div>
+        <div class="flex justify-between">
+          <span>運費</span><strong id="sumShipping">NT$ 0</strong>
+        </div>
+        <div class="flex justify-between text-base font-black">
+          <span>合計</span><strong id="sumTotal">NT$ 0</strong>
+        </div>
       </div>
 
       <div class="mt-5 flex flex-col sm:flex-row gap-3">
-        <a href="./all.html" class="w-full sm:w-auto text-center px-4 py-3 rounded-2xl border border-black/10 bg-white hover:bg-black/5">繼續逛</a>
-        <button id="btnCheckout" class="w-full sm:flex-1 px-4 py-3 rounded-2xl bg-[#8ea08e] text-white font-black tracking-widest">前往結帳（下一步接金流）</button>
+        <a href="./all.html"
+          class="w-full sm:w-auto text-center px-4 py-3 rounded-2xl border border-black/10 bg-white hover:bg-black/5">
+          繼續逛
+        </a>
+        <button id="btnCheckout"
+          class="w-full sm:flex-1 px-4 py-3 rounded-2xl bg-[#2f3a2c] text-white font-black tracking-widest">
+          前往結帳
+        </button>
       </div>
 
       <div id="toast" class="mt-3 text-sm"></div>
@@ -73,173 +66,202 @@
   </main>
 
   <script src="./include-shop.js"></script>
- <script>
-  const CART_KEY = "ten_cart";
-  const GAS_PRODUCTS_URL =
-    "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+  <script>
+    /* ========= constants ========= */
+    const CART_KEY = "ten_cart";
+    const COUPON_KEY = "ten_applied_coupon_v1";
+    const GAS_PRODUCTS_URL =
+      "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
-  /* ========= utils ========= */
-  const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
-  const num = (v, d = 0) => {
-    const n = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
-    return Number.isFinite(n) ? n : d;
-  };
-  const truthy = (v) =>
-    v === true || v === 1 || v === "1" || String(v).trim().toUpperCase() === "TRUE";
-  const normalizeQty = (n) => Math.max(1, Math.floor(Number(n || 1)));
+    /* ========= utils ========= */
+    const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
+    const num = (v, d = 0) => {
+      const n = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
+      return Number.isFinite(n) ? n : d;
+    };
+    const truthy = (v) =>
+      v === true || v === 1 || v === "1" || String(v).trim().toUpperCase() === "TRUE";
+    const normalizeQty = (n) => Math.max(1, Math.floor(Number(n || 1)));
 
-  /* ========= settings ========= */
-  let SETTINGS = null;
-  let SETTINGS_LOADING = false;
-
-  async function getSettings() {
-    if (SETTINGS || SETTINGS_LOADING) return SETTINGS || {};
-    SETTINGS_LOADING = true;
-    try {
+    /* ========= settings ========= */
+    let SETTINGS = null;
+    async function getSettings() {
+      if (SETTINGS) return SETTINGS;
       const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
-      const out = await res.json().catch(() => null);
-      SETTINGS = out && typeof out === "object"
-        ? (out.ok && out.data ? out.data : out)
-        : {};
-    } catch {
-      SETTINGS = {};
-    } finally {
-      SETTINGS_LOADING = false;
-    }
-    return SETTINGS;
-  }
-
-  /* ========= cart ========= */
-  function readCart() {
-    try {
-      const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-      return Array.isArray(arr) ? arr : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function writeCart(items) {
-    localStorage.setItem(CART_KEY, JSON.stringify(items));
-    window.dispatchEvent(new Event("cart:changed"));
-  }
-
-  /* ========= pricing ========= */
-  function calcShipping(subtotal, s) {
-    if (!truthy(s.shipping_enabled)) return 0;
-    const fee = num(s.shipping_fee, 0);
-    const th = num(s.free_shipping_threshold, 0);
-    if (fee <= 0) return 0;
-    if (th > 0 && subtotal >= th) return 0;
-    return fee;
-  }
-
-  /* ========= render ========= */
-  async function render() {
-    const list = document.getElementById("cartList");
-    const cart = readCart();
-
-    if (!cart.length) {
-      list.innerHTML = `<div class="text-sm opacity-70 py-8 text-center">購物車是空的。</div>`;
-      document.getElementById("sumSubtotal").textContent = money(0);
-      document.getElementById("sumTotal").textContent = money(0);
-      return;
+      const out = await res.json();
+      SETTINGS = out.ok && out.data ? out.data : out;
+      return SETTINGS;
     }
 
-    list.innerHTML = cart.map((it, idx) => {
-      const img = it.image || "assets/placeholder.png";
-      const title = it.title || it.id;
-      const price = num(it.price);
-      const qty = normalizeQty(it.qty);
-      return `
-        <div class="py-3 border-b border-black/10 flex items-center gap-3">
-          <div class="thumb"><img src="${img}" alt=""></div>
-          <div class="flex-1 min-w-0">
-            <div class="font-bold truncate">${title}</div>
-            <div class="text-sm opacity-70">${money(price)}</div>
-            <div class="text-sm font-bold mt-1">${money(price * qty)}</div>
+    /* ========= cart ========= */
+    function readCart() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+        return Array.isArray(arr) ? arr : [];
+      } catch { return []; }
+    }
+    function writeCart(items) {
+      localStorage.setItem(CART_KEY, JSON.stringify(items));
+      window.dispatchEvent(new Event("cart:changed"));
+    }
+
+    /* ========= member state ========= */
+    const isFirstPurchase = () => !localStorage.getItem("ten_has_purchase_v1");
+    const isBirthday = () => {
+      const m = localStorage.getItem("ten_birth_m");
+      const d = localStorage.getItem("ten_birth_d");
+      if (!m || !d) return false;
+      const now = new Date();
+      return now.getMonth() + 1 === Number(m) && now.getDate() === Number(d);
+    };
+
+    /* ========= coupon ========= */
+    async function validateCoupon(code, subtotal) {
+      const res = await fetch(
+        `${GAS_PRODUCTS_URL}?path=coupon_validate&code=${encodeURIComponent(code)}&subtotal=${subtotal}`,
+        { cache: "no-store" }
+      );
+      const out = await res.json();
+      return out.ok ? out.data : null;
+    }
+
+    /* ========= pricing ========= */
+    async function calcPricing(cart) {
+      const settings = await getSettings();
+      const subtotal = cart.reduce(
+        (s, it) => s + num(it.price) * normalizeQty(it.qty), 0
+      );
+
+      let discount = 0;
+      let discountLabel = "";
+
+      const couponCode = localStorage.getItem(COUPON_KEY);
+      if (couponCode) {
+        const c = await validateCoupon(couponCode, subtotal);
+        if (c) {
+          if (c.type === "percent") {
+            discount = Math.round(subtotal * (1 - num(c.value, 1)));
+          } else {
+            discount = Math.min(subtotal, num(c.value, 0));
+          }
+          discountLabel = `優惠碼 ${couponCode}`;
+        } else {
+          localStorage.removeItem(COUPON_KEY);
+        }
+      }
+
+      if (discount === 0) {
+        if (isFirstPurchase() && settings.first_purchase_discount) {
+          discount = Math.round(
+            subtotal * (1 - num(settings.first_purchase_discount, 1))
+          );
+          discountLabel = "首購優惠";
+        } else if (isBirthday() && settings.birthday_discount) {
+          discount = Math.round(
+            subtotal * (1 - num(settings.birthday_discount, 1))
+          );
+          discountLabel = "生日優惠";
+        }
+      }
+
+      const afterDiscount = subtotal - discount;
+      let shipping = 0;
+      if (truthy(settings.shipping_enabled)) {
+        const fee = num(settings.shipping_fee, 0);
+        const th = num(settings.free_shipping_threshold, 0);
+        if (fee > 0 && !(th > 0 && afterDiscount >= th)) {
+          shipping = fee;
+        }
+      }
+
+      return { subtotal, discount, discountLabel, shipping, total: afterDiscount + shipping };
+    }
+
+    /* ========= render ========= */
+    async function render() {
+      const cart = readCart();
+      const list = document.getElementById("cartList");
+
+      if (!cart.length) {
+        list.innerHTML = `<div class="text-center py-10 opacity-70">購物車是空的</div>`;
+        sumSubtotal.textContent = money(0);
+        sumDiscount.textContent = money(0);
+        sumShipping.textContent = money(0);
+        sumTotal.textContent = money(0);
+        return;
+      }
+
+      list.innerHTML = cart.map((it, idx) => `
+        <div class="flex gap-3 py-3 border-b border-black/10">
+          <img src="${it.image || 'assets/placeholder.png'}"
+            class="w-14 h-14 rounded-xl border">
+          <div class="flex-1">
+            <div class="font-bold">${it.title}</div>
+            <div class="text-sm opacity-70">${money(it.price)}</div>
           </div>
           <div class="flex items-center gap-2">
             <button data-dec="${idx}">-</button>
-            <input data-qty="${idx}" type="number" min="1" value="${qty}">
+            <input data-qty="${idx}" type="number" min="1" value="${it.qty}">
             <button data-inc="${idx}">+</button>
           </div>
-          <button data-del="${idx}" class="text-sm px-3 py-2 rounded-xl border">刪除</button>
+          <button data-del="${idx}" class="text-sm border px-2 rounded">刪</button>
         </div>
-      `;
-    }).join("");
+      `).join("");
 
-    const subtotal = cart.reduce(
-      (s, it) => s + num(it.price) * normalizeQty(it.qty),
-      0
-    );
+      const p = await calcPricing(cart);
 
-    const settings = await getSettings();
-    const shipping = calcShipping(subtotal, settings);
-    const total = subtotal + shipping;
+      sumSubtotal.textContent = money(p.subtotal);
+      sumDiscount.textContent = p.discount > 0 ? `- ${money(p.discount)}` : money(0);
+      sumShipping.textContent = p.shipping === 0 ? "免運" : money(p.shipping);
+      sumTotal.textContent = money(p.total);
+      couponMsg.textContent = p.discountLabel || "";
+    }
 
-    document.getElementById("sumSubtotal").textContent = money(subtotal);
-    document.getElementById("sumTotal").textContent =
-      shipping === 0 ? `${money(total)}（免運）` : money(total);
-  }
+    /* ========= events ========= */
+    document.addEventListener("click", (e) => {
+      const inc = e.target.closest("[data-inc]");
+      const dec = e.target.closest("[data-dec]");
+      const del = e.target.closest("[data-del]");
+      let cart = readCart();
 
-  /* ========= events ========= */
-  document.addEventListener("click", (e) => {
-    const inc = e.target.closest("[data-inc]");
-    const dec = e.target.closest("[data-dec]");
-    const del = e.target.closest("[data-del]");
-    let cart = readCart();
+      if (inc) cart[inc.dataset.inc].qty++;
+      if (dec) cart[dec.dataset.dec].qty = Math.max(1, cart[dec.dataset.dec].qty - 1);
+      if (del) cart.splice(del.dataset.del, 1);
 
-    if (inc) cart[inc.dataset.inc].qty++;
-    if (dec) cart[dec.dataset.dec].qty = Math.max(1, cart[dec.dataset.dec].qty - 1);
-    if (del) cart.splice(del.dataset.del, 1);
+      if (inc || dec || del) {
+        writeCart(cart);
+        render();
+      }
+    });
 
-    if (inc || dec || del) {
+    document.addEventListener("change", (e) => {
+      const inp = e.target.closest("[data-qty]");
+      if (!inp) return;
+      const cart = readCart();
+      cart[inp.dataset.qty].qty = normalizeQty(inp.value);
       writeCart(cart);
       render();
-    }
-  });
+    });
 
-  document.addEventListener("change", (e) => {
-    const inp = e.target.closest("[data-qty]");
-    if (!inp) return;
-    const cart = readCart();
-    cart[inp.dataset.qty].qty = normalizeQty(inp.value);
-    writeCart(cart);
+    btnClear.onclick = () => {
+      if (!confirm("確定清空購物車？")) return;
+      writeCart([]);
+      render();
+    };
+
+    btnApplyCoupon.onclick = async () => {
+      const code = couponInput.value.trim();
+      if (!code) return;
+      localStorage.setItem(COUPON_KEY, code);
+      await render();
+    };
+
+    btnCheckout.onclick = () => {
+      toast.textContent = "下一步可直接接綠界金流";
+    };
+
+    window.addEventListener("cart:changed", render);
     render();
-  });
-
-  document.getElementById("btnClear").addEventListener("click", () => {
-    if (!confirm("確定清空購物車？")) return;
-    writeCart([]);
-    render();
-  });
-
-  document.getElementById("btnCheckout").addEventListener("click", () => {
-    document.getElementById("toast").textContent = "下一步將接綠界金流";
-  });
-
-  window.addEventListener("cart:changed", render);
-  render();
-</script>
-
-  <footer>
-  <div class="footer-row">
-    <div class="col">💎 精選材質<small>不含鉛，安心佩戴</small></div>
-    <div class="col center">✨ 獨特設計<small>韓日歐美風格齊聚</small></div>
-    <div class="col right">🚚 便利配送<small>超商取貨、宅配到府</small></div>
-  </div>
-
-  <div class="footer-brand">
-    <div class="t">十年一日</div>
-    <div class="s">tenyears_oneday</div>
-  </div>
-
-  <div class="footer-links">
-    <a href="https://www.instagram.com/tenyears_oneday" target="_blank" rel="noopener">Instagram</a>
-    <span>｜</span>
-    <a href="https://line.me/R/ti/p/@396kwrga" target="_blank" rel="noopener">LINE</a>
-  </div>
-</footer>
+  </script>
 </body>
 </html>
