@@ -28,12 +28,9 @@ export async function getSettings() {
   try {
     const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
     const out = await res.json().catch(() => null);
-
-    if (out && typeof out === "object") {
-      __TEN_SETTINGS = out.ok && out.data ? out.data : out;
-    } else {
-      __TEN_SETTINGS = {};
-    }
+    __TEN_SETTINGS = out && typeof out === "object"
+      ? (out.ok && out.data ? out.data : out)
+      : {};
   } catch {
     __TEN_SETTINGS = {};
   } finally {
@@ -48,19 +45,39 @@ export function calcSubtotal(items) {
   return items.reduce((s, it) => s + num(it.price) * num(it.qty), 0);
 }
 
-export function calcShipping(subtotal, s) {
+export function calcShipping(subtotalAfterDiscount, s) {
   if (!truthy(s.shipping_enabled)) return 0;
 
   const fee = num(s.shipping_fee, 0);
   const th = num(s.free_shipping_threshold, 0);
 
   if (fee <= 0) return 0;
-  if (th > 0 && subtotal >= th) return 0;
+  if (th > 0 && subtotalAfterDiscount >= th) return 0;
 
   return fee;
 }
 
+/**
+ * ctx 統一格式：
+ * {
+ *   coupon: { type, rate, amount } | null,
+ *   firstPurchase: true/false,
+ *   birthday: true/false
+ * }
+ */
 export function calcDiscount(subtotal, s, ctx = {}) {
+  // 🔒 優惠碼成功 → 其他折扣全部失效
+  if (ctx.coupon) {
+    if (ctx.coupon.type === "rate") {
+      return Math.round(subtotal * (1 - num(ctx.coupon.rate, 1)));
+    }
+    if (ctx.coupon.type === "amount") {
+      return Math.min(subtotal, num(ctx.coupon.amount, 0));
+    }
+    return 0;
+  }
+
+  // 沒優惠碼，才考慮首購 / 生日
   let rate = 1;
 
   if (ctx.firstPurchase && s.first_purchase_discount)
@@ -75,8 +92,9 @@ export function calcDiscount(subtotal, s, ctx = {}) {
 export function calcTotal(items, s, ctx = {}) {
   const subtotal = calcSubtotal(items);
   const discount = calcDiscount(subtotal, s, ctx);
-  const shipping = calcShipping(subtotal - discount, s);
-  const total = subtotal - discount + shipping;
+  const afterDiscount = subtotal - discount;
+  const shipping = calcShipping(afterDiscount, s);
+  const total = afterDiscount + shipping;
 
   return { subtotal, discount, shipping, total };
 }
