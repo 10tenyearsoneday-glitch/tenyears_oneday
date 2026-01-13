@@ -107,3 +107,38 @@ export function calcTotal(items, s, ctx = {}) {
 
   return { subtotal, discount, shipping, total };
 }
+/**
+ * 回傳 UI 用的折扣標籤
+ */
+export function getDiscountLabels(s, ctx = {}) {
+  const labels = [];
+
+  // 首購 / 生日（責一）
+  const rateMap = [];
+
+  if (ctx.firstPurchase && s.first_purchase_discount) {
+    rateMap.push({
+      label: "首購優惠",
+      rate: num(s.first_purchase_discount, 1)
+    });
+  }
+
+  if (ctx.birthday && s.birthday_discount) {
+    rateMap.push({
+      label: "生日優惠",
+      rate: num(s.birthday_discount, 1)
+    });
+  }
+
+  if (rateMap.length > 0) {
+    const best = rateMap.sort((a, b) => a.rate - b.rate)[0];
+    labels.push(`${best.label} ${Math.round(best.rate * 100)} 折`);
+  }
+
+  // 優惠碼（可疊）
+  if (ctx.coupon) {
+    labels.push(`優惠碼 ${ctx.coupon.code}`);
+  }
+
+  return labels;
+}
