@@ -1,14 +1,15 @@
-// discount-label.js — TEN YEARS ONE DAY (UI ONLY)
+// discount-label.js — TEN YEARS ONE DAY (UI ONLY, NO MODULE)
 
-import { num } from "./pricing.js";
+const { num } = window.TEN_PRICING || {};
+
+if (!num) {
+  console.error("[TEN] pricing not loaded before discount-label");
+}
 
 /**
  * 依照 pricing.js 的規則，產生「人類可讀」的折扣說明
- * @param {object} settings
- * @param {object} ctx
- * @returns {string[]} labels
  */
-export function buildDiscountLabels(settings, ctx = {}) {
+function buildDiscountLabels(settings, ctx = {}) {
   const labels = [];
 
   /* === 首購 / 生日（責一，取折數較大） === */
@@ -40,6 +41,8 @@ export function buildDiscountLabels(settings, ctx = {}) {
 
   return labels;
 }
+
+// expose to window
 window.TEN_DISCOUNT_LABEL = {
   buildDiscountLabels
 };
