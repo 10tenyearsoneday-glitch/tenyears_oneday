@@ -111,15 +111,19 @@
   /* =========================
      Drawer open / close
   ========================= */
-  function openDrawer() {
-    $("cartBackdrop") && ($("cartBackdrop").hidden = false);
-    $("cartDrawer") && ($("cartDrawer").hidden = false);
-    $("cartBackdrop")?.classList.add("open");
-    $("cartDrawer")?.classList.add("open");
-    document.body.style.overflow = "hidden";
-    renderDrawer();
-    if (__TEN_SETTINGS) renderDrawer();
+  async function openDrawer() {
+  $("cartBackdrop") && ($("cartBackdrop").hidden = false);
+  $("cartDrawer") && ($("cartDrawer").hidden = false);
+  $("cartBackdrop")?.classList.add("open");
+  $("cartDrawer")?.classList.add("open");
+  document.body.style.overflow = "hidden";
+
+  if (!__TEN_SETTINGS) {
+    await getSettings();
   }
+  renderDrawer();
+}
+
   function closeDrawer() {
     $("cartBackdrop")?.classList.remove("open");
     $("cartDrawer")?.classList.remove("open");
