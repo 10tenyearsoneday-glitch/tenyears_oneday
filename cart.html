@@ -72,3 +72,136 @@
 </footer>
   <!-- Shop include: header + drawer + cart page logic -->
   <script src="./include-shop.js"></script>
+<body class="min-h-screen bg-gradient-to-br from-[#F8F9F7] to-[#D4E7D1]">
+  <!-- header.html will be injected -->
+  <main class="max-w-3xl mx-auto px-4 pt-28 pb-16">
+    <div class="card p-5">
+      <div class="flex items-center justify-between gap-3">
+        <h1 class="text-xl font-black tracking-widest">購物車</h1>
+        <button id="btnClear" class="text-sm px-3 py-2 rounded-xl border border-black/10 bg-white hover:bg-black/5">清空</button>
+      </div>
+
+      <div id="cartList" class="mt-4"></div>
+
+      <div class="mt-4 pt-4 border-t border-black/10 text-sm space-y-2">
+        <div class="flex justify-between"><span>小計</span><strong id="sumSubtotal">NT$ 0</strong></div>
+        <div class="flex justify-between"><span>合計</span><strong id="sumTotal">NT$ 0</strong></div>
+      </div>
+
+      <div class="mt-5 flex flex-col sm:flex-row gap-3">
+        <a href="./all.html" class="w-full sm:w-auto text-center px-4 py-3 rounded-2xl border border-black/10 bg-white hover:bg-black/5">繼續逛</a>
+        <button id="btnCheckout" class="w-full sm:flex-1 px-4 py-3 rounded-2xl bg-[#8ea08e] text-white font-black tracking-widest">前往結帳（下一步接金流）</button>
+      </div>
+
+      <div id="toast" class="mt-3 text-sm"></div>
+    </div>
+  </main>
+  <script>
+    const CART_KEY = "ten_cart";
+
+    function money(n){
+      n = Math.round(Number(n||0));
+      return `NT$ ${n}`;
+    }
+    function normalizeQty(n){
+      n = Number(n||1);
+      if (!Number.isFinite(n) || n < 1) n = 1;
+      return Math.floor(n);
+    }
+    function readCart(){
+      try{
+        const arr = JSON.parse(localStorage.getItem(CART_KEY)||"[]");
+        return Array.isArray(arr)?arr:[];
+      }catch{ return []; }
+    }
+    function writeCart(items){
+      localStorage.setItem(CART_KEY, JSON.stringify(items));
+      window.dispatchEvent(new Event("cart:changed"));
+    }
+
+    function render(){
+      const list = document.getElementById("cartList");
+      const cart = readCart();
+      if (!cart.length){
+        list.innerHTML = `<div class="text-sm opacity-70 py-8 text-center">購物車是空的。</div>`;
+        document.getElementById("sumSubtotal").textContent = money(0);
+        document.getElementById("sumTotal").textContent = money(0);
+        return;
+      }
+
+      list.innerHTML = cart.map((it, idx) => {
+        const img = it.image || "assets/placeholder.png";
+        const title = it.title || it.id;
+        const price = Number(it.price||0);
+        const qty = normalizeQty(it.qty);
+        return `
+          <div class="py-3 border-b border-black/10 flex items-center gap-3">
+            <div class="thumb"><img src="${img}" alt=""></div>
+            <div class="flex-1 min-w-0">
+              <div class="font-bold truncate">${title}</div>
+              <div class="text-sm opacity-70">${money(price)}</div>
+              <div class="text-sm font-bold mt-1">${money(price*qty)}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="qtybtn" data-dec="${idx}">-</button>
+              <input class="qtyinp" data-qty="${idx}" type="number" min="1" step="1" value="${qty}">
+              <button class="qtybtn" data-inc="${idx}">+</button>
+            </div>
+            <button class="text-sm px-3 py-2 rounded-xl border border-black/10 bg-white hover:bg-black/5" data-del="${idx}">刪除</button>
+          </div>
+        `;
+      }).join("");
+
+      const subtotal = cart.reduce((s,i)=> s + Number(i.price||0)*normalizeQty(i.qty), 0);
+      document.getElementById("sumSubtotal").textContent = money(subtotal);
+      document.getElementById("sumTotal").textContent = money(subtotal);
+    }
+
+    document.addEventListener("click", (e)=>{
+      const inc = e.target.closest("[data-inc]");
+      const dec = e.target.closest("[data-dec]");
+      const del = e.target.closest("[data-del]");
+      if (inc){
+        const idx = Number(inc.getAttribute("data-inc"));
+        const cart = readCart();
+        cart[idx].qty = normalizeQty(cart[idx].qty) + 1;
+        writeCart(cart); render();
+      }
+      if (dec){
+        const idx = Number(dec.getAttribute("data-dec"));
+        const cart = readCart();
+        cart[idx].qty = Math.max(1, normalizeQty(cart[idx].qty) - 1);
+        writeCart(cart); render();
+      }
+      if (del){
+        const idx = Number(del.getAttribute("data-del"));
+        const cart = readCart();
+        cart.splice(idx,1);
+        writeCart(cart); render();
+      }
+    });
+
+    document.addEventListener("change", (e)=>{
+      const inp = e.target.closest("[data-qty]");
+      if (!inp) return;
+      const idx = Number(inp.getAttribute("data-qty"));
+      const cart = readCart();
+      cart[idx].qty = normalizeQty(inp.value);
+      writeCart(cart); render();
+    });
+
+    document.getElementById("btnClear").addEventListener("click", ()=>{
+      if (!confirm("確定清空購物車？")) return;
+      writeCart([]); render();
+      document.getElementById("toast").textContent = "已清空購物車";
+    });
+
+    document.getElementById("btnCheckout").addEventListener("click", ()=>{
+      document.getElementById("toast").textContent = "下一步會接綠界金流。先把購物車/版面定版。";
+    });
+
+    window.addEventListener("cart:changed", render);
+    render();
+  </script>
+</body>
+</html>
