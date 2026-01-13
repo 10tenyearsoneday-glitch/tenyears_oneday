@@ -139,12 +139,15 @@
       if (couponCode) {
         const c = await validateCoupon(couponCode, subtotal);
         if (c) {
-          if (c.type === "percent") {
-            discount = Math.round(subtotal * (1 - num(c.value, 1)));
-          } else {
-            discount = Math.min(subtotal, num(c.value, 0));
-          }
-          discountLabel = `優惠碼 ${couponCode}`;
+         if (c.type === "percent") {
+  // rate = 0.9 表示打 9 折
+  discount = Math.round(subtotal * (1 - num(c.rate, 1)));
+} else if (c.type === "amount") {
+  // amount = 100 表示折 100
+  discount = Math.min(subtotal, num(c.amount, 0));
+}
+discountLabel = `優惠碼 ${couponCode}`;
+
         } else {
           localStorage.removeItem(COUPON_KEY);
         }
