@@ -28,9 +28,10 @@ export async function getSettings() {
   try {
     const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
     const out = await res.json().catch(() => null);
-    __TEN_SETTINGS = out && typeof out === "object"
-      ? (out.ok && out.data ? out.data : out)
-      : {};
+    __TEN_SETTINGS =
+      out && typeof out === "object"
+        ? (out.ok && out.data ? out.data : out)
+        : {};
   } catch {
     __TEN_SETTINGS = {};
   } finally {
@@ -58,35 +59,43 @@ export function calcShipping(subtotalAfterDiscount, s) {
 }
 
 /**
- * ctx 統一格式：
+ * ctx:
  * {
- *   coupon: { type, rate, amount } | null,
  *   firstPurchase: true/false,
- *   birthday: true/false
+ *   birthday: true/false,
+ *   coupon: { type: "rate"|"amount", rate?, amount? } | null
  * }
  */
 export function calcDiscount(subtotal, s, ctx = {}) {
-  // 🔒 優惠碼成功 → 其他折扣全部失效
-  if (ctx.coupon) {
-    if (ctx.coupon.type === "rate") {
-      return Math.round(subtotal * (1 - num(ctx.coupon.rate, 1)));
-    }
-    if (ctx.coupon.type === "amount") {
-      return Math.min(subtotal, num(ctx.coupon.amount, 0));
-    }
-    return 0;
+  let discount = 0;
+
+  /* === 第一層：首購 / 生日（責一，取折數較大） === */
+  let baseRate = 1;
+
+  const rates = [];
+  if (ctx.firstPurchase && s.first_purchase_discount)
+    rates.push(num(s.first_purchase_discount, 1));
+  if (ctx.birthday && s.birthday_discount)
+    rates.push(num(s.birthday_discount, 1));
+
+  if (rates.length > 0) {
+    baseRate = Math.min(...rates); // 折數越小，折越多
+    const baseDiscount = Math.round(subtotal * (1 - baseRate));
+    discount += baseDiscount;
   }
 
-  // 沒優惠碼，才考慮首購 / 生日
-  let rate = 1;
+  const afterBase = subtotal - discount;
 
-  if (ctx.firstPurchase && s.first_purchase_discount)
-    rate *= num(s.first_purchase_discount, 1);
+  /* === 第二層：優惠碼（可疊加） === */
+  if (ctx.coupon && afterBase > 0) {
+    if (ctx.coupon.type === "rate") {
+      discount += Math.round(afterBase * (1 - num(ctx.coupon.rate, 1)));
+    } else if (ctx.coupon.type === "amount") {
+      discount += Math.min(afterBase, num(ctx.coupon.amount, 0));
+    }
+  }
 
-  if (ctx.birthday && s.birthday_discount)
-    rate *= num(s.birthday_discount, 1);
-
-  return Math.round(subtotal * (1 - rate));
+  return discount;
 }
 
 export function calcTotal(items, s, ctx = {}) {
