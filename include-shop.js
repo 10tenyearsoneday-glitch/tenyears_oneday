@@ -29,19 +29,33 @@
   }
 
   async function getSettings() {
-    if (__TEN_SETTINGS || __TEN_SETTINGS_LOADING) return __TEN_SETTINGS || {};
-    __TEN_SETTINGS_LOADING = true;
-    try {
-      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
-      const out = await res.json().catch(() => null);
-      __TEN_SETTINGS = out?.ok ? normalizeSettings(out.data) : {};
-    } catch {
+  if (__TEN_SETTINGS || __TEN_SETTINGS_LOADING) return __TEN_SETTINGS || {};
+  __TEN_SETTINGS_LOADING = true;
+
+  try {
+    const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
+    const out = await res.json().catch(() => null);
+
+    // ✅ 重點修正：同時支援「包 ok」與「直接物件」
+    if (out && typeof out === "object") {
+      if (out.ok && out.data) {
+        __TEN_SETTINGS = normalizeSettings(out.data);
+      } else {
+        // 👈 你現在就是走這裡
+        __TEN_SETTINGS = normalizeSettings(out);
+      }
+    } else {
       __TEN_SETTINGS = {};
-    } finally {
-      __TEN_SETTINGS_LOADING = false;
     }
-    return __TEN_SETTINGS;
+  } catch {
+    __TEN_SETTINGS = {};
+  } finally {
+    __TEN_SETTINGS_LOADING = false;
   }
+
+  return __TEN_SETTINGS;
+}
+
 
   /* =========================
      工具
