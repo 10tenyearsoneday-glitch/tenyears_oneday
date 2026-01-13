@@ -1,3 +1,8 @@
+// include-shop.js — TEN YEARS ONE DAY (DRAWER USES PRICING)
+
+import { calcTotal, money } from "./pricing.js";
+import { buildDiscountLabels } from "./discount-label.js";
+
 (() => {
   if (window.TEN_SHOP_LOADED) return;
   window.TEN_SHOP_LOADED = true;
@@ -6,59 +11,19 @@
      基本設定
   ========================= */
   const CART_KEY = "ten_cart";
-  const GAS_PRODUCTS_URL =
+  const COUPON_KEY = "ten_applied_coupon_v1";
+  const GAS_URL =
     "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
   const $ = (id) => document.getElementById(id);
-  const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
-
-  /* =========================
-     Settings（穩定版）
-  ========================= */
-  let SETTINGS = null;
-  let SETTINGS_LOADING = false;
-
-  const truthy = (v) =>
-    v === true ||
-    v === 1 ||
-    v === "1" ||
-    String(v).trim().toUpperCase() === "TRUE";
-
-  const num = (v, d = 0) => {
-    const n = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
-    return Number.isFinite(n) ? n : d;
-  };
-
-  async function getSettings() {
-    if (SETTINGS || SETTINGS_LOADING) return SETTINGS || {};
-    SETTINGS_LOADING = true;
-
-    try {
-      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
-      const out = await res.json().catch(() => null);
-
-      if (out && typeof out === "object") {
-        SETTINGS = out.ok && out.data ? out.data : out;
-      } else {
-        SETTINGS = {};
-      }
-    } catch {
-      SETTINGS = {};
-    } finally {
-      SETTINGS_LOADING = false;
-    }
-    return SETTINGS;
-  }
 
   /* =========================
      Cart storage
   ========================= */
-  const normalizeQty = (n) => Math.max(1, Math.floor(Number(n || 1)));
-
   const readCart = () => {
     try {
-      const a = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-      return Array.isArray(a) ? a : [];
+      const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+      return Array.isArray(arr) ? arr : [];
     } catch {
       return [];
     }
@@ -69,92 +34,71 @@
     window.dispatchEvent(new Event("cart:changed"));
   };
 
-  const cartCount = () =>
-    readCart().reduce((s, it) => s + normalizeQty(it.qty), 0);
-
   /* =========================
-     Public API
+     Member state
   ========================= */
-  window.TEN = window.TEN || {};
-  window.TEN.addToCart = (product, qty = 1) => {
-    const pid = String(product?.id || "");
-    if (!pid) return;
+  const isFirstPurchase = () => !localStorage.getItem("ten_has_purchase_v1");
 
-    const cart = readCart();
-    const i = cart.findIndex((x) => x.id === pid);
-    const price = num(product.price, 0);
-
-    if (i === -1) {
-      cart.push({
-        id: pid,
-        title: product.title || "",
-        price,
-        image: product.image || "",
-        qty: normalizeQty(qty),
-      });
-    } else {
-      cart[i].qty = normalizeQty(cart[i].qty + qty);
-    }
-
-    writeCart(cart);
+  const isBirthday = () => {
+    const m = localStorage.getItem("ten_birth_m");
+    const d = localStorage.getItem("ten_birth_d");
+    if (!m || !d) return false;
+    const now = new Date();
+    return now.getMonth() + 1 === Number(m) && now.getDate() === Number(d);
   };
 
   /* =========================
-     Header / Drawer 控制
+     Settings
   ========================= */
-  async function loadHeader() {
-    if (document.documentElement.dataset.headerLoaded === "1") return;
-    document.documentElement.dataset.headerLoaded = "1";
-
-    try {
-      const res = await fetch("./header.html", { cache: "no-store" });
-      if (!res.ok) return;
-      document.body.insertAdjacentHTML("afterbegin", await res.text());
-
-      bindCartIcon();
-      bindDrawerClose();
-      bindClearCart();
-      bindCheckoutBtn();
-      renderCartBadge();
-    } catch {}
+  let SETTINGS = null;
+  async function getSettings() {
+    if (SETTINGS) return SETTINGS;
+    const res = await fetch(`${GAS_URL}?path=settings`, { cache: "no-store" });
+    const out = await res.json();
+    SETTINGS = out.ok && out.data ? out.data : out;
+    return SETTINGS;
   }
 
-  function renderCartBadge() {
-    const el = $("cartCount");
-    if (!el) return;
-    const n = cartCount();
-    el.textContent = n > 0 ? String(n) : "";
-    el.style.display = n > 0 ? "inline-flex" : "none";
+  /* =========================
+     Coupon
+  ========================= */
+  async function validateCoupon(code, subtotal) {
+    const res = await fetch(
+      `${GAS_URL}?path=coupon_validate&code=${encodeURIComponent(code)}&subtotal=${subtotal}`,
+      { cache: "no-store" }
+    );
+    const out = await res.json();
+    return out.ok ? out.data : null;
   }
 
-  async function openDrawer() {
-    $("cartBackdrop").hidden = false;
-    $("cartDrawer").hidden = false;
-    $("cartBackdrop").classList.add("open");
-    $("cartDrawer").classList.add("open");
+  /* =========================
+     Drawer open / close
+  ========================= */
+  function openDrawer() {
+    $("cartBackdrop") && ($("cartBackdrop").hidden = false);
+    $("cartDrawer") && ($("cartDrawer").hidden = false);
+    $("cartBackdrop")?.classList.add("open");
+    $("cartDrawer")?.classList.add("open");
     document.body.style.overflow = "hidden";
-
-    await getSettings(); // ← 關鍵：一定先拿到
     renderDrawer();
   }
 
   function closeDrawer() {
-    $("cartBackdrop").classList.remove("open");
-    $("cartDrawer").classList.remove("open");
+    $("cartBackdrop")?.classList.remove("open");
+    $("cartDrawer")?.classList.remove("open");
     document.body.style.overflow = "";
     setTimeout(() => {
-      $("cartBackdrop").hidden = true;
-      $("cartDrawer").hidden = true;
+      $("cartBackdrop") && ($("cartBackdrop").hidden = true);
+      $("cartDrawer") && ($("cartDrawer").hidden = true);
     }, 180);
   }
 
   function bindCartIcon() {
-    document
-      .querySelector('.icon-row a[data-icon="cart"]')
-      ?.addEventListener("click", (e) => {
-        e.preventDefault();
-        openDrawer();
-      });
+    const a = document.querySelector('.icon-row a[data-icon="cart"]');
+    a && a.addEventListener("click", (e) => {
+      e.preventDefault();
+      openDrawer();
+    });
   }
 
   function bindDrawerClose() {
@@ -162,38 +106,26 @@
     $("cartBackdrop")?.addEventListener("click", closeDrawer);
   }
 
-  function bindClearCart() {
-    $("cartClear")?.addEventListener("click", () => {
-      if (confirm("確定要清空購物車嗎？")) writeCart([]);
-    });
-  }
-
-  function bindCheckoutBtn() {
-    $("cartGoCheckout")?.addEventListener(
-      "click",
-      () => (location.href = "./cart.html")
-    );
-  }
-
   /* =========================
-     Drawer render（穩定）
+     Drawer render（核心）
   ========================= */
-  function renderDrawer() {
+  async function renderDrawer() {
     const list = $("cartItems");
     if (!list) return;
 
     const cart = readCart();
+
     if (!cart.length) {
       list.innerHTML = `<div class="muted">購物車是空的</div>`;
       $("cartSubtotal").textContent = money(0);
+      $("cartDiscount").textContent = money(0);
       $("cartShipping").textContent = money(0);
       $("cartTotal").textContent = money(0);
+      $("cartDiscountLabel").textContent = "";
       return;
     }
 
-    list.innerHTML = cart
-      .map(
-        (it) => `
+    list.innerHTML = cart.map(it => `
       <div class="d-item">
         <div class="d-thumb"><img src="${it.image || ""}"></div>
         <div class="d-info">
@@ -207,28 +139,32 @@
         </div>
         <button class="d-del" data-del="${it.id}">移除</button>
       </div>
-    `
-      )
-      .join("");
+    `).join("");
 
-    const subtotal = cart.reduce(
-      (s, it) => s + num(it.price) * num(it.qty),
-      0
-    );
+    const settings = await getSettings();
+    const subtotal = cart.reduce((s, it) => s + Number(it.price) * Number(it.qty), 0);
 
-    const s = SETTINGS || {};
-    const shipping =
-      truthy(s.shipping_enabled) &&
-      num(s.shipping_fee) > 0 &&
-      !(num(s.free_shipping_threshold) > 0 &&
-        subtotal >= num(s.free_shipping_threshold))
-        ? num(s.shipping_fee)
-        : 0;
+    const couponCode = localStorage.getItem(COUPON_KEY);
+    const coupon = couponCode
+      ? await validateCoupon(couponCode, subtotal)
+      : null;
 
-    $("cartSubtotal").textContent = money(subtotal);
+    const ctx = {
+      firstPurchase: isFirstPurchase(),
+      birthday: isBirthday(),
+      coupon: coupon ? { ...coupon, code: couponCode } : null
+    };
+
+    const pricing = calcTotal(cart, settings, ctx);
+    const labels = buildDiscountLabels(settings, ctx);
+
+    $("cartSubtotal").textContent = money(pricing.subtotal);
+    $("cartDiscount").textContent =
+      pricing.discount > 0 ? `- ${money(pricing.discount)}` : money(0);
     $("cartShipping").textContent =
-      shipping === 0 ? "免運" : money(shipping);
-    $("cartTotal").textContent = money(subtotal + shipping);
+      pricing.shipping === 0 ? "免運" : money(pricing.shipping);
+    $("cartTotal").textContent = money(pricing.total);
+    $("cartDiscountLabel").textContent = labels.join(" ＋ ");
   }
 
   /* =========================
@@ -238,41 +174,43 @@
     const inc = e.target.closest("[data-inc]");
     const dec = e.target.closest("[data-dec]");
     const del = e.target.closest("[data-del]");
-    if (!inc && !dec && !del) return;
-
     let cart = readCart();
-    if (inc) cart.find((x) => x.id === inc.dataset.inc).qty++;
-    if (dec)
-      cart.find((x) => x.id === dec.dataset.dec).qty = Math.max(
-        1,
-        cart.find((x) => x.id === dec.dataset.dec).qty - 1
-      );
-    if (del) cart = cart.filter((x) => x.id !== del.dataset.del);
 
-    writeCart(cart);
+    if (inc) {
+      const i = cart.find(x => x.id === inc.dataset.inc);
+      if (i) i.qty++;
+    }
+    if (dec) {
+      const i = cart.find(x => x.id === dec.dataset.dec);
+      if (i) i.qty = Math.max(1, i.qty - 1);
+    }
+    if (del) {
+      cart = cart.filter(x => x.id !== del.dataset.del);
+    }
+
+    if (inc || dec || del) {
+      writeCart(cart);
+      renderDrawer();
+    }
   });
 
   document.addEventListener("change", (e) => {
     const inp = e.target.closest("[data-qty]");
     if (!inp) return;
     const cart = readCart();
-    const i = cart.find((x) => x.id === inp.dataset.qty);
-    if (i) i.qty = normalizeQty(inp.value);
+    const i = cart.find(x => x.id === inp.dataset.qty);
+    if (i) i.qty = Math.max(1, Math.floor(inp.value));
     writeCart(cart);
+    renderDrawer();
   });
 
   /* =========================
      Init
   ========================= */
-  window.addEventListener("cart:changed", () => {
-    renderCartBadge();
-    renderDrawer();
-  });
-
-  window.addEventListener("DOMContentLoaded", async () => {
-    await loadHeader();
-    await getSettings();
-    renderCartBadge();
+  window.addEventListener("cart:changed", renderDrawer);
+  window.addEventListener("DOMContentLoaded", () => {
+    bindCartIcon();
+    bindDrawerClose();
     renderDrawer();
   });
 })();
