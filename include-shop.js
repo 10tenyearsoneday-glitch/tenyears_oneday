@@ -1,7 +1,8 @@
 // include-shop.js — TEN YEARS ONE DAY (DRAWER USES PRICING)
 
-import { calcTotal, money } from "./pricing.js";
-import { buildDiscountLabels } from "./discount-label.js";
+const { calcTotal, money } = window.TEN_PRICING;
+const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL;
+
 
 (() => {
   if (window.TEN_SHOP_LOADED) return;
