@@ -13,33 +13,41 @@
   const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
 
   /* =========================
-     Settings（背景抓取，不阻塞 header）
+     Settings（一次抓取＋正規化）
   ========================= */
   let __TEN_SETTINGS = null;
   let __TEN_SETTINGS_LOADING = false;
 
-  async function getSettings({ force = false } = {}) {
-    if (!force && __TEN_SETTINGS) return __TEN_SETTINGS;
-    if (__TEN_SETTINGS_LOADING) return __TEN_SETTINGS || {};
+  function normalizeSettings(data) {
+    if (data && !Array.isArray(data) && typeof data === "object") return data;
+    if (Array.isArray(data)) {
+      const obj = {};
+      data.forEach(row => {
+        if (row && row.key != null) obj[row.key] = row.value;
+      });
+      return obj;
+    }
+    return {};
+  }
 
+  async function getSettings() {
+    if (__TEN_SETTINGS || __TEN_SETTINGS_LOADING) return __TEN_SETTINGS || {};
     __TEN_SETTINGS_LOADING = true;
     try {
-      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, {
-        cache: "no-store",
-      });
+      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
       const out = await res.json().catch(() => null);
       if (out?.ok && out.data) {
-  __TEN_SETTINGS = normalizeSettings(out.data);
-} else {
-        __TEN_SETTINGS = __TEN_SETTINGS || {}; // 保留舊值
+        __TEN_SETTINGS = normalizeSettings(out.data);
+      } else {
+        __TEN_SETTINGS = {};
       }
     } catch (e) {
       console.warn("getSettings failed", e);
-      __TEN_SETTINGS = __TEN_SETTINGS || {};
+      __TEN_SETTINGS = {};
     } finally {
       __TEN_SETTINGS_LOADING = false;
     }
-    return __TEN_SETTINGS || {};
+    return __TEN_SETTINGS;
   }
 
   /* =========================
@@ -49,6 +57,15 @@
     n = Number(n || 1);
     if (!Number.isFinite(n) || n < 1) n = 1;
     return Math.floor(n);
+  }
+
+  function num(v, def = 0) {
+    const n = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
+    return Number.isFinite(n) ? n : def;
+  }
+
+  function truthy(v) {
+    return v === true || v === 1 || v === "1" || String(v).toUpperCase() === "TRUE";
   }
 
   function escapeHtml(s) {
@@ -63,35 +80,6 @@
   function escapeAttr(s) {
     return escapeHtml(s).replace(/`/g, "");
   }
-
-  function num(v, def = 0) {
-    const n = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
-    return Number.isFinite(n) ? n : def;
-  }
-
-  function truthy(v) {
-    // TRUE / true / 1 / "1"
-    return v === true || v === 1 || v === "1" || String(v).toUpperCase() === "TRUE";
-  }
-function normalizeSettings(data) {
-  // 如果已經是物件，直接回傳
-  if (data && !Array.isArray(data) && typeof data === "object") {
-    return data;
-  }
-
-  // 如果是 [{key, value}, ...] 轉成 { key: value }
-  if (Array.isArray(data)) {
-    const obj = {};
-    data.forEach(row => {
-      if (row && row.key != null) {
-        obj[row.key] = row.value;
-      }
-    });
-    return obj;
-  }
-
-  return {};
-}
 
   /* =========================
      Cart storage
@@ -118,17 +106,12 @@ function normalizeSettings(data) {
      Public API
   ========================= */
   window.TEN = window.TEN || {};
-  window.TEN.readCart = readCart;
-  window.TEN.writeCart = writeCart;
-  window.TEN.getSettings = () => (__TEN_SETTINGS || null);
-
   window.TEN.addToCart = function (product, qty = 1) {
     const pid = String(product?.id || "");
     if (!pid) return;
 
     const cart = readCart();
-    const idx = cart.findIndex((x) => x.id === pid);
-
+    const idx = cart.findIndex(x => x.id === pid);
     const price = num(product.price, 0);
 
     if (idx === -1) {
@@ -142,7 +125,6 @@ function normalizeSettings(data) {
     } else {
       cart[idx].qty = normalizeQty(cart[idx].qty + qty);
     }
-
     writeCart(cart);
   };
 
@@ -158,7 +140,6 @@ function normalizeSettings(data) {
       if (!res.ok) return;
       const html = await res.text();
       document.body.insertAdjacentHTML("afterbegin", html);
-
       bindCartIcon();
       bindDrawerClose();
       bindClearCart();
@@ -225,12 +206,8 @@ function normalizeSettings(data) {
   }
 
   /* =========================
-     Drawer render（同步渲染 + settings 狀態顯示）
+     Drawer render（穩定版）
   ========================= */
-  function calcSubtotal(cart) {
-    return cart.reduce((s, it) => s + num(it.price, 0) * num(it.qty, 0), 0);
-  }
-
   function renderDrawer() {
     const list = $("cartItems");
     if (!list) return;
@@ -239,50 +216,48 @@ function normalizeSettings(data) {
 
     if (!cart.length) {
       list.innerHTML = `<div class="muted">購物車是空的</div>`;
-      $("cartSubtotal") && ($("cartSubtotal").textContent = money(0));
-      $("cartShipping") && ($("cartShipping").textContent = money(0));
-      $("cartTotal") && ($("cartTotal").textContent = money(0));
+      $("cartSubtotal").textContent = money(0);
+      $("cartShipping").textContent = money(0);
+      $("cartTotal").textContent = money(0);
       return;
     }
 
     list.innerHTML = cart.map(it => `
       <div class="d-item">
-        <div class="d-thumb">
-          <img src="${it.image || "assets/placeholder.png"}">
-        </div>
+        <div class="d-thumb"><img src="${it.image || ""}"></div>
         <div class="d-info">
           <div class="d-name">${escapeHtml(it.title)}</div>
           <div class="d-meta">${money(it.price)}</div>
         </div>
         <div class="d-qty">
-          <button type="button" data-dec="${escapeAttr(it.id)}">-</button>
+          <button data-dec="${escapeAttr(it.id)}">-</button>
           <input type="number" min="1" value="${it.qty}" data-qty="${escapeAttr(it.id)}">
-          <button type="button" data-inc="${escapeAttr(it.id)}">+</button>
+          <button data-inc="${escapeAttr(it.id)}">+</button>
         </div>
-        <button type="button" class="d-del" data-del="${escapeAttr(it.id)}">移除</button>
+        <button class="d-del" data-del="${escapeAttr(it.id)}">移除</button>
       </div>
     `).join("");
 
-    const subtotal = calcSubtotal(cart);
-    $("cartSubtotal") && ($("cartSubtotal").textContent = money(subtotal));
+    const subtotal = cart.reduce((s, it) => s + num(it.price) * num(it.qty), 0);
+    $("cartSubtotal").textContent = money(subtotal);
 
-    // settings 尚未載入：顯示「計算中…」避免誤顯示免運
-const settings = __TEN_SETTINGS || {};
+    const s = __TEN_SETTINGS || {};
+    const shippingEnabled = truthy(s.shipping_enabled);
+    const fee = num(s.shipping_fee, 0);
+    const freeTh = num(s.free_shipping_threshold, 0);
 
-  let shipping = 0;
-  if (settings.shipping_enable) {
-    const fee = Number(settings.shipping_fee || 0);
-    const freeTh = Number(settings.free_shipping_th || 0);
-    shipping = subtotal >= freeTh ? 0 : fee;
+    let shipping = 0;
+    if (shippingEnabled && fee > 0) {
+      shipping = freeTh > 0 && subtotal >= freeTh ? 0 : fee;
+    }
+
+    $("cartShipping").textContent =
+      shippingEnabled && shipping === 0 ? "免運" : money(shipping);
+    $("cartTotal").textContent = money(subtotal + shipping);
   }
 
-  $("cartShipping") && (
-    $("cartShipping").textContent =
-      shipping === 0 ? "免運" : money(shipping)
-  );
-
   /* =========================
-     Drawer events（補回！）
+     Drawer events
   ========================= */
   document.addEventListener("click", (e) => {
     const inc = e.target.closest("[data-inc]");
@@ -291,36 +266,31 @@ const settings = __TEN_SETTINGS || {};
     if (!inc && !dec && !del) return;
 
     let cart = readCart();
-
     if (inc) {
       const i = cart.find(x => x.id === inc.dataset.inc);
-      if (i) i.qty = normalizeQty(num(i.qty, 1) + 1);
+      if (i) i.qty = normalizeQty(i.qty + 1);
     }
-
     if (dec) {
       const i = cart.find(x => x.id === dec.dataset.dec);
-      if (i) i.qty = normalizeQty(Math.max(1, num(i.qty, 1) - 1));
+      if (i) i.qty = normalizeQty(Math.max(1, i.qty - 1));
     }
-
     if (del) {
       cart = cart.filter(x => x.id !== del.dataset.del);
     }
-
     writeCart(cart);
   });
 
   document.addEventListener("change", (e) => {
     const inp = e.target.closest("[data-qty]");
     if (!inp) return;
-    const id = inp.dataset.qty;
     const cart = readCart();
-    const i = cart.find(x => x.id === id);
+    const i = cart.find(x => x.id === inp.dataset.qty);
     if (i) i.qty = normalizeQty(inp.value);
     writeCart(cart);
   });
 
   /* =========================
-     Global listeners
+     Init
   ========================= */
   window.addEventListener("cart:changed", () => {
     renderCartBadge();
@@ -328,13 +298,10 @@ const settings = __TEN_SETTINGS || {};
   });
 
   window.addEventListener("DOMContentLoaded", async () => {
-    // ⭐ header 先載入（解決你說的 header 很慢）
     await loadHeader();
     renderCartBadge();
-    renderDrawer(); // 先用「計算中…」畫一次
-
-    // ⭐ settings 背景抓到後，再更新運費/合計
-    await getSettings({ force: true });
+    renderDrawer();
+    await getSettings();
     renderDrawer();
   });
 })();
