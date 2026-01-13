@@ -13,7 +13,7 @@
   const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
 
   /* =========================
-     Settings（一次抓取＋正規化）
+     Settings
   ========================= */
   let __TEN_SETTINGS = null;
   let __TEN_SETTINGS_LOADING = false;
@@ -21,11 +21,9 @@
   function normalizeSettings(data) {
     if (data && !Array.isArray(data) && typeof data === "object") return data;
     if (Array.isArray(data)) {
-      const obj = {};
-      data.forEach(row => {
-        if (row && row.key != null) obj[row.key] = row.value;
-      });
-      return obj;
+      const o = {};
+      data.forEach(r => { if (r?.key != null) o[r.key] = r.value; });
+      return o;
     }
     return {};
   }
@@ -36,13 +34,8 @@
     try {
       const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
       const out = await res.json().catch(() => null);
-      if (out?.ok && out.data) {
-        __TEN_SETTINGS = normalizeSettings(out.data);
-      } else {
-        __TEN_SETTINGS = {};
-      }
-    } catch (e) {
-      console.warn("getSettings failed", e);
+      __TEN_SETTINGS = out?.ok ? normalizeSettings(out.data) : {};
+    } catch {
       __TEN_SETTINGS = {};
     } finally {
       __TEN_SETTINGS_LOADING = false;
@@ -53,78 +46,42 @@
   /* =========================
      工具
   ========================= */
-  function normalizeQty(n) {
-    n = Number(n || 1);
-    if (!Number.isFinite(n) || n < 1) n = 1;
-    return Math.floor(n);
-  }
-
-  function num(v, def = 0) {
+  const truthy = (v) => v === true || v === 1 || v === "1" || String(v).toUpperCase() === "TRUE";
+  const num = (v, d = 0) => {
     const n = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
-    return Number.isFinite(n) ? n : def;
-  }
-
-  function truthy(v) {
-    return v === true || v === 1 || v === "1" || String(v).toUpperCase() === "TRUE";
-  }
-
-  function escapeHtml(s) {
-    return String(s || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-
-  function escapeAttr(s) {
-    return escapeHtml(s).replace(/`/g, "");
-  }
+    return Number.isFinite(n) ? n : d;
+  };
+  const normalizeQty = (n) => Math.max(1, Math.floor(Number(n || 1)));
+  const escapeHtml = (s) =>
+    String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  const escapeAttr = (s) => escapeHtml(s).replace(/`/g,"");
 
   /* =========================
      Cart storage
   ========================= */
-  function readCart() {
-    try {
-      const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-      return Array.isArray(arr) ? arr : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function writeCart(items) {
+  const readCart = () => {
+    try { const a = JSON.parse(localStorage.getItem(CART_KEY) || "[]"); return Array.isArray(a)?a:[]; }
+    catch { return []; }
+  };
+  const writeCart = (items) => {
     localStorage.setItem(CART_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("cart:changed"));
-  }
-
-  function cartCount() {
-    return readCart().reduce((s, it) => s + normalizeQty(it.qty), 0);
-  }
+  };
+  const cartCount = () => readCart().reduce((s,it)=>s+normalizeQty(it.qty),0);
 
   /* =========================
      Public API
   ========================= */
   window.TEN = window.TEN || {};
-  window.TEN.addToCart = function (product, qty = 1) {
+  window.TEN.addToCart = (product, qty = 1) => {
     const pid = String(product?.id || "");
     if (!pid) return;
-
     const cart = readCart();
-    const idx = cart.findIndex(x => x.id === pid);
+    const i = cart.findIndex(x => x.id === pid);
     const price = num(product.price, 0);
-
-    if (idx === -1) {
-      cart.push({
-        id: pid,
-        title: product.title || "",
-        price,
-        image: product.image || "",
-        qty: normalizeQty(qty),
-      });
-    } else {
-      cart[idx].qty = normalizeQty(cart[idx].qty + qty);
-    }
+    if (i === -1) cart.push({ id: pid, title: product.title||"", price, image: product.image||"", qty: normalizeQty(qty) });
+    else cart[i].qty = normalizeQty(cart[i].qty + qty);
     writeCart(cart);
   };
 
@@ -134,16 +91,11 @@
   async function loadHeader() {
     if (document.documentElement.dataset.headerLoaded === "1") return;
     document.documentElement.dataset.headerLoaded = "1";
-
     try {
       const res = await fetch("./header.html", { cache: "no-store" });
       if (!res.ok) return;
-      const html = await res.text();
-      document.body.insertAdjacentHTML("afterbegin", html);
-      bindCartIcon();
-      bindDrawerClose();
-      bindClearCart();
-      bindCheckoutBtn();
+      document.body.insertAdjacentHTML("afterbegin", await res.text());
+      bindCartIcon(); bindDrawerClose(); bindClearCart(); bindCheckoutBtn();
       renderCartBadge();
     } catch {}
   }
@@ -166,8 +118,8 @@
     $("cartDrawer")?.classList.add("open");
     document.body.style.overflow = "hidden";
     renderDrawer();
+    if (__TEN_SETTINGS) renderDrawer();
   }
-
   function closeDrawer() {
     $("cartBackdrop")?.classList.remove("open");
     $("cartDrawer")?.classList.remove("open");
@@ -177,43 +129,29 @@
       $("cartDrawer") && ($("cartDrawer").hidden = true);
     }, 180);
   }
-
   function bindCartIcon() {
-    const cartA = document.querySelector('.icon-row a[data-icon="cart"]');
-    if (!cartA) return;
-    cartA.addEventListener("click", (e) => {
-      e.preventDefault();
-      openDrawer();
-    });
+    const a = document.querySelector('.icon-row a[data-icon="cart"]');
+    a && a.addEventListener("click", (e)=>{ e.preventDefault(); openDrawer(); });
   }
-
   function bindDrawerClose() {
     $("cartClose")?.addEventListener("click", closeDrawer);
     $("cartBackdrop")?.addEventListener("click", closeDrawer);
   }
-
   function bindClearCart() {
-    $("cartClear")?.addEventListener("click", () => {
-      if (!confirm("確定要清空購物車嗎？")) return;
-      writeCart([]);
-    });
+    $("cartClear")?.addEventListener("click", ()=>{ if(confirm("確定要清空購物車嗎？")) writeCart([]); });
   }
-
   function bindCheckoutBtn() {
-    $("cartGoCheckout")?.addEventListener("click", () => {
-      window.location.href = "./cart.html";
-    });
+    $("cartGoCheckout")?.addEventListener("click", ()=>{ location.href="./cart.html"; });
   }
 
   /* =========================
-     Drawer render（穩定版）
+     Drawer render
   ========================= */
   function renderDrawer() {
     const list = $("cartItems");
     if (!list) return;
 
     const cart = readCart();
-
     if (!cart.length) {
       list.innerHTML = `<div class="muted">購物車是空的</div>`;
       $("cartSubtotal").textContent = money(0);
@@ -222,9 +160,9 @@
       return;
     }
 
-    list.innerHTML = cart.map(it => `
+    list.innerHTML = cart.map(it=>`
       <div class="d-item">
-        <div class="d-thumb"><img src="${it.image || ""}"></div>
+        <div class="d-thumb"><img src="${it.image||""}"></div>
         <div class="d-info">
           <div class="d-name">${escapeHtml(it.title)}</div>
           <div class="d-meta">${money(it.price)}</div>
@@ -238,53 +176,46 @@
       </div>
     `).join("");
 
-    const subtotal = cart.reduce((s, it) => s + num(it.price) * num(it.qty), 0);
+    const subtotal = cart.reduce((s,it)=>s+num(it.price)*num(it.qty),0);
     $("cartSubtotal").textContent = money(subtotal);
 
-    const s = __TEN_SETTINGS || {};
-    const shippingEnabled = truthy(s.shipping_enabled);
-    const fee = num(s.shipping_fee, 0);
-    const freeTh = num(s.free_shipping_threshold, 0);
-
-    let shipping = 0;
-    if (shippingEnabled && fee > 0) {
-      shipping = freeTh > 0 && subtotal >= freeTh ? 0 : fee;
+    if (!__TEN_SETTINGS) {
+      $("cartShipping").textContent = "計算中…";
+      $("cartTotal").textContent = money(subtotal);
+      return;
     }
 
-    $("cartShipping").textContent =
-      shippingEnabled && shipping === 0 ? "免運" : money(shipping);
+    const s = __TEN_SETTINGS;
+    const enabled = truthy(s.shipping_enabled);
+    const fee = num(s.shipping_fee, 0);
+    const th = num(s.free_shipping_threshold, 0);
+
+    let shipping = 0;
+    if (enabled && fee > 0) shipping = th > 0 && subtotal >= th ? 0 : fee;
+
+    $("cartShipping").textContent = (enabled && shipping === 0) ? "免運" : money(shipping);
     $("cartTotal").textContent = money(subtotal + shipping);
   }
 
   /* =========================
      Drawer events
   ========================= */
-  document.addEventListener("click", (e) => {
+  document.addEventListener("click", (e)=>{
     const inc = e.target.closest("[data-inc]");
     const dec = e.target.closest("[data-dec]");
     const del = e.target.closest("[data-del]");
     if (!inc && !dec && !del) return;
-
     let cart = readCart();
-    if (inc) {
-      const i = cart.find(x => x.id === inc.dataset.inc);
-      if (i) i.qty = normalizeQty(i.qty + 1);
-    }
-    if (dec) {
-      const i = cart.find(x => x.id === dec.dataset.dec);
-      if (i) i.qty = normalizeQty(Math.max(1, i.qty - 1));
-    }
-    if (del) {
-      cart = cart.filter(x => x.id !== del.dataset.del);
-    }
+    if (inc) { const i = cart.find(x=>x.id===inc.dataset.inc); if(i) i.qty=normalizeQty(i.qty+1); }
+    if (dec) { const i = cart.find(x=>x.id===dec.dataset.dec); if(i) i.qty=normalizeQty(Math.max(1,i.qty-1)); }
+    if (del) cart = cart.filter(x=>x.id!==del.dataset.del);
     writeCart(cart);
   });
-
-  document.addEventListener("change", (e) => {
+  document.addEventListener("change",(e)=>{
     const inp = e.target.closest("[data-qty]");
     if (!inp) return;
     const cart = readCart();
-    const i = cart.find(x => x.id === inp.dataset.qty);
+    const i = cart.find(x=>x.id===inp.dataset.qty);
     if (i) i.qty = normalizeQty(inp.value);
     writeCart(cart);
   });
@@ -292,12 +223,8 @@
   /* =========================
      Init
   ========================= */
-  window.addEventListener("cart:changed", () => {
-    renderCartBadge();
-    renderDrawer();
-  });
-
-  window.addEventListener("DOMContentLoaded", async () => {
+  window.addEventListener("cart:changed", ()=>{ renderCartBadge(); renderDrawer(); });
+  window.addEventListener("DOMContentLoaded", async ()=>{
     await loadHeader();
     renderCartBadge();
     renderDrawer();
