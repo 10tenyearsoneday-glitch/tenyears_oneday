@@ -267,7 +267,7 @@ function normalizeSettings(data) {
     $("cartSubtotal") && ($("cartSubtotal").textContent = money(subtotal));
 
     // settings 尚未載入：顯示「計算中…」避免誤顯示免運
-   const settings = await getSettings();
+const settings = __TEN_SETTINGS || {};
 
   let shipping = 0;
   if (settings.shipping_enable) {
