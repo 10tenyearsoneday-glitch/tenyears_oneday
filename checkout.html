@@ -5,127 +5,172 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>結帳｜十年一日 TEN YEARS ONE DAY</title>
 
-  <!-- Tailwind -->
+  <link rel="stylesheet" href="assets/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- 你的購物車邏輯 -->
-  <script src="./include-shop.js"></script>
-
-  <style>
-    body {
-      font-family: "Noto Serif TC", serif;
-      background: #f8f9f7;
-    }
-  </style>
 </head>
 
-<body class="min-h-screen">
+<body class="min-h-screen bg-gradient-to-br from-[#F8F9F7] to-[#D4E7D1]">
+  <!-- header injected -->
+  <main class="max-w-3xl mx-auto px-4 pt-28 pb-16">
+    <div class="card p-5 space-y-5">
 
-  <!-- Header 由 include-shop.js 注入 -->
+      <h1 class="text-xl font-black tracking-widest">結帳資訊</h1>
 
-  <main class="max-w-4xl mx-auto px-4 py-10">
-    <h1 class="text-2xl font-semibold mb-6">結帳確認</h1>
+      <!-- 收件資訊 -->
+      <div class="space-y-3">
+        <input id="name" placeholder="姓名" class="w-full h-10 px-3 rounded-xl border">
+        <input id="phone" placeholder="電話" class="w-full h-10 px-3 rounded-xl border">
+        <input id="email" placeholder="Email" class="w-full h-10 px-3 rounded-xl border">
+        <textarea id="address" placeholder="地址 / 超商門市" class="w-full h-20 px-3 py-2 rounded-xl border"></textarea>
+      </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-      <!-- 左：訂單摘要 -->
-      <section class="md:col-span-2 bg-white rounded-xl shadow p-6">
-        <h2 class="text-lg font-medium mb-4">訂單內容</h2>
-
-        <div id="checkoutItems" class="space-y-4 text-sm"></div>
-
-        <hr class="my-4"/>
-
-        <div class="space-y-2 text-sm">
-          <div class="flex justify-between">
-            <span>小計</span>
-            <span id="coSubtotal">NT$ 0</span>
-          </div>
-          <div class="flex justify-between">
-            <span>折扣</span>
-            <span id="coDiscount">- NT$ 0</span>
-          </div>
-          <div class="flex justify-between font-semibold text-base">
-            <span>合計</span>
-            <span id="coTotal">NT$ 0</span>
-          </div>
+      <!-- 金額摘要 -->
+      <div class="pt-4 border-t border-black/10 text-sm space-y-2">
+        <div class="flex justify-between">
+          <span>小計</span><strong id="sumSubtotal">NT$ 0</strong>
         </div>
-      </section>
+        <div class="flex justify-between">
+          <span>折扣</span><strong id="sumDiscount">NT$ 0</strong>
+        </div>
+        <div class="flex justify-between">
+          <span>運費</span><strong id="sumShipping">NT$ 0</strong>
+        </div>
+        <div class="flex justify-between text-base font-black">
+          <span>合計</span><strong id="sumTotal">NT$ 0</strong>
+        </div>
+        <div id="discountSummary" class="text-sm opacity-80"></div>
+      </div>
 
-      <!-- 右：填資料（UI only） -->
-      <aside class="bg-white rounded-xl shadow p-6 text-sm space-y-4">
-        <h2 class="text-lg font-medium">收件資訊</h2>
+      <!-- 操作 -->
+      <button id="btnSubmit"
+        class="w-full h-11 rounded-2xl bg-[#2f3a2c] text-white font-black tracking-widest">
+        確認下單
+      </button>
 
-        <input class="w-full border rounded px-3 py-2" placeholder="收件人姓名">
-        <input class="w-full border rounded px-3 py-2" placeholder="手機號碼">
-        <input class="w-full border rounded px-3 py-2" placeholder="Email">
-        <input class="w-full border rounded px-3 py-2" placeholder="收件地址">
-
-        <hr>
-
-        <h3 class="font-medium">付款方式</h3>
-        <label class="flex items-center gap-2">
-          <input type="radio" checked disabled>
-          信用卡（即將開放）
-        </label>
-        <label class="flex items-center gap-2 text-gray-400">
-          <input type="radio" disabled>
-          ATM 轉帳
-        </label>
-
-        <button
-          id="goPay"
-          class="w-full mt-4 bg-gray-300 text-gray-600 py-3 rounded-lg cursor-not-allowed"
-        >
-          前往付款（尚未開放）
-        </button>
-
-        <a href="./cart.html" class="block text-center text-xs text-gray-500 mt-2">
-          ← 返回購物車
-        </a>
-      </aside>
-
+      <div id="toast" class="text-sm"></div>
     </div>
   </main>
 
-  <script>
-    const $ = (id) => document.getElementById(id);
-    const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
+  <script src="./include-shop.js"></script>
 
-    function renderCheckout() {
-      if (!window.TEN) return;
+  <script type="module">
+    import { calcTotal, money } from "./pricing.js";
+    import { buildDiscountLabels } from "./discount-label.js";
 
-      const cart = window.TEN.readCart();
-      const applied = window.TEN_APPLIED || { discount: 0 };
+    const CART_KEY = "ten_cart";
+    const COUPON_KEY = "ten_applied_coupon_v1";
+    const GAS_URL =
+      "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
-      if (!cart.length) {
-        $("checkoutItems").innerHTML =
-          `<div class="text-gray-500">購物車是空的</div>`;
-        return;
-      }
+    const readCart = () => {
+      try { return JSON.parse(localStorage.getItem(CART_KEY) || "[]"); }
+      catch { return []; }
+    };
 
-      $("checkoutItems").innerHTML = cart.map(it => `
-        <div class="flex justify-between items-center">
-          <div>
-            <div class="font-medium">${it.title}</div>
-            <div class="text-xs text-gray-500">數量 × ${it.qty}</div>
-          </div>
-          <div>${money(it.price * it.qty)}</div>
-        </div>
-      `).join("");
+    const isFirstPurchase = () => !localStorage.getItem("ten_has_purchase_v1");
+    const isBirthday = () => {
+      const m = localStorage.getItem("ten_birth_m");
+      const d = localStorage.getItem("ten_birth_d");
+      if (!m || !d) return false;
+      const now = new Date();
+      return now.getMonth()+1===Number(m) && now.getDate()===Number(d);
+    };
 
-      const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
-      const discount = Math.min(subtotal, Number(applied.discount || 0));
-      const total = subtotal - discount;
-
-      $("coSubtotal").textContent = money(subtotal);
-      $("coDiscount").textContent = `- ${money(discount)}`;
-      $("coTotal").textContent = money(total);
+    let SETTINGS = null;
+    async function getSettings(){
+      if (SETTINGS) return SETTINGS;
+      const r = await fetch(`${GAS_URL}?path=settings`, { cache:"no-store" });
+      const o = await r.json();
+      SETTINGS = o.ok && o.data ? o.data : o;
+      return SETTINGS;
     }
 
-    window.addEventListener("DOMContentLoaded", renderCheckout);
-    window.addEventListener("cart:changed", renderCheckout);
-  </script>
+    async function validateCoupon(code, subtotal){
+      const r = await fetch(
+        `${GAS_URL}?path=coupon_validate&code=${encodeURIComponent(code)}&subtotal=${subtotal}`,
+        { cache:"no-store" }
+      );
+      const o = await r.json();
+      return o.ok ? o.data : null;
+    }
 
+    async function render(){
+      const cart = readCart();
+      const settings = await getSettings();
+
+      const subtotal = cart.reduce((s,i)=>s+Number(i.price)*Number(i.qty),0);
+
+      const couponCode = localStorage.getItem(COUPON_KEY);
+      const coupon = couponCode ? await validateCoupon(couponCode, subtotal) : null;
+
+      const ctx = {
+        firstPurchase: isFirstPurchase(),
+        birthday: isBirthday(),
+        coupon: coupon ? { ...coupon, code: couponCode } : null
+      };
+
+      const pricing = calcTotal(cart, settings, ctx);
+      const labels = buildDiscountLabels(settings, ctx);
+
+      sumSubtotal.textContent = money(pricing.subtotal);
+      sumDiscount.textContent =
+        pricing.discount>0 ? `- ${money(pricing.discount)}` : money(0);
+      sumShipping.textContent =
+        pricing.shipping===0 ? "免運" : money(pricing.shipping);
+      sumTotal.textContent = money(pricing.total);
+      discountSummary.textContent = labels.join(" ＋ ");
+    }
+
+    btnSubmit.onclick = async () => {
+      const cart = readCart();
+      if (!cart.length) return toast.textContent = "購物車是空的";
+
+      const settings = await getSettings();
+      const subtotal = cart.reduce((s,i)=>s+Number(i.price)*Number(i.qty),0);
+
+      const couponCode = localStorage.getItem(COUPON_KEY);
+      const coupon = couponCode ? await validateCoupon(couponCode, subtotal) : null;
+
+      const ctx = {
+        firstPurchase: isFirstPurchase(),
+        birthday: isBirthday(),
+        coupon: coupon ? { ...coupon, code: couponCode } : null
+      };
+
+      const pricing = calcTotal(cart, settings, ctx);
+      const labels = buildDiscountLabels(settings, ctx);
+
+      const payload = {
+        order_id: "OD" + Date.now(),
+        name: name.value,
+        phone: phone.value,
+        email: email.value,
+        address_or_store: address.value,
+        items: cart,
+        subtotal: pricing.subtotal,
+        discount: pricing.discount,
+        shipping_fee: pricing.shipping,
+        total: pricing.total,
+        coupon_code: couponCode || "",
+        discount_note: labels.join(" ＋ ")
+      };
+
+      const res = await fetch(`${GAS_URL}?path=orders`, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify(payload)
+      });
+      const out = await res.json();
+
+      if (out.ok) {
+        localStorage.removeItem(CART_KEY);
+        toast.textContent = "下單完成";
+      } else {
+        toast.textContent = "下單失敗";
+      }
+    };
+
+    render();
+  </script>
 </body>
 </html>
