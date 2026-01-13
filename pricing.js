@@ -107,3 +107,8 @@ export function calcTotal(items, s, ctx = {}) {
 
   return { subtotal, discount, shipping, total };
 }
+// expose to window for non-module scripts
+window.TEN_PRICING = {
+  calcTotal,
+  money
+};
