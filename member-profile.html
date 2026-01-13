@@ -1,70 +1,88 @@
-<!doctype html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>會員資料｜十年一日 TEN YEARS ONE DAY</title>
-  <link rel="stylesheet" href="assets/style.css">
-  <style>
-    .page-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 14px;background:linear-gradient(135deg,#F8F9F7 0%,#D4E7D1 55%,#B8C9A8 100%);}
-    .card{width:min(640px,100%);background:rgba(255,255,255,.82);backdrop-filter:blur(10px);border:1px solid rgba(0,0,0,.06);border-radius:26px;box-shadow:0 18px 50px rgba(0,0,0,.08);padding:22px 18px;}
-    .brand{text-align:center;margin-bottom:14px}
-    .brand h1{margin:0;font-size:20px;letter-spacing:.12em}
-    .brand .sub{margin-top:6px;opacity:.75;font-size:12px;letter-spacing:.12em}
-    .panel{background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.06);border-radius:22px;padding:18px}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .field label{display:block;font-size:12px;opacity:.75;margin:0 0 6px 4px;letter-spacing:.12em}
-    .field input{width:100%;padding:12px 14px;border-radius:16px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.92);outline:none}
-    .row{display:flex;gap:10px;margin-top:14px}
-    .btn{flex:1;border:none;border-radius:18px;padding:14px 12px;font-size:15px;font-weight:900;letter-spacing:.16em;cursor:pointer;background:#8ea08e;color:#fff}
-    .btn.outline{background:transparent;color:#2f3a2c;border:1px solid rgba(0,0,0,.18)}
-    .toast{margin-top:10px;text-align:center;font-size:13px;min-height:18px}
-    @media (max-width:520px){.grid2{grid-template-columns:1fr}.row{flex-direction:column}}
-  </style>
-</head>
-<body>
-  <div class="page-wrap">
-    <div class="card" id="profileWrap">
-      <div class="brand">
-        <h1>會員資料</h1>
-        <div class="sub">十年一日 TEN YEARS ONE DAY</div>
-      </div>
+// include-member.js — TEN YEARS ONE DAY (NON-MODULE)
 
-      <section class="panel">
-        <div class="grid2">
-          <div class="field">
-            <label>姓名 *</label>
-            <input id="pfName" placeholder="姓名">
-          </div>
-          <div class="field">
-            <label>手機（帳號）</label>
-            <input id="pfPhone" disabled>
-          </div>
-          <div class="field">
-            <label>Email（選填）</label>
-            <input id="pfEmail" inputmode="email" autocomplete="email" placeholder="you@example.com">
-          </div>
-          <div class="field">
-            <label>生日（選填）</label>
-            <input id="pfBirth" type="date">
-          </div>
-        </div>
+(() => {
+  if (window.TEN_MEMBER_LOADED) return;
+  window.TEN_MEMBER_LOADED = true;
 
-        <div class="field" style="margin-top:10px">
-          <label>地址（選填）</label>
-          <input id="pfAddress" autocomplete="street-address" placeholder="縣市區路段號樓">
-        </div>
+  const MEMBER_API =
+    "https://script.google.com/macros/s/1Q21he0DoqUId8rgJj3nwFjM6wMKHkSBhLstkHaXQKdI/exec";
 
-        <div class="row">
-          <button id="btnSaveProfile" class="btn" type="button">儲存</button>
-          <button id="btnLogout" class="btn outline" type="button">登出</button>
-        </div>
+  const KEY = {
+    memberId: "ten_member_id",
+    token: "ten_member_token",
+    birthM: "ten_birth_m",
+    birthD: "ten_birth_d"
+  };
 
-        <div id="profileToast" class="toast"></div>
-      </section>
-    </div>
-  </div>
+  function jsonp(params, cb) {
+    const callback = "__cb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    window[callback] = (res) => {
+      delete window[callback];
+      document.body.removeChild(script);
+      cb && cb(res);
+    };
 
-  <script src="./include-member.js"></script>
-</body>
-</html>
+    const q = new URLSearchParams({ ...params, callback }).toString();
+    const script = document.createElement("script");
+    script.src = MEMBER_API + "?" + q;
+    document.body.appendChild(script);
+  }
+
+  function saveProfile(profile) {
+    if (!profile) return;
+    localStorage.setItem(KEY.memberId, profile.memberId);
+    if (profile.birth) {
+      const [, m, d] = profile.birth.split("-");
+      localStorage.setItem(KEY.birthM, m);
+      localStorage.setItem(KEY.birthD, d);
+    }
+  }
+
+  function clearProfile() {
+    Object.values(KEY).forEach(k => localStorage.removeItem(k));
+  }
+
+  window.TEN_MEMBER = {
+    register(data, cb) {
+      jsonp({ path: "register", ...data }, (res) => {
+        if (res.ok) {
+          localStorage.setItem(KEY.token, res.token);
+          saveProfile(res.profile);
+        }
+        cb && cb(res);
+      });
+    },
+
+    login(phone, pw, cb) {
+      jsonp({ path: "login", phone, pw }, (res) => {
+        if (res.ok) {
+          localStorage.setItem(KEY.token, res.token);
+          saveProfile(res.profile);
+        }
+        cb && cb(res);
+      });
+    },
+
+    me(cb) {
+      const token = localStorage.getItem(KEY.token);
+      if (!token) return cb && cb({ ok:false });
+      jsonp({ path: "me", token }, (res) => {
+        if (res.ok) saveProfile(res.profile);
+        cb && cb(res);
+      });
+    },
+
+    logout(cb) {
+      const token = localStorage.getItem(KEY.token);
+      if (!token) return cb && cb({ ok:true });
+      jsonp({ path: "logout", token }, (res) => {
+        clearProfile();
+        cb && cb(res);
+      });
+    },
+
+    getMemberId() {
+      return localStorage.getItem(KEY.memberId) || "";
+    }
+  };
+})();
