@@ -10,7 +10,8 @@
 </head>
 
 <body class="min-h-screen bg-gradient-to-br from-[#F8F9F7] to-[#D4E7D1]">
-  <!-- header injected -->
+  <!-- header 由 include-shop.js 注入 -->
+
   <main class="max-w-3xl mx-auto px-4 pt-28 pb-16">
     <div class="card p-5 space-y-5">
 
@@ -21,7 +22,8 @@
         <input id="name" placeholder="姓名" class="w-full h-10 px-3 rounded-xl border">
         <input id="phone" placeholder="電話" class="w-full h-10 px-3 rounded-xl border">
         <input id="email" placeholder="Email" class="w-full h-10 px-3 rounded-xl border">
-        <textarea id="address" placeholder="地址 / 超商門市" class="w-full h-20 px-3 py-2 rounded-xl border"></textarea>
+        <textarea id="address" placeholder="地址 / 超商門市"
+          class="w-full h-20 px-3 py-2 rounded-xl border"></textarea>
       </div>
 
       <!-- 金額摘要 -->
@@ -51,23 +53,37 @@
     </div>
   </main>
 
+  <!-- 一定要先載 -->
+  <script src="./pricing.js"></script>
+  <script src="./discount-label.js"></script>
   <script src="./include-shop.js"></script>
 
-  <script type="module">
-    import { calcTotal, money } from "./pricing.js";
-    import { buildDiscountLabels } from "./discount-label.js";
+  <script>
+    /* =========================
+       Bridge
+    ========================= */
+    const { calcTotal, money } = window.TEN_PRICING;
+    const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL;
 
+    /* =========================
+       Constants
+    ========================= */
     const CART_KEY = "ten_cart";
     const COUPON_KEY = "ten_applied_coupon_v1";
     const GAS_URL =
       "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
+    /* =========================
+       Utils
+    ========================= */
     const readCart = () => {
       try { return JSON.parse(localStorage.getItem(CART_KEY) || "[]"); }
       catch { return []; }
     };
 
-    const isFirstPurchase = () => !localStorage.getItem("ten_has_purchase_v1");
+    const isFirstPurchase = () =>
+      !localStorage.getItem("ten_has_purchase_v1");
+
     const isBirthday = () => {
       const m = localStorage.getItem("ten_birth_m");
       const d = localStorage.getItem("ten_birth_d");
@@ -94,14 +110,20 @@
       return o.ok ? o.data : null;
     }
 
+    /* =========================
+       Render
+    ========================= */
     async function render(){
       const cart = readCart();
-      const settings = await getSettings();
+      if (!cart.length) return;
 
+      const settings = await getSettings();
       const subtotal = cart.reduce((s,i)=>s+Number(i.price)*Number(i.qty),0);
 
       const couponCode = localStorage.getItem(COUPON_KEY);
-      const coupon = couponCode ? await validateCoupon(couponCode, subtotal) : null;
+      const coupon = couponCode
+        ? await validateCoupon(couponCode, subtotal)
+        : null;
 
       const ctx = {
         firstPurchase: isFirstPurchase(),
@@ -121,15 +143,23 @@
       discountSummary.textContent = labels.join(" ＋ ");
     }
 
+    /* =========================
+       Submit order
+    ========================= */
     btnSubmit.onclick = async () => {
       const cart = readCart();
-      if (!cart.length) return toast.textContent = "購物車是空的";
+      if (!cart.length) {
+        toast.textContent = "購物車是空的";
+        return;
+      }
 
       const settings = await getSettings();
       const subtotal = cart.reduce((s,i)=>s+Number(i.price)*Number(i.qty),0);
 
       const couponCode = localStorage.getItem(COUPON_KEY);
-      const coupon = couponCode ? await validateCoupon(couponCode, subtotal) : null;
+      const coupon = couponCode
+        ? await validateCoupon(couponCode, subtotal)
+        : null;
 
       const ctx = {
         firstPurchase: isFirstPurchase(),
@@ -142,6 +172,7 @@
 
       const payload = {
         order_id: "OD" + Date.now(),
+        member_id: "GUEST",
         name: name.value,
         phone: phone.value,
         email: email.value,
@@ -160,10 +191,12 @@
         headers: { "Content-Type":"application/json" },
         body: JSON.stringify(payload)
       });
+
       const out = await res.json();
 
       if (out.ok) {
         localStorage.removeItem(CART_KEY);
+        localStorage.setItem("ten_has_purchase_v1", "1");
         toast.textContent = "下單完成";
       } else {
         toast.textContent = "下單失敗";
