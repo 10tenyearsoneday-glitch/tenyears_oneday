@@ -1,12 +1,18 @@
-// include-shop.js — TEN YEARS ONE DAY (DRAWER USES PRICING)
-
-const { calcTotal, money } = window.TEN_PRICING;
-const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL;
-
-
+// include-shop.js — TEN YEARS ONE DAY (NO MODULE VERSION)
 (() => {
   if (window.TEN_SHOP_LOADED) return;
   window.TEN_SHOP_LOADED = true;
+
+  /* =========================
+     Bridge from modules
+  ========================= */
+  const { calcTotal, money } = window.TEN_PRICING || {};
+  const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL || {};
+
+  if (!calcTotal || !money || !buildDiscountLabels) {
+    console.error("[TEN] pricing / discount-label not loaded");
+    return;
+  }
 
   /* =========================
      基本設定
