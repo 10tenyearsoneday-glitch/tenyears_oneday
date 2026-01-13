@@ -73,113 +73,156 @@
   </main>
 
   <script src="./include-shop.js"></script>
-  <script>
-    const CART_KEY = "ten_cart";
+ <script>
+  const CART_KEY = "ten_cart";
+  const GAS_PRODUCTS_URL =
+    "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
-    function money(n){
-      n = Math.round(Number(n||0));
-      return `NT$ ${n}`;
+  /* ========= utils ========= */
+  const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
+  const num = (v, d = 0) => {
+    const n = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
+    return Number.isFinite(n) ? n : d;
+  };
+  const truthy = (v) =>
+    v === true || v === 1 || v === "1" || String(v).trim().toUpperCase() === "TRUE";
+  const normalizeQty = (n) => Math.max(1, Math.floor(Number(n || 1)));
+
+  /* ========= settings ========= */
+  let SETTINGS = null;
+  let SETTINGS_LOADING = false;
+
+  async function getSettings() {
+    if (SETTINGS || SETTINGS_LOADING) return SETTINGS || {};
+    SETTINGS_LOADING = true;
+    try {
+      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
+      const out = await res.json().catch(() => null);
+      SETTINGS = out && typeof out === "object"
+        ? (out.ok && out.data ? out.data : out)
+        : {};
+    } catch {
+      SETTINGS = {};
+    } finally {
+      SETTINGS_LOADING = false;
     }
-    function normalizeQty(n){
-      n = Number(n||1);
-      if (!Number.isFinite(n) || n < 1) n = 1;
-      return Math.floor(n);
+    return SETTINGS;
+  }
+
+  /* ========= cart ========= */
+  function readCart() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
     }
-    function readCart(){
-      try{
-        const arr = JSON.parse(localStorage.getItem(CART_KEY)||"[]");
-        return Array.isArray(arr)?arr:[];
-      }catch{ return []; }
-    }
-    function writeCart(items){
-      localStorage.setItem(CART_KEY, JSON.stringify(items));
-      window.dispatchEvent(new Event("cart:changed"));
+  }
+
+  function writeCart(items) {
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+    window.dispatchEvent(new Event("cart:changed"));
+  }
+
+  /* ========= pricing ========= */
+  function calcShipping(subtotal, s) {
+    if (!truthy(s.shipping_enabled)) return 0;
+    const fee = num(s.shipping_fee, 0);
+    const th = num(s.free_shipping_threshold, 0);
+    if (fee <= 0) return 0;
+    if (th > 0 && subtotal >= th) return 0;
+    return fee;
+  }
+
+  /* ========= render ========= */
+  async function render() {
+    const list = document.getElementById("cartList");
+    const cart = readCart();
+
+    if (!cart.length) {
+      list.innerHTML = `<div class="text-sm opacity-70 py-8 text-center">購物車是空的。</div>`;
+      document.getElementById("sumSubtotal").textContent = money(0);
+      document.getElementById("sumTotal").textContent = money(0);
+      return;
     }
 
-    function render(){
-      const list = document.getElementById("cartList");
-      const cart = readCart();
-      if (!cart.length){
-        list.innerHTML = `<div class="text-sm opacity-70 py-8 text-center">購物車是空的。</div>`;
-        document.getElementById("sumSubtotal").textContent = money(0);
-        document.getElementById("sumTotal").textContent = money(0);
-        return;
-      }
-
-      list.innerHTML = cart.map((it, idx) => {
-        const img = it.image || "assets/placeholder.png";
-        const title = it.title || it.id;
-        const price = Number(it.price||0);
-        const qty = normalizeQty(it.qty);
-        return `
-          <div class="py-3 border-b border-black/10 flex items-center gap-3">
-            <div class="thumb"><img src="${img}" alt=""></div>
-            <div class="flex-1 min-w-0">
-              <div class="font-bold truncate">${title}</div>
-              <div class="text-sm opacity-70">${money(price)}</div>
-              <div class="text-sm font-bold mt-1">${money(price*qty)}</div>
-            </div>
-            <div class="flex items-center gap-2">
-              <button class="qtybtn" data-dec="${idx}">-</button>
-              <input class="qtyinp" data-qty="${idx}" type="number" min="1" step="1" value="${qty}">
-              <button class="qtybtn" data-inc="${idx}">+</button>
-            </div>
-            <button class="text-sm px-3 py-2 rounded-xl border border-black/10 bg-white hover:bg-black/5" data-del="${idx}">刪除</button>
+    list.innerHTML = cart.map((it, idx) => {
+      const img = it.image || "assets/placeholder.png";
+      const title = it.title || it.id;
+      const price = num(it.price);
+      const qty = normalizeQty(it.qty);
+      return `
+        <div class="py-3 border-b border-black/10 flex items-center gap-3">
+          <div class="thumb"><img src="${img}" alt=""></div>
+          <div class="flex-1 min-w-0">
+            <div class="font-bold truncate">${title}</div>
+            <div class="text-sm opacity-70">${money(price)}</div>
+            <div class="text-sm font-bold mt-1">${money(price * qty)}</div>
           </div>
-        `;
-      }).join("");
+          <div class="flex items-center gap-2">
+            <button data-dec="${idx}">-</button>
+            <input data-qty="${idx}" type="number" min="1" value="${qty}">
+            <button data-inc="${idx}">+</button>
+          </div>
+          <button data-del="${idx}" class="text-sm px-3 py-2 rounded-xl border">刪除</button>
+        </div>
+      `;
+    }).join("");
 
-      const subtotal = cart.reduce((s,i)=> s + Number(i.price||0)*normalizeQty(i.qty), 0);
-      document.getElementById("sumSubtotal").textContent = money(subtotal);
-      document.getElementById("sumTotal").textContent = money(subtotal);
+    const subtotal = cart.reduce(
+      (s, it) => s + num(it.price) * normalizeQty(it.qty),
+      0
+    );
+
+    const settings = await getSettings();
+    const shipping = calcShipping(subtotal, settings);
+    const total = subtotal + shipping;
+
+    document.getElementById("sumSubtotal").textContent = money(subtotal);
+    document.getElementById("sumTotal").textContent =
+      shipping === 0 ? `${money(total)}（免運）` : money(total);
+  }
+
+  /* ========= events ========= */
+  document.addEventListener("click", (e) => {
+    const inc = e.target.closest("[data-inc]");
+    const dec = e.target.closest("[data-dec]");
+    const del = e.target.closest("[data-del]");
+    let cart = readCart();
+
+    if (inc) cart[inc.dataset.inc].qty++;
+    if (dec) cart[dec.dataset.dec].qty = Math.max(1, cart[dec.dataset.dec].qty - 1);
+    if (del) cart.splice(del.dataset.del, 1);
+
+    if (inc || dec || del) {
+      writeCart(cart);
+      render();
     }
+  });
 
-    document.addEventListener("click", (e)=>{
-      const inc = e.target.closest("[data-inc]");
-      const dec = e.target.closest("[data-dec]");
-      const del = e.target.closest("[data-del]");
-      if (inc){
-        const idx = Number(inc.getAttribute("data-inc"));
-        const cart = readCart();
-        cart[idx].qty = normalizeQty(cart[idx].qty) + 1;
-        writeCart(cart); render();
-      }
-      if (dec){
-        const idx = Number(dec.getAttribute("data-dec"));
-        const cart = readCart();
-        cart[idx].qty = Math.max(1, normalizeQty(cart[idx].qty) - 1);
-        writeCart(cart); render();
-      }
-      if (del){
-        const idx = Number(del.getAttribute("data-del"));
-        const cart = readCart();
-        cart.splice(idx,1);
-        writeCart(cart); render();
-      }
-    });
-
-    document.addEventListener("change", (e)=>{
-      const inp = e.target.closest("[data-qty]");
-      if (!inp) return;
-      const idx = Number(inp.getAttribute("data-qty"));
-      const cart = readCart();
-      cart[idx].qty = normalizeQty(inp.value);
-      writeCart(cart); render();
-    });
-
-    document.getElementById("btnClear").addEventListener("click", ()=>{
-      if (!confirm("確定清空購物車？")) return;
-      writeCart([]); render();
-      document.getElementById("toast").textContent = "已清空購物車";
-    });
-
-    document.getElementById("btnCheckout").addEventListener("click", ()=>{
-      document.getElementById("toast").textContent = "下一步會接綠界金流。先把購物車/版面定版。";
-    });
-
-    window.addEventListener("cart:changed", render);
+  document.addEventListener("change", (e) => {
+    const inp = e.target.closest("[data-qty]");
+    if (!inp) return;
+    const cart = readCart();
+    cart[inp.dataset.qty].qty = normalizeQty(inp.value);
+    writeCart(cart);
     render();
-  </script>
+  });
+
+  document.getElementById("btnClear").addEventListener("click", () => {
+    if (!confirm("確定清空購物車？")) return;
+    writeCart([]);
+    render();
+  });
+
+  document.getElementById("btnCheckout").addEventListener("click", () => {
+    document.getElementById("toast").textContent = "下一步將接綠界金流";
+  });
+
+  window.addEventListener("cart:changed", render);
+  render();
+</script>
+
   <footer>
   <div class="footer-row">
     <div class="col">💎 精選材質<small>不含鉛，安心佩戴</small></div>
