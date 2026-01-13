@@ -40,3 +40,6 @@ export function buildDiscountLabels(settings, ctx = {}) {
 
   return labels;
 }
+window.TEN_DISCOUNT_LABEL = {
+  buildDiscountLabels
+};
