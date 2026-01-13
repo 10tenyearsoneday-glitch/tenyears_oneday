@@ -1,108 +1,60 @@
 <!doctype html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>會員中心｜十年一日 TEN YEARS ONE DAY</title>
-  <link rel="stylesheet" href="assets/style.css">
-  <style>
-    .page-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 14px;background:linear-gradient(135deg,#F8F9F7 0%,#D4E7D1 55%,#B8C9A8 100%);}
-    .card{width:min(560px,100%);background:rgba(255,255,255,.82);backdrop-filter:blur(10px);border:1px solid rgba(0,0,0,.06);border-radius:26px;box-shadow:0 18px 50px rgba(0,0,0,.08);padding:22px 18px;}
-    .brand{text-align:center;margin-bottom:14px}
-    .brand h1{margin:0;font-size:20px;letter-spacing:.12em}
-    .brand .sub{margin-top:6px;opacity:.75;font-size:12px;letter-spacing:.12em}
-    .tabs{display:flex;justify-content:center;gap:10px;margin:14px 0 18px}
-    .tab{border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.8);border-radius:999px;padding:10px 18px;font-weight:800;letter-spacing:.12em;cursor:pointer}
-    .tab.active{background:#8ea08e;color:#fff;border-color:transparent}
-    .panel{background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.06);border-radius:22px;padding:18px}
-    .title{text-align:center;font-weight:900;letter-spacing:.18em;margin:2px 0 14px}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .field label{display:block;font-size:12px;opacity:.75;margin:0 0 6px 4px;letter-spacing:.12em}
-    .field input,.field select{width:100%;padding:12px 14px;border-radius:16px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.92);outline:none}
-    .birth3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px}
-    .btn{width:100%;margin-top:14px;border:none;border-radius:18px;padding:14px 12px;font-size:15px;font-weight:900;letter-spacing:.16em;cursor:pointer;background:#8ea08e;color:#fff}
-    .toast{margin-top:10px;text-align:center;font-size:13px;min-height:18px}
-    @media (max-width:420px){.grid2{grid-template-columns:1fr}}
-  </style>
+  <meta charset="UTF-8">
+  <title>會員登入｜十年一日</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div class="page-wrap">
-    <div class="card">
-      <div class="brand">
-        <h1>會員中心</h1>
-        <div class="sub">十年一日 TEN YEARS ONE DAY</div>
-      </div>
+<body class="min-h-screen flex items-center justify-center bg-[#F8F9F7]">
 
-      <div class="tabs">
-        <button id="tabLogin" class="tab active" type="button">登入</button>
-        <button id="tabRegister" class="tab" type="button">註冊</button>
-      </div>
+  <div class="w-full max-w-sm bg-white p-6 rounded-2xl shadow">
+    <h1 class="text-xl font-black text-center mb-4">會員登入</h1>
 
-      <!-- Login -->
-      <section id="panelLogin" class="panel">
-        <div class="title">登入</div>
-        <div class="grid2">
-          <div class="field">
-            <label>手機（帳號）*</label>
-            <input id="loginPhone" inputmode="tel" autocomplete="tel" placeholder="09xxxxxxxx">
-          </div>
-          <div class="field">
-            <label>密碼 *</label>
-            <input id="loginPw" type="password" autocomplete="current-password" placeholder="••••••">
-          </div>
-        </div>
-        <button id="btnLogin" class="btn" type="button">登入</button>
-        <div id="loginToast" class="toast"></div>
-      </section>
+    <input id="phone" placeholder="手機"
+      class="w-full h-10 px-3 mb-2 border rounded-xl">
+    <input id="pw" type="password" placeholder="密碼"
+      class="w-full h-10 px-3 mb-4 border rounded-xl">
 
-      <!-- Register -->
-      <section id="panelRegister" class="panel" hidden>
-        <div class="title">註冊</div>
-        <div class="grid2">
-          <div class="field">
-            <label>姓名 *</label>
-            <input id="regName" autocomplete="name" placeholder="姓名">
-          </div>
-          <div class="field">
-            <label>手機（帳號）*</label>
-            <input id="regPhone" inputmode="tel" autocomplete="tel" placeholder="09xxxxxxxx">
-          </div>
-          <div class="field">
-            <label>Email（選填）</label>
-            <input id="regEmail" inputmode="email" autocomplete="email" placeholder="you@example.com">
-          </div>
-          <div class="field">
-            <label>地址（選填）</label>
-            <input id="regAddress" autocomplete="street-address" placeholder="縣市區路段號樓">
-          </div>
-        </div>
+    <button id="btnLogin"
+      class="w-full h-10 bg-[#2f3a2c] text-white rounded-xl font-black">
+      登入
+    </button>
 
-        <div class="field" style="margin-top:10px">
-          <label>生日（選填）</label>
-          <div class="birth3">
-            <select id="birthY"></select>
-            <select id="birthM"></select>
-            <select id="birthD"></select>
-          </div>
-        </div>
+    <div class="text-center my-3 text-sm opacity-60">或</div>
 
-        <div class="grid2" style="margin-top:10px">
-          <div class="field">
-            <label>密碼 *</label>
-            <input id="regPw" type="password" autocomplete="new-password" placeholder="至少 6 碼">
-          </div>
-          <div class="field">
-            <label>再次輸入密碼 *</label>
-            <input id="regPw2" type="password" autocomplete="new-password" placeholder="再輸入一次">
-          </div>
-        </div>
+    <button id="btnRegister"
+      class="w-full h-10 border rounded-xl">
+      註冊新會員
+    </button>
 
-        <button id="btnRegister" class="btn" type="button">建立帳號</button>
-        <div id="regToast" class="toast"></div>
-      </section>
-    </div>
+    <div id="msg" class="text-sm mt-3"></div>
   </div>
 
   <script src="./include-member.js"></script>
+  <script>
+    btnLogin.onclick = () => {
+      TEN_MEMBER.login(phone.value, pw.value, (res) => {
+        if (res.ok) {
+          location.href = "./all.html";
+        } else {
+          msg.textContent = "登入失敗";
+        }
+      });
+    };
+
+    btnRegister.onclick = () => {
+      TEN_MEMBER.register({
+        phone: phone.value,
+        pw: pw.value,
+        name: "新會員"
+      }, (res) => {
+        if (res.ok) {
+          location.href = "./all.html";
+        } else {
+          msg.textContent = "註冊失敗";
+        }
+      });
+    };
+  </script>
 </body>
 </html>
