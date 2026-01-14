@@ -4,6 +4,47 @@
   <meta charset="UTF-8">
   <title>會員登入｜十年一日</title>
   <script src="https://cdn.tailwindcss.com"></script>
+   <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .admin-wrap{max-width:980px;margin:auto;padding:18px;}
+    .admin-top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:10px 0 14px;}
+    .admin-title{font-size:1.15rem;letter-spacing:.08em;color:rgba(47,58,44,.85)}
+    .admin-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .btn2{border:none;border-radius:999px;padding:10px 14px;background:#5d6b59;color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+    .btn2.secondary{background:rgba(0,0,0,.08);color:rgba(47,58,44,.9)}
+    .btn2.danger{background:#8a3b3b}
+    .hint{font-size:.85rem;opacity:.7}
+    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px;}
+    .tab{border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.60);padding:10px 14px;border-radius:999px;cursor:pointer}
+    .tab.active{background:#2c3a2c;color:#fff;border-color:#2c3a2c}
+    .cardx{background:rgba(255,255,255,.70);border:1px solid rgba(0,0,0,.06);box-shadow:0 10px 30px rgba(0,0,0,.06);border-radius:14px;padding:14px;margin-bottom:14px}
+    .form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .form .full{grid-column:1/-1}
+    label{display:block;font-size:.82rem;opacity:.75;margin:2px 0 6px}
+    input, select, textarea{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.12);
+      background:rgba(255,255,255,.85);
+      outline:none;
+    }
+    textarea{min-height:90px;resize:vertical}
+    .table{width:100%;border-collapse:separate;border-spacing:0 10px;}
+    .row{background:rgba(255,255,255,.70);border:1px solid rgba(0,0,0,.06);box-shadow:0 10px 30px rgba(0,0,0,.06);border-radius:14px;overflow:hidden}
+    .row td{padding:12px 12px;vertical-align:middle}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.06);font-size:.82rem;white-space:nowrap}
+    .pill.on{background:rgba(93,107,89,.18);color:rgba(47,58,44,.9)}
+    .pill.off{background:rgba(138,59,59,.12);color:#8a3b3b}
+    .toast{margin-top:10px;font-size:.9rem}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-start;justify-content:center;padding:18px;overflow:auto;z-index:9999;}
+    .modal.open{display:flex}
+    .panel{width:min(760px,100%);background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-radius:18px;padding:16px 16px 14px;border:1px solid rgba(0,0,0,.08);max-height:calc(100vh - 36px);overflow:auto;}
+    .panel-actions{position:sticky;bottom:0;background:rgba(255,255,255,.92);padding:12px 0 4px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid rgba(0,0,0,.06);}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid2 .full{grid-column:1/-1}
+    .muted{opacity:.75}
+  </style>
 </head>
 <body class="min-h-screen flex items-center justify-center bg-[#F8F9F7]">
 
