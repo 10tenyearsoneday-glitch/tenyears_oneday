@@ -1,3 +1,5 @@
+// include-shop.js — TEN YEARS ONE DAY (FINAL, NO MODULE, SAFE)
+
 (() => {
   if (window.TEN_SHOP_LOADED) return;
   window.TEN_SHOP_LOADED = true;
@@ -6,55 +8,16 @@
      基本設定
   ========================= */
   const CART_KEY = "ten_cart";
-  const GAS_PRODUCTS_URL =
+  const COUPON_KEY = "ten_applied_coupon_v1";
+  const GAS_URL =
     "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
   const $ = (id) => document.getElementById(id);
-  const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
-
-  /* =========================
-     Settings（穩定版）
-  ========================= */
-  let SETTINGS = null;
-  let SETTINGS_LOADING = false;
-
-  const truthy = (v) =>
-    v === true ||
-    v === 1 ||
-    v === "1" ||
-    String(v).trim().toUpperCase() === "TRUE";
-
-  const num = (v, d = 0) => {
-    const n = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
-    return Number.isFinite(n) ? n : d;
-  };
-
-  async function getSettings() {
-    if (SETTINGS || SETTINGS_LOADING) return SETTINGS || {};
-    SETTINGS_LOADING = true;
-
-    try {
-      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, { cache: "no-store" });
-      const out = await res.json().catch(() => null);
-
-      if (out && typeof out === "object") {
-        SETTINGS = out.ok && out.data ? out.data : out;
-      } else {
-        SETTINGS = {};
-      }
-    } catch {
-      SETTINGS = {};
-    } finally {
-      SETTINGS_LOADING = false;
-    }
-    return SETTINGS;
-  }
+  const moneyFallback = (n) => `NT$ ${Math.round(Number(n || 0))}`;
 
   /* =========================
      Cart storage
   ========================= */
-  const normalizeQty = (n) => Math.max(1, Math.floor(Number(n || 1)));
-
   const readCart = () => {
     try {
       const a = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
@@ -70,55 +33,42 @@
   };
 
   const cartCount = () =>
-    readCart().reduce((s, it) => s + normalizeQty(it.qty), 0);
+    readCart().reduce((s, it) => s + Math.max(1, Number(it.qty || 1)), 0);
 
   /* =========================
-     Public API
+     ✅ Public API（商品加入一定要有）
   ========================= */
   window.TEN = window.TEN || {};
-  window.TEN.addToCart = (product, qty = 1) => {
-    const pid = String(product?.id || "");
-    if (!pid) return;
+
+  window.TEN.addToCart = function (product, qty = 1) {
+    if (!product || !product.id) {
+      console.error("[TEN] addToCart invalid product", product);
+      return false;
+    }
 
     const cart = readCart();
+    const pid = String(product.id);
     const i = cart.findIndex((x) => x.id === pid);
-    const price = num(product.price, 0);
 
     if (i === -1) {
       cart.push({
         id: pid,
         title: product.title || "",
-        price,
+        price: Number(product.price || 0),
         image: product.image || "",
-        qty: normalizeQty(qty),
+        qty: Math.max(1, Number(qty || 1)),
       });
     } else {
-      cart[i].qty = normalizeQty(cart[i].qty + qty);
+      cart[i].qty += Math.max(1, Number(qty || 1));
     }
 
     writeCart(cart);
+    return true;
   };
 
   /* =========================
-     Header / Drawer 控制
+     Header badge
   ========================= */
-  async function loadHeader() {
-    if (document.documentElement.dataset.headerLoaded === "1") return;
-    document.documentElement.dataset.headerLoaded = "1";
-
-    try {
-      const res = await fetch("./header.html", { cache: "no-store" });
-      if (!res.ok) return;
-      document.body.insertAdjacentHTML("afterbegin", await res.text());
-
-      bindCartIcon();
-      bindDrawerClose();
-      bindClearCart();
-      bindCheckoutBtn();
-      renderCartBadge();
-    } catch {}
-  }
-
   function renderCartBadge() {
     const el = $("cartCount");
     if (!el) return;
@@ -127,31 +77,32 @@
     el.style.display = n > 0 ? "inline-flex" : "none";
   }
 
-  async function openDrawer() {
-    $("cartBackdrop").hidden = false;
-    $("cartDrawer").hidden = false;
-    $("cartBackdrop").classList.add("open");
-    $("cartDrawer").classList.add("open");
+  /* =========================
+     Drawer open / close
+  ========================= */
+  function openDrawer() {
+    $("cartBackdrop") && ($("cartBackdrop").hidden = false);
+    $("cartDrawer") && ($("cartDrawer").hidden = false);
+    $("cartBackdrop")?.classList.add("open");
+    $("cartDrawer")?.classList.add("open");
     document.body.style.overflow = "hidden";
-
-    await getSettings(); // ← 關鍵：一定先拿到
     renderDrawer();
   }
 
   function closeDrawer() {
-    $("cartBackdrop").classList.remove("open");
-    $("cartDrawer").classList.remove("open");
+    $("cartBackdrop")?.classList.remove("open");
+    $("cartDrawer")?.classList.remove("open");
     document.body.style.overflow = "";
     setTimeout(() => {
-      $("cartBackdrop").hidden = true;
-      $("cartDrawer").hidden = true;
+      $("cartBackdrop") && ($("cartBackdrop").hidden = true);
+      $("cartDrawer") && ($("cartDrawer").hidden = true);
     }, 180);
   }
 
   function bindCartIcon() {
-    document
-      .querySelector('.icon-row a[data-icon="cart"]')
-      ?.addEventListener("click", (e) => {
+    const a = document.querySelector('.icon-row a[data-icon="cart"]');
+    a &&
+      a.addEventListener("click", (e) => {
         e.preventDefault();
         openDrawer();
       });
@@ -162,32 +113,20 @@
     $("cartBackdrop")?.addEventListener("click", closeDrawer);
   }
 
-  function bindClearCart() {
-    $("cartClear")?.addEventListener("click", () => {
-      if (confirm("確定要清空購物車嗎？")) writeCart([]);
-    });
-  }
-
-  function bindCheckoutBtn() {
-    $("cartGoCheckout")?.addEventListener(
-      "click",
-      () => (location.href = "./cart.html")
-    );
-  }
-
   /* =========================
-     Drawer render（穩定）
+     Drawer render（穩定版）
   ========================= */
-  function renderDrawer() {
+  async function renderDrawer() {
     const list = $("cartItems");
     if (!list) return;
 
     const cart = readCart();
+
     if (!cart.length) {
       list.innerHTML = `<div class="muted">購物車是空的</div>`;
-      $("cartSubtotal").textContent = money(0);
-      $("cartShipping").textContent = money(0);
-      $("cartTotal").textContent = money(0);
+      $("cartSubtotal").textContent = moneyFallback(0);
+      $("cartShipping").textContent = moneyFallback(0);
+      $("cartTotal").textContent = moneyFallback(0);
       return;
     }
 
@@ -198,7 +137,7 @@
         <div class="d-thumb"><img src="${it.image || ""}"></div>
         <div class="d-info">
           <div class="d-name">${it.title}</div>
-          <div class="d-meta">${money(it.price)}</div>
+          <div class="d-meta">${moneyFallback(it.price)}</div>
         </div>
         <div class="d-qty">
           <button data-dec="${it.id}">-</button>
@@ -211,24 +150,38 @@
       )
       .join("");
 
-    const subtotal = cart.reduce(
-      (s, it) => s + num(it.price) * num(it.qty),
+    /* ===== 計價（安全切換） ===== */
+    const P = window.TEN_PRICING;
+    const L = window.TEN_DISCOUNT_LABEL;
+
+    let subtotal = cart.reduce(
+      (s, it) => s + Number(it.price || 0) * Number(it.qty || 1),
       0
     );
 
-    const s = SETTINGS || {};
-    const shipping =
-      truthy(s.shipping_enabled) &&
-      num(s.shipping_fee) > 0 &&
-      !(num(s.free_shipping_threshold) > 0 &&
-        subtotal >= num(s.free_shipping_threshold))
-        ? num(s.shipping_fee)
-        : 0;
+    let pricing = {
+      subtotal,
+      discount: 0,
+      shipping: 0,
+      total: subtotal,
+      discountLabel: "",
+    };
 
-    $("cartSubtotal").textContent = money(subtotal);
+    if (P && P.calcTotal) {
+      const settings = await fetch(`${GAS_URL}?path=settings`)
+        .then((r) => r.json())
+        .catch(() => ({}));
+      pricing = P.calcTotal(cart, settings, {});
+    }
+
+    $("cartSubtotal").textContent = (P?.money || moneyFallback)(
+      pricing.subtotal
+    );
     $("cartShipping").textContent =
-      shipping === 0 ? "免運" : money(shipping);
-    $("cartTotal").textContent = money(subtotal + shipping);
+      pricing.shipping === 0
+        ? "免運"
+        : (P?.money || moneyFallback)(pricing.shipping);
+    $("cartTotal").textContent = (P?.money || moneyFallback)(pricing.total);
   }
 
   /* =========================
@@ -238,18 +191,22 @@
     const inc = e.target.closest("[data-inc]");
     const dec = e.target.closest("[data-dec]");
     const del = e.target.closest("[data-del]");
-    if (!inc && !dec && !del) return;
-
     let cart = readCart();
-    if (inc) cart.find((x) => x.id === inc.dataset.inc).qty++;
-    if (dec)
-      cart.find((x) => x.id === dec.dataset.dec).qty = Math.max(
-        1,
-        cart.find((x) => x.id === dec.dataset.dec).qty - 1
-      );
+
+    if (inc) {
+      const i = cart.find((x) => x.id === inc.dataset.inc);
+      if (i) i.qty++;
+    }
+    if (dec) {
+      const i = cart.find((x) => x.id === dec.dataset.dec);
+      if (i) i.qty = Math.max(1, i.qty - 1);
+    }
     if (del) cart = cart.filter((x) => x.id !== del.dataset.del);
 
-    writeCart(cart);
+    if (inc || dec || del) {
+      writeCart(cart);
+      renderDrawer();
+    }
   });
 
   document.addEventListener("change", (e) => {
@@ -257,8 +214,9 @@
     if (!inp) return;
     const cart = readCart();
     const i = cart.find((x) => x.id === inp.dataset.qty);
-    if (i) i.qty = normalizeQty(inp.value);
+    if (i) i.qty = Math.max(1, Math.floor(inp.value));
     writeCart(cart);
+    renderDrawer();
   });
 
   /* =========================
@@ -269,9 +227,9 @@
     renderDrawer();
   });
 
-  window.addEventListener("DOMContentLoaded", async () => {
-    await loadHeader();
-    await getSettings();
+  window.addEventListener("DOMContentLoaded", () => {
+    bindCartIcon();
+    bindDrawerClose();
     renderCartBadge();
     renderDrawer();
   });
