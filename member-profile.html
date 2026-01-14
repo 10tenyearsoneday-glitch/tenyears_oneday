@@ -1,35 +1,28 @@
 <!doctype html>
 <html lang="zh-TW">
-<head>
-  <meta charset="utf-8">
-  <title>會員中心｜十年一日</title>
-</head>
+<head><meta charset="utf-8"><title>會員中心</title></head>
 <body>
-  <h1>會員中心</h1>
+<h2>會員中心</h2>
+<div id="info">載入中…</div>
+<button onclick="logout()">登出</button>
 
-  <div id="profile"></div>
-  <button id="btnLogout">登出</button>
+<script src="./include-member.js"></script>
+<script>
+fetchMe()
+  .then(p=>{
+    info.innerHTML = `
+      <div>姓名：${p.name}</div>
+      <div>手機：${p.phone}</div>
+      <div>生日：${p.birth}</div>
+      <div>Email：${p.email||""}</div>
+    `;
+  })
+  .catch(()=>location.href="member.html");
 
-  <script src="./include-member.js"></script>
-  <script>
-    async function init() {
-      try {
-        const res = await fetchMe();
-        const p = res.profile;
-        qs("profile").innerHTML = `
-          <div>姓名：${p.name}</div>
-          <div>手機：${p.phone}</div>
-          <div>生日：${p.birth}</div>
-          <div>Email：${p.email || ""}</div>
-        `;
-      } catch (e) {
-        // 沒登入 / token 過期
-        location.href = "member.html";
-      }
-    }
-
-    qs("btnLogout").onclick = logoutMember;
-    init();
-  </script>
+function logout(){
+  localStorage.removeItem("ten_token");
+  location.href="member.html";
+}
+</script>
 </body>
 </html>
