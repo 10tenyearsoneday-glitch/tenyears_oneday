@@ -1,7 +1,7 @@
 // include-member.js — TEN YEARS ONE DAY (STABLE)
 
 const MEMBER_GAS_URL =
-  "https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxx/exec"; // ← 換成你的 Members GAS
+  "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec"; // ← 換成你的 Members GAS
 
 /* =========================
    Utils
