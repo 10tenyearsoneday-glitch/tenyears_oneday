@@ -270,4 +270,39 @@
   });
 
   window.addEventListener("DOMContentLoaded", loadHeader);
+    /* =========================
+     Drawer actions（補回）
+  ========================= */
+
+  function bindDrawerActions() {
+    // 清空購物車
+    const btnClear = $("cartClear");
+    if (btnClear) {
+      btnClear.addEventListener("click", () => {
+        if (!confirm("確定要清空購物車？")) return;
+        writeCart([]);
+        renderDrawer();
+      });
+    }
+
+    // 前往結帳
+    const btnCheckout = $("cartGoCheckout");
+    if (btnCheckout) {
+      btnCheckout.addEventListener("click", () => {
+        // 你現在的流程是 modal / checkout.html
+        // 這裡我只做最保守、不炸的版本
+        window.location.href = "checkout.html";
+      });
+    }
+  }
+
+  /* =========================
+     補到 header 注入完成後
+  ========================= */
+  const _oldLoadHeader = loadHeader;
+  loadHeader = function () {
+    _oldLoadHeader();
+    setTimeout(bindDrawerActions, 0);
+  };
+
 })();
