@@ -1,29 +1,26 @@
-// 是否首購（暫時用 localStorage，之後可換 orders）
-function isFirstPurchase() {
-  // 有下過單就不是首購
-  return !localStorage.getItem("ten_has_purchase_v1");
-}
-
-// 是否生日
-function isBirthday() {
-  const m = localStorage.getItem("ten_birth_m");
-  const d = localStorage.getItem("ten_birth_d");
-  if (!m || !d) return false;
-
-  const now = new Date();
-  return (
-    now.getMonth() + 1 === Number(m) &&
-    now.getDate() === Number(d)
-  );
-}
-// include-shop.js — TEN YEARS ONE DAY (STABLE FINAL)
+// include-shop.js — TEN YEARS ONE DAY (FINAL / NO MODULE / STABLE)
 
 (() => {
   if (window.TEN_SHOP_LOADED) return;
   window.TEN_SHOP_LOADED = true;
 
   /* =========================
-     基本設定
+     Member / Discount State
+  ========================= */
+  function isFirstPurchase() {
+    return !localStorage.getItem("ten_has_purchase_v1");
+  }
+
+  function isBirthday() {
+    const m = localStorage.getItem("ten_birth_m");
+    const d = localStorage.getItem("ten_birth_d");
+    if (!m || !d) return false;
+    const now = new Date();
+    return now.getMonth() + 1 === Number(m) && now.getDate() === Number(d);
+  }
+
+  /* =========================
+     Basic config
   ========================= */
   const CART_KEY = "ten_cart";
   const COUPON_KEY = "ten_applied_coupon_v1";
@@ -31,62 +28,62 @@ function isBirthday() {
     "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
   const $ = (id) => document.getElementById(id);
-  /* =========================
-   Settings（補回來）
-========================= */
-let __TEN_SETTINGS = null;
-
-async function getSettings() {
-  if (__TEN_SETTINGS) return __TEN_SETTINGS;
-
-  const res = await fetch(
-    "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec?path=settings",
-    { cache: "no-store" }
-  );
-
-  const out = await res.json();
-  __TEN_SETTINGS = out.ok && out.data ? out.data : out;
-  return __TEN_SETTINGS;
-}
-
 
   /* =========================
-     Pricing / Label（安全吃）
+     Settings（一定存在）
+  ========================= */
+  let __TEN_SETTINGS = null;
+  async function getSettings() {
+    if (__TEN_SETTINGS) return __TEN_SETTINGS;
+    const res = await fetch(`${GAS_URL}?path=settings`, { cache: "no-store" });
+    const out = await res.json();
+    __TEN_SETTINGS = out && typeof out === "object" ? out : {};
+    return __TEN_SETTINGS;
+  }
+
+  /* =========================
+     Pricing / Label（安全橋接）
   ========================= */
   const PRICING = window.TEN_PRICING || {};
   const LABELS = window.TEN_DISCOUNT_LABEL || {};
 
-  const calcTotal = PRICING.calcTotal || function (items) {
-    const subtotal = items.reduce((s, it) => s + it.price * it.qty, 0);
-    return { subtotal, discount: 0, shipping: 0, total: subtotal };
-  };
+  const calcTotal =
+    PRICING.calcTotal ||
+    function (items) {
+      const subtotal = items.reduce((s, it) => s + Number(it.price) * Number(it.qty), 0);
+      return { subtotal, discount: 0, shipping: 0, total: subtotal };
+    };
 
-  const money = PRICING.money || (n => `NT$ ${Math.round(Number(n || 0))}`);
+  const money =
+    PRICING.money ||
+    ((n) => `NT$ ${Math.round(Number(n || 0))}`);
+
   const buildDiscountLabels =
     LABELS.buildDiscountLabels || (() => []);
 
   /* =========================
      Cart storage
   ========================= */
-  const readCart = () => {
+  function readCart() {
     try {
       const arr = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
       return Array.isArray(arr) ? arr : [];
     } catch {
       return [];
     }
-  };
+  }
 
-  const writeCart = (items) => {
+  function writeCart(items) {
     localStorage.setItem(CART_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("cart:changed"));
-  };
+  }
 
-  const cartCount = () =>
-    readCart().reduce((s, it) => s + Number(it.qty || 1), 0);
+  function cartCount() {
+    return readCart().reduce((s, it) => s + Number(it.qty || 1), 0);
+  }
 
   /* =========================
-     ✅ PUBLIC API（關鍵）
+     PUBLIC API（不可再動）
   ========================= */
   window.TEN = window.TEN || {};
 
@@ -98,7 +95,7 @@ async function getSettings() {
 
     const cart = readCart();
     const id = String(product.id);
-    const i = cart.findIndex(x => x.id === id);
+    const i = cart.findIndex((x) => x.id === id);
 
     if (i === -1) {
       cart.push({
@@ -106,7 +103,7 @@ async function getSettings() {
         title: product.title || "",
         price: Number(product.price || 0),
         image: product.image || "",
-        qty: Math.max(1, Number(qty || 1))
+        qty: Math.max(1, Number(qty || 1)),
       });
     } else {
       cart[i].qty += Math.max(1, Number(qty || 1));
@@ -118,22 +115,22 @@ async function getSettings() {
   };
 
   /* =========================
-     Header 注入
+     Header inject
   ========================= */
   function loadHeader() {
     if (document.body.dataset.headerLoaded) return;
     document.body.dataset.headerLoaded = "1";
 
     fetch("./header.html", { cache: "no-store" })
-      .then(res => res.text())
-      .then(html => {
+      .then((r) => r.text())
+      .then((html) => {
         document.body.insertAdjacentHTML("afterbegin", html);
         bindCartIcon();
         bindDrawerClose();
         renderCartBadge();
         renderDrawer();
       })
-      .catch(err => console.error("[TEN] header load failed", err));
+      .catch((e) => console.error("[TEN] header load failed", e));
   }
 
   function renderCartBadge() {
@@ -175,7 +172,7 @@ async function getSettings() {
   }
 
   /* =========================
-     Drawer render
+     Drawer render（核心）
   ========================= */
   async function renderDrawer() {
     const list = $("cartItems");
@@ -191,7 +188,9 @@ async function getSettings() {
       return;
     }
 
-    list.innerHTML = cart.map(it => `
+    list.innerHTML = cart
+      .map(
+        (it) => `
       <div class="d-item">
         <div class="d-thumb"><img src="${it.image || ""}"></div>
         <div class="d-info">
@@ -204,21 +203,17 @@ async function getSettings() {
           <button data-inc="${it.id}">+</button>
         </div>
         <button class="d-del" data-del="${it.id}">移除</button>
-      </div>
-    `).join("");
+      </div>`
+      )
+      .join("");
 
     const settings = await getSettings();
-    /* =========================
-   Member / Discount State
-========================= */
 
-
-
-const pricing = calcTotal(cart, settings, {
-  firstPurchase: isFirstPurchase(),
-  birthday: isBirthday(),
-  coupon: null // 先不管優惠碼也可以
-});
+    const pricing = calcTotal(cart, settings, {
+      firstPurchase: isFirstPurchase(),
+      birthday: isBirthday(),
+      coupon: null,
+    });
 
     $("cartSubtotal").textContent = money(pricing.subtotal);
     $("cartShipping").textContent =
@@ -227,8 +222,11 @@ const pricing = calcTotal(cart, settings, {
 
     const promo = $("cartPromoTips");
     if (promo) {
-      const labels = buildDiscountLabels({}, {});
-      promo.innerHTML = labels.map(t => `<span>${t}</span>`).join("");
+      const labels = buildDiscountLabels(settings, {
+        firstPurchase: isFirstPurchase(),
+        birthday: isBirthday(),
+      });
+      promo.innerHTML = labels.map((t) => `<span>${t}</span>`).join("");
     }
   }
 
@@ -242,15 +240,15 @@ const pricing = calcTotal(cart, settings, {
     let cart = readCart();
 
     if (inc) {
-      const i = cart.find(x => x.id === inc.dataset.inc);
+      const i = cart.find((x) => x.id === inc.dataset.inc);
       if (i) i.qty++;
     }
     if (dec) {
-      const i = cart.find(x => x.id === dec.dataset.dec);
+      const i = cart.find((x) => x.id === dec.dataset.dec);
       if (i) i.qty = Math.max(1, i.qty - 1);
     }
     if (del) {
-      cart = cart.filter(x => x.id !== del.dataset.del);
+      cart = cart.filter((x) => x.id !== del.dataset.del);
     }
 
     if (inc || dec || del) {
@@ -263,7 +261,7 @@ const pricing = calcTotal(cart, settings, {
     const inp = e.target.closest("[data-qty]");
     if (!inp) return;
     const cart = readCart();
-    const i = cart.find(x => x.id === inp.dataset.qty);
+    const i = cart.find((x) => x.id === inp.dataset.qty);
     if (i) i.qty = Math.max(1, Math.floor(inp.value));
     writeCart(cart);
     renderDrawer();
