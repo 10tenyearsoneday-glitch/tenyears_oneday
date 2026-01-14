@@ -171,7 +171,14 @@
       </div>
     `).join("");
 
-    const pricing = calcTotal(cart);
+    const settings = await getSettings();
+
+const pricing = calcTotal(cart, settings, {
+  firstPurchase: isFirstPurchase(),
+  birthday: isBirthday(),
+  coupon: null // 先不管優惠碼也可以
+});
+
     $("cartSubtotal").textContent = money(pricing.subtotal);
     $("cartShipping").textContent =
       pricing.shipping === 0 ? "免運" : money(pricing.shipping);
