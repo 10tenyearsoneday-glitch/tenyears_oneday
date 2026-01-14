@@ -232,3 +232,7 @@
     renderDrawer();
   });
 })();
+  }
+
+  waitForDeps();
+})();
