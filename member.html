@@ -1,51 +1,82 @@
-<!doctype html>
-<html lang="zh-TW">
-<head>
-  <meta charset="utf-8">
-  <title>會員登入｜十年一日</title>
-</head>
-<body>
-  <h1>會員登入 / 註冊</h1>
+// include-member.js — TEN YEARS ONE DAY (JSONP FINAL)
 
-  <h2>登入</h2>
-  <input id="loginPhone" placeholder="手機">
-  <input id="loginPw" type="password" placeholder="密碼">
-  <button id="btnLogin">登入</button>
+const MEMBER_GAS_URL =
+  "https://script.google.com/macros/s/AKfycb【換成你的 Members GAS ID】/exec";
 
-  <h2>註冊</h2>
-  <input id="regPhone" placeholder="手機">
-  <input id="regPw" type="password" placeholder="密碼">
-  <input id="regName" placeholder="姓名">
-  <input id="regBirth" placeholder="生日 YYYY-MM-DD">
-  <button id="btnRegister">註冊</button>
+/* =========================
+   Utils
+========================= */
+function qs(id) {
+  return document.getElementById(id);
+}
 
-  <div id="msg"></div>
+function saveAuth(res) {
+  localStorage.setItem("ten_member_token", res.token);
+  localStorage.setItem("ten_member_id", res.memberId);
+}
 
-  <script src="./include-member.js"></script>
-  <script>
-    qs("btnLogin").onclick = async () => {
-      try {
-        await loginMember({
-          phone: qs("loginPhone").value,
-          password: qs("loginPw").value
-        });
-      } catch (e) {
-        qs("msg").textContent = "登入失敗：" + (e.error || "");
-      }
+function getToken() {
+  return localStorage.getItem("ten_member_token");
+}
+
+/* =========================
+   JSONP helper
+========================= */
+function jsonp(path, params = {}) {
+  return new Promise((resolve, reject) => {
+    const cb = "cb_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+    const script = document.createElement("script");
+
+    params.path = path;
+    params.callback = cb;
+
+    const qs = Object.keys(params)
+      .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
+      .join("&");
+
+    script.src = `${MEMBER_GAS_URL}?${qs}`;
+
+    window[cb] = (res) => {
+      delete window[cb];
+      script.remove();
+      res && res.ok ? resolve(res) : reject(res);
     };
 
-    qs("btnRegister").onclick = async () => {
-      try {
-        await registerMember({
-          phone: qs("regPhone").value,
-          password: qs("regPw").value,
-          name: qs("regName").value,
-          birth: qs("regBirth").value
-        });
-      } catch (e) {
-        qs("msg").textContent = "註冊失敗：" + (e.error || "");
-      }
+    script.onerror = () => {
+      delete window[cb];
+      script.remove();
+      reject({ error: "NETWORK_ERROR" });
     };
-  </script>
-</body>
-</html>
+
+    document.body.appendChild(script);
+  });
+}
+
+/* =========================
+   Auth actions
+========================= */
+async function registerMember(data) {
+  const res = await jsonp("register", data);
+  saveAuth(res);
+  location.href = "member-profile.html";
+}
+
+async function loginMember(data) {
+  const res = await jsonp("login", data);
+  saveAuth(res);
+  location.href = "member-profile.html";
+}
+
+async function logoutMember() {
+  const token = getToken();
+  if (token) await jsonp("logout", { token });
+  localStorage.removeItem("ten_member_token");
+  localStorage.removeItem("ten_member_id");
+  location.href = "member.html";
+}
+
+async function fetchMe() {
+  const token = getToken();
+  if (!token) throw { error: "NO_TOKEN" };
+  return jsonp("me", { token });
+}
