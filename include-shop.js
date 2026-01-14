@@ -109,6 +109,20 @@
   /* =========================
      Header 注入
   ========================= */
+  function bindCartIcon() {
+  const a = document.querySelector('.icon-row a[data-icon="cart"]');
+  if (!a) return;
+  a.addEventListener("click", (e) => {
+    e.preventDefault();
+    openDrawer();
+  });
+}
+
+function bindDrawerClose() {
+  $("cartClose")?.addEventListener("click", closeDrawer);
+  $("cartBackdrop")?.addEventListener("click", closeDrawer);
+}
+
   function loadHeader() {
     if (document.body.dataset.headerLoaded) return;
     document.body.dataset.headerLoaded = "1";
