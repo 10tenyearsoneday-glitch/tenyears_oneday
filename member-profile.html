@@ -1,88 +1,35 @@
-// include-member.js — TEN YEARS ONE DAY (NON-MODULE)
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <title>會員中心｜十年一日</title>
+</head>
+<body>
+  <h1>會員中心</h1>
 
-(() => {
-  if (window.TEN_MEMBER_LOADED) return;
-  window.TEN_MEMBER_LOADED = true;
+  <div id="profile"></div>
+  <button id="btnLogout">登出</button>
 
-  const MEMBER_API =
-    "https://script.google.com/macros/s/1Q21he0DoqUId8rgJj3nwFjM6wMKHkSBhLstkHaXQKdI/exec";
-
-  const KEY = {
-    memberId: "ten_member_id",
-    token: "ten_member_token",
-    birthM: "ten_birth_m",
-    birthD: "ten_birth_d"
-  };
-
-  function jsonp(params, cb) {
-    const callback = "__cb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
-    window[callback] = (res) => {
-      delete window[callback];
-      document.body.removeChild(script);
-      cb && cb(res);
-    };
-
-    const q = new URLSearchParams({ ...params, callback }).toString();
-    const script = document.createElement("script");
-    script.src = MEMBER_API + "?" + q;
-    document.body.appendChild(script);
-  }
-
-  function saveProfile(profile) {
-    if (!profile) return;
-    localStorage.setItem(KEY.memberId, profile.memberId);
-    if (profile.birth) {
-      const [, m, d] = profile.birth.split("-");
-      localStorage.setItem(KEY.birthM, m);
-      localStorage.setItem(KEY.birthD, d);
+  <script src="./include-member.js"></script>
+  <script>
+    async function init() {
+      try {
+        const res = await fetchMe();
+        const p = res.profile;
+        qs("profile").innerHTML = `
+          <div>姓名：${p.name}</div>
+          <div>手機：${p.phone}</div>
+          <div>生日：${p.birth}</div>
+          <div>Email：${p.email || ""}</div>
+        `;
+      } catch (e) {
+        // 沒登入 / token 過期
+        location.href = "member.html";
+      }
     }
-  }
 
-  function clearProfile() {
-    Object.values(KEY).forEach(k => localStorage.removeItem(k));
-  }
-
-  window.TEN_MEMBER = {
-    register(data, cb) {
-      jsonp({ path: "register", ...data }, (res) => {
-        if (res.ok) {
-          localStorage.setItem(KEY.token, res.token);
-          saveProfile(res.profile);
-        }
-        cb && cb(res);
-      });
-    },
-
-    login(phone, pw, cb) {
-      jsonp({ path: "login", phone, pw }, (res) => {
-        if (res.ok) {
-          localStorage.setItem(KEY.token, res.token);
-          saveProfile(res.profile);
-        }
-        cb && cb(res);
-      });
-    },
-
-    me(cb) {
-      const token = localStorage.getItem(KEY.token);
-      if (!token) return cb && cb({ ok:false });
-      jsonp({ path: "me", token }, (res) => {
-        if (res.ok) saveProfile(res.profile);
-        cb && cb(res);
-      });
-    },
-
-    logout(cb) {
-      const token = localStorage.getItem(KEY.token);
-      if (!token) return cb && cb({ ok:true });
-      jsonp({ path: "logout", token }, (res) => {
-        clearProfile();
-        cb && cb(res);
-      });
-    },
-
-    getMemberId() {
-      return localStorage.getItem(KEY.memberId) || "";
-    }
-  };
-})();
+    qs("btnLogout").onclick = logoutMember;
+    init();
+  </script>
+</body>
+</html>
