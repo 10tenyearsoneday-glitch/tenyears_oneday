@@ -13,6 +13,24 @@
     "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
   const $ = (id) => document.getElementById(id);
+  /* =========================
+   Settings（補回來）
+========================= */
+let __TEN_SETTINGS = null;
+
+async function getSettings() {
+  if (__TEN_SETTINGS) return __TEN_SETTINGS;
+
+  const res = await fetch(
+    "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec?path=settings",
+    { cache: "no-store" }
+  );
+
+  const out = await res.json();
+  __TEN_SETTINGS = out.ok && out.data ? out.data : out;
+  return __TEN_SETTINGS;
+}
+
 
   /* =========================
      Pricing / Label（安全吃）
