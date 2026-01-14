@@ -1,10 +1,10 @@
-// include-shop.js — TEN YEARS ONE DAY (FINAL / NO MODULE)
+// include-shop.js — TEN YEARS ONE DAY (FINAL VERSION, NO MODULE)
 
 (() => {
   if (window.TEN_SHOP_LOADED) return;
 
   /* =========================
-     等待依賴
+     Wait for pricing / labels
   ========================= */
   function waitForDeps() {
     const P = window.TEN_PRICING;
@@ -14,14 +14,14 @@
       return setTimeout(waitForDeps, 30);
     }
 
-    // 依賴齊了，正式啟動
+    // ===== deps ready =====
     window.TEN_SHOP_LOADED = true;
 
     const { calcTotal, money } = P;
     const { buildDiscountLabels } = L;
 
     /* =========================
-       Header 注入（關鍵）
+       Inject header
     ========================= */
     function loadHeader() {
       if (document.body.dataset.headerLoaded) return;
@@ -39,7 +39,7 @@
     }
 
     /* =========================
-       基本設定
+       Basic config
     ========================= */
     const CART_KEY = "ten_cart";
     const COUPON_KEY = "ten_applied_coupon_v1";
@@ -66,16 +66,48 @@
     };
 
     /* =========================
+       PUBLIC API（你之前缺的）
+    ========================= */
+    window.TEN = window.TEN || {};
+    window.TEN.addToCart = function (product, qty = 1) {
+      if (!product || !product.id) {
+        console.error("[TEN] addToCart invalid product", product);
+        return false;
+      }
+
+      const cart = readCart();
+      const i = cart.findIndex(x => x.id === String(product.id));
+
+      if (i === -1) {
+        cart.push({
+          id: String(product.id),
+          title: product.title || "",
+          price: Number(product.price || 0),
+          image: product.image || "",
+          qty: Math.max(1, Number(qty || 1))
+        });
+      } else {
+        cart[i].qty += Math.max(1, Number(qty || 1));
+      }
+
+      writeCart(cart);
+      renderDrawer();
+      return true;
+    };
+
+    /* =========================
        Member state
     ========================= */
-    const isFirstPurchase = () => !localStorage.getItem("ten_has_purchase_v1");
+    const isFirstPurchase = () =>
+      !localStorage.getItem("ten_has_purchase_v1");
 
     const isBirthday = () => {
       const m = localStorage.getItem("ten_birth_m");
       const d = localStorage.getItem("ten_birth_d");
       if (!m || !d) return false;
       const now = new Date();
-      return now.getMonth() + 1 === Number(m) && now.getDate() === Number(d);
+      return now.getMonth() + 1 === Number(m) &&
+             now.getDate() === Number(d);
     };
 
     /* =========================
@@ -159,7 +191,7 @@
       `).join("");
 
       const settings = await getSettings();
-      const subtotal = cart.reduce((s, it) => s + Number(it.price) * Number(it.qty), 0);
+      const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
 
       const couponCode = localStorage.getItem(COUPON_KEY);
       const coupon = couponCode
