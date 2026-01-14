@@ -1,51 +1,31 @@
 <!doctype html>
 <html lang="zh-TW">
-<head>
-  <meta charset="utf-8">
-  <title>會員登入｜十年一日</title>
-</head>
+<head><meta charset="utf-8"><title>會員登入</title></head>
 <body>
-  <h1>會員登入 / 註冊</h1>
+<h2>會員登入</h2>
+<input id="phone" placeholder="手機">
+<input id="pw" type="password" placeholder="密碼">
+<button onclick="login()">登入</button>
 
-  <h2>登入</h2>
-  <input id="loginPhone" placeholder="手機">
-  <input id="loginPw" type="password" placeholder="密碼">
-  <button id="btnLogin">登入</button>
+<h3>註冊</h3>
+<input id="r_phone" placeholder="手機">
+<input id="r_pw" type="password" placeholder="密碼">
+<input id="r_name" placeholder="姓名">
+<input id="r_birth" placeholder="1997/03/21">
+<button onclick="register()">註冊</button>
 
-  <h2>註冊</h2>
-  <input id="regPhone" placeholder="手機">
-  <input id="regPw" type="password" placeholder="密碼">
-  <input id="regName" placeholder="姓名">
-  <input id="regBirth" placeholder="生日 YYYY-MM-DD">
-  <button id="btnRegister">註冊</button>
-
-  <div id="msg"></div>
-
-  <script src="./include-member.js"></script>
-  <script>
-    qs("btnLogin").onclick = async () => {
-      try {
-        await loginMember({
-          phone: qs("loginPhone").value,
-          password: qs("loginPw").value
-        });
-      } catch (e) {
-        qs("msg").textContent = "登入失敗：" + (e.error || "");
-      }
-    };
-
-    qs("btnRegister").onclick = async () => {
-      try {
-        await registerMember({
-          phone: qs("regPhone").value,
-          password: qs("regPw").value,
-          name: qs("regName").value,
-          birth: qs("regBirth").value
-        });
-      } catch (e) {
-        qs("msg").textContent = "註冊失敗：" + (e.error || "");
-      }
-    };
-  </script>
+<script src="./include-member.js"></script>
+<script>
+async function login(){
+  const r = await jsonp(`${MEMBER_API}?path=login&phone=${phone.value}&password=${pw.value}`);
+  if(r.ok){ setToken(r.token); location.href="member-profile.html"; }
+  else alert("登入失敗");
+}
+async function register(){
+  const r = await jsonp(`${MEMBER_API}?path=register&phone=${r_phone.value}&password=${r_pw.value}&name=${r_name.value}&birth=${r_birth.value}`);
+  if(r.ok){ setToken(r.token); location.href="member-profile.html"; }
+  else alert("註冊失敗："+r.error);
+}
+</script>
 </body>
 </html>
