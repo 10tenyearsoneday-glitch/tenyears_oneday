@@ -190,6 +190,29 @@ async function getSettings() {
     `).join("");
 
     const settings = await getSettings();
+    /* =========================
+   Member / Discount State
+========================= */
+
+// 是否首購（暫時用 localStorage，之後可換 orders）
+function isFirstPurchase() {
+  // 有下過單就不是首購
+  return !localStorage.getItem("ten_has_purchase_v1");
+}
+
+// 是否生日
+function isBirthday() {
+  const m = localStorage.getItem("ten_birth_m");
+  const d = localStorage.getItem("ten_birth_d");
+  if (!m || !d) return false;
+
+  const now = new Date();
+  return (
+    now.getMonth() + 1 === Number(m) &&
+    now.getDate() === Number(d)
+  );
+}
+
 
 const pricing = calcTotal(cart, settings, {
   firstPurchase: isFirstPurchase(),
