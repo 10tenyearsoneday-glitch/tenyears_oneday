@@ -1,8 +1,11 @@
-// include-shop.js — TEN YEARS ONE DAY (NO MODULE, SAFE BOOT)
+// include-shop.js — TEN YEARS ONE DAY (FINAL / NO MODULE)
 
 (() => {
   if (window.TEN_SHOP_LOADED) return;
 
+  /* =========================
+     等待依賴
+  ========================= */
   function waitForDeps() {
     const P = window.TEN_PRICING;
     const L = window.TEN_DISCOUNT_LABEL;
@@ -11,11 +14,29 @@
       return setTimeout(waitForDeps, 30);
     }
 
-    // ✅ 依賴齊了，正式啟動
+    // 依賴齊了，正式啟動
     window.TEN_SHOP_LOADED = true;
 
     const { calcTotal, money } = P;
     const { buildDiscountLabels } = L;
+
+    /* =========================
+       Header 注入（關鍵）
+    ========================= */
+    function loadHeader() {
+      if (document.body.dataset.headerLoaded) return;
+      document.body.dataset.headerLoaded = "1";
+
+      fetch("./header.html", { cache: "no-store" })
+        .then(res => res.text())
+        .then(html => {
+          document.body.insertAdjacentHTML("afterbegin", html);
+          bindCartIcon();
+          bindDrawerClose();
+          renderDrawer();
+        })
+        .catch(err => console.error("[TEN] header load failed", err));
+    }
 
     /* =========================
        基本設定
@@ -138,30 +159,37 @@
       `).join("");
 
       const settings = await getSettings();
+      const subtotal = cart.reduce((s, it) => s + Number(it.price) * Number(it.qty), 0);
+
+      const couponCode = localStorage.getItem(COUPON_KEY);
+      const coupon = couponCode
+        ? await validateCoupon(couponCode, subtotal)
+        : null;
+
       const ctx = {
         firstPurchase: isFirstPurchase(),
-        birthday: isBirthday()
+        birthday: isBirthday(),
+        coupon
       };
 
       const pricing = calcTotal(cart, settings, ctx);
+      const labels = buildDiscountLabels(settings, ctx);
 
       $("cartSubtotal").textContent = money(pricing.subtotal);
       $("cartShipping").textContent =
         pricing.shipping === 0 ? "免運" : money(pricing.shipping);
       $("cartTotal").textContent = money(pricing.total);
+
+      const promo = $("cartPromoTips");
+      if (promo) promo.innerHTML = labels.map(t => `<span>${t}</span>`).join("");
     }
 
     /* =========================
        Init
     ========================= */
     window.addEventListener("cart:changed", renderDrawer);
-    window.addEventListener("DOMContentLoaded", () => {
-      bindCartIcon();
-      bindDrawerClose();
-      renderDrawer();
-    });
+    window.addEventListener("DOMContentLoaded", loadHeader);
   }
 
-  // 🔑 啟動等待
   waitForDeps();
 })();
