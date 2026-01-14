@@ -136,47 +136,48 @@
      Drawer open / close（關鍵）
   ========================= */
   function openDrawer() {
-    const bd = $("cartBackdrop");
-    const dr = $("cartDrawer");
-    if (!bd || !dr) return;
+  const bd = $("cartBackdrop");
+  const dr = $("cartDrawer");
 
+  if (bd) {
     bd.hidden = false;
-    dr.hidden = false;
     bd.classList.add("open");
+    bd.setAttribute("aria-hidden", "false");
+  }
+
+  if (dr) {
+    dr.hidden = false;
     dr.classList.add("open");
-
-    document.body.style.overflow = "hidden";
-    renderDrawer();
+    dr.setAttribute("aria-hidden", "false");
   }
 
-  function closeDrawer() {
-    const bd = $("cartBackdrop");
-    const dr = $("cartDrawer");
-    if (!bd || !dr) return;
+  document.body.style.overflow = "hidden";
+  renderDrawer();
+}
 
+function closeDrawer() {
+  const bd = $("cartBackdrop");
+  const dr = $("cartDrawer");
+
+  if (bd) {
     bd.classList.remove("open");
+    bd.setAttribute("aria-hidden", "true");
+  }
+
+  if (dr) {
     dr.classList.remove("open");
-    document.body.style.overflow = "";
-
-    setTimeout(() => {
-      bd.hidden = true;
-      dr.hidden = true;
-    }, 180);
+    dr.setAttribute("aria-hidden", "true");
   }
 
-  function bindCartIcon() {
-    const a = document.querySelector('.icon-row a[data-icon="cart"]');
-    if (!a) return;
-    a.addEventListener("click", (e) => {
-      e.preventDefault();
-      openDrawer();
-    });
-  }
+  document.body.style.overflow = "";
 
-  function bindDrawerClose() {
-    $("cartClose")?.addEventListener("click", closeDrawer);
-    $("cartBackdrop")?.addEventListener("click", closeDrawer);
-  }
+  // 等動畫完再 hidden
+  setTimeout(() => {
+    if (bd) bd.hidden = true;
+    if (dr) dr.hidden = true;
+  }, 180);
+}
+
 
   /* =========================
      Drawer render
