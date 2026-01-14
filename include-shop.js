@@ -1,18 +1,29 @@
-// include-shop.js — TEN YEARS ONE DAY (NO MODULE VERSION)
+// include-shop.js — TEN YEARS ONE DAY (NO MODULE, SAFE BOOT)
+
 (() => {
   if (window.TEN_SHOP_LOADED) return;
-  window.TEN_SHOP_LOADED = true;
 
-  /* =========================
-     Bridge from modules
-  ========================= */
-  const { calcTotal, money } = window.TEN_PRICING || {};
-  const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL || {};
+  function waitForDeps() {
+    const P = window.TEN_PRICING;
+    const L = window.TEN_DISCOUNT_LABEL;
 
-  if (!calcTotal || !money || !buildDiscountLabels) {
-    console.error("[TEN] pricing / discount-label not loaded");
-    return;
-  }
+    if (!P || !P.calcTotal || !P.money || !L || !L.buildDiscountLabels) {
+      // 等 30ms 再檢查一次
+      return setTimeout(waitForDeps, 30);
+    }
+
+    // ✅ 依賴齊了，正式啟動
+    window.TEN_SHOP_LOADED = true;
+
+    const { calcTotal, money } = P;
+    const { buildDiscountLabels } = L;
+
+    /* =========================
+       下面接「你原本 include-shop.js 的全部內容」
+       不要 return
+    ========================= */
+
+    // ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇
 
   /* =========================
      基本設定
