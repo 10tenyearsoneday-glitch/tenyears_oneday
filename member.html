@@ -36,19 +36,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const $ = id => document.getElementById(id);
 
-  $("btnLogin").addEventListener("click", async () => {
-    const r = await TEN_MEMBER.login(
-      $("l_phone").value,
-      $("l_pw").value
-    );
-    if (r.ok) {
-      localStorage.setItem("ten_member_token", r.token);
-      location.href = "member-profile.html";
-    } else {
-      $("loginToast").textContent = "登入失敗";
-    }
-  });
-
   $("btnRegister").addEventListener("click", async () => {
     const r = await TEN_MEMBER.register({
       phone: $("r_phone").value,
@@ -62,6 +49,19 @@ document.addEventListener("DOMContentLoaded", () => {
       location.href = "member-profile.html";
     } else {
       $("regToast").textContent = "註冊失敗";
+    }
+  });
+
+  $("btnLogin").addEventListener("click", async () => {
+    const r = await TEN_MEMBER.login(
+      $("l_phone").value,
+      $("l_pw").value
+    );
+    if (r.ok) {
+      localStorage.setItem("ten_member_token", r.token);
+      location.href = "member-profile.html";
+    } else {
+      $("loginToast").textContent = "登入失敗";
     }
   });
 });
