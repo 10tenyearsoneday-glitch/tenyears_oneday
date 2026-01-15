@@ -1,5 +1,8 @@
 const MEMBER_API = "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
 
+const TOKEN_KEY = "ten_member_token";
+const MID_KEY   = "ten_member_id";
+
 async function api(action, payload = {}) {
   const res = await fetch(MEMBER_API, {
     method: "POST",
@@ -8,9 +11,6 @@ async function api(action, payload = {}) {
   });
   return res.json();
 }
-
-const TOKEN_KEY = "ten_member_token";
-const MID_KEY   = "ten_member_id";
 
 window.TEN_MEMBER = {
   async register(data) {
@@ -40,6 +40,12 @@ window.TEN_MEMBER = {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return { ok:false };
     return api("update", { token, ...data });
+  },
+
+  async orders() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return { ok:false };
+    return api("orders", { token });
   },
 
   async logout() {
