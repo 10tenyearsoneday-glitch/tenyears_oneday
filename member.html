@@ -28,25 +28,29 @@
 
 <script>
 (async () => {
-  const me = await TEN_MEMBER.me();
-  if (me.ok) location.href = "member-profile.html";
+  const profile = await TEN_MEMBER.me();
+  if (profile) location.href = "member-profile.html";
 })();
 
 async function login() {
-  const res = await TEN_MEMBER.login(phone.value, password.value);
-  if (res.ok) location.href = "member-profile.html";
-  else msg.textContent = "登入失敗";
+  try {
+    await TEN_MEMBER.login(phone.value, password.value);
+  } catch {
+    msg.textContent = "登入失敗";
+  }
 }
 
 async function register() {
-  const res = await TEN_MEMBER.register({
-    phone: phone.value,
-    password: password.value,
-    name: name.value,
-    birth: birth.value
-  });
-  if (res.ok) location.href = "member-profile.html";
-  else msg.textContent = "註冊失敗";
+  try {
+    await TEN_MEMBER.register({
+      phone: phone.value,
+      password: password.value,
+      name: name.value,
+      birth: birth.value
+    });
+  } catch {
+    msg.textContent = "註冊失敗";
+  }
 }
 </script>
 
