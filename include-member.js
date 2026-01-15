@@ -1,9 +1,9 @@
 /* =========================
-   TEN MEMBER - JSONP CORE
+   TEN MEMBER - JSONP CORE (FIXED)
 ========================= */
 
 const MEMBER_API =
-  "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec"; // ⚠️ 用你「已部署」的
+  "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
 
 function jsonp(url) {
   return new Promise((resolve, reject) => {
@@ -32,21 +32,16 @@ function call(action, params = {}) {
   return jsonp(`${MEMBER_API}?${q}`);
 }
 
-/* =========================
-   Public API
-========================= */
-
 window.TEN_MEMBER = {
   async register(data) {
     const res = await call("register", {
       phone: data.phone,
       password: data.password,
-      name: encodeURIComponent(data.name),
+      name: data.name, // ✅ 不再 encode
       birth: data.birth || "",
       email: data.email || "",
       address: data.address || ""
     });
-
     if (!res.ok) throw res;
     localStorage.setItem("ten_token", res.token);
     location.href = "member-profile.html";
@@ -64,6 +59,12 @@ window.TEN_MEMBER = {
     if (!token) return null;
     const res = await call("me", { token });
     return res.ok ? res.profile : null;
+  },
+
+  async update(data) {
+    const token = localStorage.getItem("ten_token");
+    if (!token) return { ok: false };
+    return call("update", { token, ...data });
   },
 
   logout() {
