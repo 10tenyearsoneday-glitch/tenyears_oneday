@@ -26,6 +26,7 @@ function jsonp(params) {
   });
 }
 
+
 window.TEN_MEMBER = {
   register(data) {
     return jsonp({
