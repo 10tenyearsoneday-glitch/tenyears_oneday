@@ -22,32 +22,43 @@
 <script src="./include-member.js"></script>
 
 <script>
+<script src="./include-member.js"></script>
+<script>
 async function login() {
-  const res = await jsonp(
-    `${MEMBER_API}?path=login&phone=${phone.value}&password=${pw.value}`
-  );
+  const phone = document.getElementById("phone").value.trim();
+  const password = document.getElementById("password").value.trim();
 
-  if (res.ok) {
-    setMemberToken(res.token);
-    location.href = "member-profile.html";
-  } else {
-    alert("登入失敗");
+  const out = await TEN_MEMBER.login({ phone, password });
+
+  if (!out.ok) {
+    alert("登入失敗：" + (out.error || ""));
+    return;
   }
+
+  // ✅ 登入成功 → 去會員中心
+  location.href = "member-profile.html";
 }
 
 async function register() {
-  const res = await jsonp(
-    `${MEMBER_API}?path=register&phone=${r_phone.value}&password=${r_pw.value}&name=${r_name.value}&birth=${r_birth.value}`
-  );
+  const phone = document.getElementById("phone").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const name = document.getElementById("name").value.trim();
+  const birth = document.getElementById("birth").value.trim();
 
-  if (res.ok) {
-    setMemberToken(res.token);
-    location.href = "member-profile.html";
-  } else {
-    alert("註冊失敗：" + res.error);
+  const out = await TEN_MEMBER.register({
+    phone, password, name, birth
+  });
+
+  if (!out.ok) {
+    alert("註冊失敗：" + (out.error || ""));
+    return;
   }
+
+  // ✅ 註冊成功 → 直接進會員中心
+  location.href = "member-profile.html";
 }
 </script>
+
 
 </body>
 </html>
