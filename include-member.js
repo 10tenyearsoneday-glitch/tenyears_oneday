@@ -28,19 +28,41 @@ function jsonp(params) {
 
 window.TEN_MEMBER = {
   register(data) {
-    return jsonp({ action:"register", ...data });
+    return jsonp({
+      action: "register",
+      phone: data.phone,
+      password: data.password,
+      name: data.name,
+      birth_y: data.birth_y,
+      birth_m: data.birth_m,
+      birth_d: data.birth_d,
+      address: data.address
+    });
   },
+
   login(phone, password) {
-    return jsonp({ action:"login", phone, password });
+    return jsonp({
+      action: "login",
+      phone,
+      password
+    });
   },
+
   me() {
     const t = localStorage.getItem(TOKEN_KEY);
     return t ? jsonp({ action:"me", token:t }) : null;
   },
+
   update(data) {
     const t = localStorage.getItem(TOKEN_KEY);
-    return jsonp({ action:"update", token:t, ...data });
+    return jsonp({
+      action:"update",
+      token: t,
+      name: data.name,
+      address: data.address
+    });
   },
+
   logout() {
     const t = localStorage.getItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
