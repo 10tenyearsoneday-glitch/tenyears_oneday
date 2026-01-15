@@ -1,103 +1,38 @@
-// include-member.js — TEN YEARS ONE DAY (STABLE FINAL)
+// include-member.js — TEN YEARS ONE DAY (FINAL)
 
 (() => {
   const API =
-    "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
+    "https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxx/exec";
 
-  const TOKEN_KEY = "ten_member_token";
-  const MEMBER_KEY = "ten_member_profile";
+  const KEY = "ten_member_token";
 
-  /* =========================
-     helpers
-  ========================= */
-  const saveSession = (out) => {
-    if (out.token) localStorage.setItem(TOKEN_KEY, out.token);
-    if (out.profile) localStorage.setItem(MEMBER_KEY, JSON.stringify(out.profile));
-  };
+  async function call(path, data = {}) {
+    const token = localStorage.getItem(KEY);
+    const params = new URLSearchParams({ path, ...data });
+    if (token) params.append("token", token);
 
-  const clearSession = () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(MEMBER_KEY);
-  };
-
-  const getToken = () => localStorage.getItem(TOKEN_KEY);
-
-  const fetchAPI = async (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
-    const res = await fetch(`${API}?${qs}`, { cache: "no-store" });
+    const res = await fetch(`${API}?${params.toString()}`);
     return await res.json();
-  };
-
-  /* =========================
-     core methods
-  ========================= */
-  async function register(data) {
-    const out = await fetchAPI({
-      path: "register",
-      ...data
-    });
-    if (out.ok) saveSession(out);
-    return out;
   }
 
-  async function login(data) {
-    const out = await fetchAPI({
-      path: "login",
-      ...data
-    });
-    if (out.ok) saveSession(out);
-    return out;
-  }
-
-  async function me() {
-    const token = getToken();
-    if (!token) return { ok: false };
-
-    const out = await fetchAPI({
-      path: "me",
-      token
-    });
-
-    if (!out.ok) {
-      clearSession();
-    } else {
-      saveSession(out);
-    }
-
-    return out;
-  }
-
-  async function update(data) {
-    const token = getToken();
-    if (!token) return { ok: false, error: "NOT_LOGIN" };
-
-    const out = await fetchAPI({
-      path: "update",
-      token,
-      ...data
-    });
-
-    if (out.ok) saveSession(out);
-    return out;
-  }
-
-  async function logout() {
-    const token = getToken();
-    if (token) {
-      await fetchAPI({ path: "logout", token });
-    }
-    clearSession();
-    return { ok: true };
-  }
-
-  /* =========================
-     🔑 PUBLIC API（重點）
-  ========================= */
   window.TEN_MEMBER = {
-    register,
-    login,
-    me,
-    update,
-    logout
+    async register(data) {
+      const out = await call("register", data);
+      if (out.ok && out.token) localStorage.setItem(KEY, out.token);
+      return out;
+    },
+    async login(data) {
+      const out = await call("login", data);
+      if (out.ok && out.token) localStorage.setItem(KEY, out.token);
+      return out;
+    },
+    async me() {
+      return await call("me");
+    },
+    async logout() {
+      const out = await call("logout");
+      localStorage.removeItem(KEY);
+      return out;
+    }
   };
 })();
