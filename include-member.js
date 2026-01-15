@@ -4,23 +4,30 @@ const TOKEN_KEY = "ten_member_token";
 async function api(action, payload = {}) {
   const res = await fetch(MEMBER_API, {
     method: "POST",
-    headers: { "Content-Type":"application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action, ...payload })
   });
   return res.json();
 }
 
 window.TEN_MEMBER = {
-  register: (d) => api("register", d),
-  login: (p, pw) => api("login", { phone:p, password:pw }),
-  me: () => {
-    const t = localStorage.getItem(TOKEN_KEY);
-    return t ? api("me", { token:t }) : null;
+  register(data) {
+    return api("register", data);
   },
-  update: (d) => api("update", { token:localStorage.getItem(TOKEN_KEY), ...d }),
-  logout: () => {
+  login(phone, password) {
+    return api("login", { phone, password });
+  },
+  me() {
+    const t = localStorage.getItem(TOKEN_KEY);
+    return t ? api("me", { token: t }) : null;
+  },
+  update(data) {
+    const t = localStorage.getItem(TOKEN_KEY);
+    return api("update", { token: t, ...data });
+  },
+  logout() {
     const t = localStorage.getItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
-    return t ? api("logout", { token:t }) : null;
+    return t ? api("logout", { token: t }) : null;
   }
 };
