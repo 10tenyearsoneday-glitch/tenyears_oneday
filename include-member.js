@@ -1,10 +1,9 @@
-<script>
-/* include-member.js — TEN YEARS ONE DAY (FINAL STABLE) */
+// include-member.js — FINAL STABLE
 (() => {
   if (window.TEN_MEMBER) return;
 
   const GAS =
-    "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec"; // ←換成你的
+    "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec"; // 換你的
 
   const KEY_TOKEN = "ten_member_token";
   const KEY_MEMBER = "ten_member_id";
@@ -32,7 +31,6 @@
   }
 
   function saveAuth(res) {
-    if (!res?.token || !res?.memberId) return;
     localStorage.setItem(KEY_TOKEN, res.token);
     localStorage.setItem(KEY_MEMBER, res.memberId);
   }
@@ -42,9 +40,10 @@
     localStorage.removeItem(KEY_MEMBER);
   }
 
-  async function call(path, params = {}) {
-    const qs = new URLSearchParams({ path, ...params }).toString();
-    return jsonp(`${GAS}?${qs}`);
+  function call(path, params = {}) {
+    return jsonp(
+      GAS + "?" + new URLSearchParams({ path, ...params }).toString()
+    );
   }
 
   window.TEN_MEMBER = {
@@ -68,15 +67,12 @@
     },
 
     async me() {
-      const token = this.token;
-      if (!token) return { ok:false };
-      return call("me", { token });
+      if (!this.token) return { ok:false };
+      return call("me", { token: this.token });
     },
 
     async update(data) {
-      const token = this.token;
-      if (!token) return { ok:false };
-      return call("update", { token, ...data });
+      return call("update", { token: this.token, ...data });
     },
 
     logout() {
@@ -85,4 +81,3 @@
     }
   };
 })();
-</script>
