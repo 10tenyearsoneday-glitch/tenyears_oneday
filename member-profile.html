@@ -1,132 +1,39 @@
 <!doctype html>
 <html lang="zh-TW">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <title>會員中心｜十年一日</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
-
 </head>
 <body>
 
-  <!-- header：一定要先載 -->
-  <script src="./include-shop.js"></script>
+<h2>會員中心</h2>
 
-  <main class="member-wrap" style="max-width:720px;margin:40px auto;padding:0 16px;">
-    <h2 style="margin-bottom:16px;">會員中心</h2>
+<div>姓名：<span id="pName"></span></div>
+<div>手機：<span id="pPhone"></span></div>
+<div>生日：<span id="pBirth"></span></div>
 
-    <!-- 基本資料 -->
-    <section style="margin-bottom:32px;">
-      <h3>基本資料</h3>
+<button onclick="logout()">登出</button>
 
-     <script src="./include-member.js"></script>
+<script src="./include-member.js"></script>
 <script>
 (async () => {
   const me = await TEN_MEMBER.me();
 
   if (!me.ok) {
-    // ❌ 沒登入 → 踢回登入頁
     location.href = "member.html";
     return;
   }
 
-  // ✅ 已登入 → 顯示資料
-  document.getElementById("mName").textContent = me.profile.name;
-  document.getElementById("mPhone").textContent = me.profile.phone;
+  document.getElementById("pName").textContent = me.profile.name;
+  document.getElementById("pPhone").textContent = me.profile.phone;
+  document.getElementById("pBirth").textContent = me.profile.birth || "-";
 })();
+
+async function logout() {
+  await TEN_MEMBER.logout();
+  location.href = "member.html";
+}
 </script>
-
-
-    <!-- 修改資料 -->
-    <section>
-      <h3>修改資料</h3>
-
-      <div class="form">
-        <label>
-          姓名
-          <input id="name" type="text">
-        </label>
-
-        <label>
-          生日（YYYY-MM-DD）
-          <input id="birth" type="text" placeholder="1997-03-21">
-        </label>
-
-        <label>
-          Email
-          <input id="email" type="email">
-        </label>
-
-        <label>
-          地址
-          <input id="address" type="text">
-        </label>
-
-        <label>
-          新密碼（不改可留空）
-          <input id="password" type="password">
-        </label>
-
-        <button id="btnSave" class="primary">儲存修改</button>
-      </div>
-
-      <div id="msg" style="margin-top:12px;"></div>
-    </section>
-  </main>
-
-  <!-- 會員邏輯（一定最後） -->
-  <script src="./include-member.js"></script>
-
-  <script>
-    (async () => {
-      // 1️⃣ 確認登入狀態
-      const me = await TEN_MEMBER.me();
-      if (!me.ok) {
-        location.href = "member.html";
-        return;
-      }
-
-      const p = me.profile;
-
-      // 2️⃣ 顯示資料
-      document.getElementById("memberInfo").innerHTML = `
-        <div>會員編號：${p.memberId}</div>
-        <div>姓名：${p.name}</div>
-        <div>電話：${p.phone}</div>
-        <div>Email：${p.email || "-"}</div>
-        <div>生日：${p.birth || "-"}</div>
-        <div>地址：${p.address || "-"}</div>
-      `;
-
-      // 3️⃣ 預填表單
-      name.value = p.name || "";
-      birth.value = p.birth || "";
-      email.value = p.email || "";
-      address.value = p.address || "";
-
-      // 4️⃣ 儲存修改
-      btnSave.onclick = async () => {
-        msg.textContent = "儲存中…";
-
-        const out = await TEN_MEMBER.update({
-          name: name.value,
-          birth: birth.value,
-          email: email.value,
-          address: address.value,
-          password: password.value
-        });
-
-        if (!out.ok) {
-          msg.textContent = "❌ 儲存失敗：" + out.error;
-          return;
-        }
-
-        msg.textContent = "✅ 已儲存";
-        password.value = "";
-      };
-    })();
-  </script>
 
 </body>
 </html>
