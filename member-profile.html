@@ -5,22 +5,27 @@
   <title>會員中心｜十年一日</title>
 </head>
 <body>
-<h2>會員中心</h2>
 
-<div id="profile"></div>
-
-<h3>修改資料</h3>
-<input id="u_name" placeholder="姓名">
-<input id="u_email" placeholder="Email">
-<input id="u_address" placeholder="地址">
-<button onclick="save()">儲存</button>
-
-<h3>我的訂單</h3>
-<div id="orders">（之後接 orders API）</div>
-
-<button onclick="TEN_MEMBER.logout()">登出</button>
-
+<script src="./include-shop.js"></script>
 <script src="./include-member.js"></script>
+
+<main style="max-width:640px;margin:40px auto;">
+  <h2>會員中心</h2>
+
+  <div id="profile"></div>
+
+  <h3>修改資料</h3>
+  <input id="u_name" placeholder="姓名"><br>
+  <input id="u_email" placeholder="Email"><br>
+  <input id="u_address" placeholder="地址"><br>
+  <button onclick="save()">儲存</button>
+
+  <h3>我的訂單</h3>
+  <div id="orders">（下一步接 orders）</div>
+
+  <button onclick="TEN_MEMBER.logout()">登出</button>
+</main>
+
 <script>
 (async () => {
   const res = await TEN_MEMBER.me();
@@ -50,5 +55,6 @@ async function save() {
   alert(res.ok ? "已更新" : "更新失敗");
 }
 </script>
+
 </body>
 </html>
