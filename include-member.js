@@ -10,7 +10,7 @@ function jsonp(params) {
 
     for (var k in params) {
       if (params.hasOwnProperty(k)) {
-        qs += encodeURIComponent(k) + "=" + encodeURIComponent(params[k]) + "&";
+        qs += encodeURIComponent(k) + "=" + encodeURIComponent(params[k] || "") + "&";
       }
     }
     qs += "callback=" + cb;
@@ -39,9 +39,9 @@ window.TEN_MEMBER = {
     return jsonp({
       action: "register",
       phone: data.phone,
-      password: data.password,
+      password: data.password,   // 🔴 一定要有
       name: data.name,
-      birth_y: data.birth_y,
+      birth_y: data.birth_y,     // 🔴 一定要有
       birth_m: data.birth_m,
       birth_d: data.birth_d,
       address: data.address
