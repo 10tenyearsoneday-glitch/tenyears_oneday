@@ -26,7 +26,20 @@
   <input id="r_pw" type="password" placeholder="密碼">
   <input id="r_name" placeholder="姓名">
   <input id="r_addr" placeholder="地址">
-  <input id="r_birth" placeholder="生日 YYYY-MM-DD">
+<div style="display:flex; gap:8px;">
+  <select id="r_by">
+    <option value="">年</option>
+  </select>
+
+  <select id="r_bm">
+    <option value="">月</option>
+  </select>
+
+  <select id="r_bd">
+    <option value="">日</option>
+  </select>
+</div>
+
   <button id="btnRegister">註冊</button>
   <div id="regToast"></div>
 </div>
