@@ -1,63 +1,66 @@
 <!doctype html>
 <html lang="zh-TW">
 <head>
-  <meta charset="utf-8">
-  <title>會員登入</title>
+  <meta charset="UTF-8">
+  <title>會員登入｜十年一日</title>
 </head>
 <body>
 
-<h2>會員登入</h2>
-<input id="phone" placeholder="手機">
-<input id="pw" type="password" placeholder="密碼">
-<button onclick="login()">登入</button>
+<h2>會員登入 / 註冊</h2>
 
-<h3>註冊</h3>
-<input id="r_phone" placeholder="手機">
-<input id="r_pw" type="password" placeholder="密碼">
-<input id="r_name" placeholder="姓名">
-<input id="r_birth" placeholder="1997/03/21">
+<input id="mPhone" placeholder="手機">
+<input id="mPassword" type="password" placeholder="密碼">
+
+<input id="mName" placeholder="姓名（註冊用）">
+<input id="mBirth" placeholder="生日 YYYY-MM-DD（註冊用）">
+
+<button onclick="login()">登入</button>
 <button onclick="register()">註冊</button>
 
-<!-- ✅ 一定要先載這支 -->
 <script src="./include-member.js"></script>
-
-
 <script>
 async function login() {
-  const phone = document.getElementById("phone").value.trim();
-  const password = document.getElementById("password").value.trim();
+  const phone = document.getElementById("mPhone").value.trim();
+  const password = document.getElementById("mPassword").value.trim();
+
+  if (!phone || !password) {
+    alert("請輸入手機與密碼");
+    return;
+  }
 
   const out = await TEN_MEMBER.login({ phone, password });
 
   if (!out.ok) {
-    alert("登入失敗：" + (out.error || ""));
+    alert("登入失敗：" + out.error);
     return;
   }
 
-  // ✅ 登入成功 → 去會員中心
   location.href = "member-profile.html";
 }
 
 async function register() {
-  const phone = document.getElementById("phone").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const name = document.getElementById("name").value.trim();
-  const birth = document.getElementById("birth").value.trim();
+  const phone = document.getElementById("mPhone").value.trim();
+  const password = document.getElementById("mPassword").value.trim();
+  const name = document.getElementById("mName").value.trim();
+  const birth = document.getElementById("mBirth").value.trim();
+
+  if (!phone || !password || !name) {
+    alert("請填寫手機 / 密碼 / 姓名");
+    return;
+  }
 
   const out = await TEN_MEMBER.register({
     phone, password, name, birth
   });
 
   if (!out.ok) {
-    alert("註冊失敗：" + (out.error || ""));
+    alert("註冊失敗：" + out.error);
     return;
   }
 
-  // ✅ 註冊成功 → 直接進會員中心
   location.href = "member-profile.html";
 }
 </script>
-
 
 </body>
 </html>
