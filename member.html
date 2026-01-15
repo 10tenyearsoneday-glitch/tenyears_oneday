@@ -1,48 +1,61 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>會員｜十年一日 TEN YEARS ONE DAY</title>
-  <link rel="stylesheet" href="assets/style.css" />
+  <meta charset="utf-8">
+  <title>會員登入｜十年一日</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body{background:linear-gradient(135deg,#F8F9F7 0%,#D4E7D1 55%,#A8BCA5 100%);}
-    .wrap{max-width:980px;margin:0 auto;padding:22px 16px 46px;}
-    .card{background:rgba(255,255,255,.88);border:1px solid rgba(0,0,0,.08);border-radius:22px;box-shadow:0 12px 40px rgba(0,0,0,.08);overflow:hidden}
-    .head{padding:18px 18px 6px}
-    .ttl{font-size:1.35rem;font-weight:900;letter-spacing:.08em}
-    .sub{margin-top:6px;opacity:.75;line-height:1.6}
-    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 18px 0}
-    .tabbtn{border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);border-radius:16px;padding:12px 10px;font-weight:900;letter-spacing:.12em;cursor:pointer}
-    .tabbtn.active{background:#8ea08e;color:#fff;border-color:#8ea08e}
-    .body{padding:14px 18px 18px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .inp,select{width:100%;padding:12px;border-radius:14px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.92);outline:none}
-    .btn{width:100%;border:none;border-radius:16px;padding:14px 12px;font-size:1rem;font-weight:900;letter-spacing:.12em;cursor:pointer;background:#8ea08e;color:#fff}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
-    .toast{margin-top:10px;font-size:.92rem;opacity:.92}
-    .muted{opacity:.7;font-size:.9rem;line-height:1.6}
-    .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
-    .mini{font-size:.85rem;opacity:.75}
-    .bdayRow{display:grid;grid-template-columns:1.1fr .9fr .9fr;gap:10px}
-    @media (max-width:720px){.grid{grid-template-columns:1fr}.bdayRow{grid-template-columns:1fr 1fr 1fr}}
+    body { font-family: system-ui; background:#f4f6f4; }
+    .box { max-width:420px; margin:60px auto; background:#fff; padding:24px; border-radius:16px; }
+    input,button { width:100%; padding:12px; margin-top:10px; }
   </style>
 </head>
 <body>
 
-<!-- 你原本的 HTML / style 全部保留 -->
+<div class="box">
+  <h2>會員登入</h2>
+  <input id="l_phone" placeholder="手機">
+  <input id="l_pw" type="password" placeholder="密碼">
+  <button id="btnLogin">登入</button>
+  <div id="loginToast"></div>
+
+  <hr>
+
+  <h2>註冊</h2>
+  <input id="r_phone" placeholder="手機">
+  <input id="r_pw" type="password" placeholder="密碼">
+  <input id="r_name" placeholder="姓名">
+  <input id="r_addr" placeholder="地址">
+  <input id="r_birth" placeholder="生日 YYYY-MM-DD">
+  <button id="btnRegister">註冊</button>
+  <div id="regToast"></div>
+</div>
+
 <script src="./include-member.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const $ = id => document.getElementById(id);
 
-  $("btnRegister").onclick = async () => {
+  $("btnLogin").addEventListener("click", async () => {
+    const r = await TEN_MEMBER.login(
+      $("l_phone").value,
+      $("l_pw").value
+    );
+    if (r.ok) {
+      localStorage.setItem("ten_member_token", r.token);
+      location.href = "member-profile.html";
+    } else {
+      $("loginToast").textContent = "登入失敗";
+    }
+  });
+
+  $("btnRegister").addEventListener("click", async () => {
     const r = await TEN_MEMBER.register({
       phone: $("r_phone").value,
       password: $("r_pw").value,
       name: $("r_name").value,
       address: $("r_addr").value,
-      birth: `${$("r_by").value}-${$("r_bm").value}-${$("r_bd").value}`
+      birth: $("r_birth").value
     });
     if (r.ok) {
       localStorage.setItem("ten_member_token", r.token);
@@ -50,17 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       $("regToast").textContent = "註冊失敗";
     }
-  };
-
-  $("btnLogin").onclick = async () => {
-    const r = await TEN_MEMBER.login($("l_phone").value, $("l_pw").value);
-    if (r.ok) {
-      localStorage.setItem("ten_member_token", r.token);
-      location.href = "member-profile.html";
-    } else {
-      $("loginToast").textContent = "登入失敗";
-    }
-  };
+  });
 });
 </script>
 
