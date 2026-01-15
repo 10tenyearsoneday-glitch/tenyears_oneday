@@ -4,18 +4,26 @@ const MEMBER_API =
 const TOKEN_KEY = "ten_member_token";
 
 function jsonp(params) {
-  return new Promise((resolve, reject) => {
-    const cb = "__cb_" + Math.random().toString(36).slice(2);
-    const qs = new URLSearchParams({ ...params, callback: cb }).toString();
-    const s = document.createElement("script");
+  return new Promise(function(resolve, reject) {
+    var cb = "__cb_" + Math.random().toString(36).slice(2);
+    var qs = "";
 
-    window[cb] = (data) => {
+    for (var k in params) {
+      if (params.hasOwnProperty(k)) {
+        qs += encodeURIComponent(k) + "=" + encodeURIComponent(params[k]) + "&";
+      }
+    }
+    qs += "callback=" + cb;
+
+    var s = document.createElement("script");
+
+    window[cb] = function(data) {
       delete window[cb];
       s.remove();
       resolve(data);
     };
 
-    s.onerror = () => {
+    s.onerror = function() {
       delete window[cb];
       s.remove();
       reject(new Error("JSONP_FAILED"));
@@ -26,9 +34,8 @@ function jsonp(params) {
   });
 }
 
-
 window.TEN_MEMBER = {
-  register(data) {
+  register: function(data) {
     return jsonp({
       action: "register",
       phone: data.phone,
@@ -41,32 +48,24 @@ window.TEN_MEMBER = {
     });
   },
 
-  login(phone, password) {
+  login: function(phone, password) {
     return jsonp({
       action: "login",
-      phone,
-      password
+      phone: phone,
+      password: password
     });
   },
 
-  me() {
-    const t = localStorage.getItem(TOKEN_KEY);
-    return t ? jsonp({ action:"me", token:t }) : null;
+  me: function() {
+    var t = localStorage.getItem(TOKEN_KEY);
+    if (!t) return null;
+    return jsonp({ action: "me", token: t });
   },
 
-  update(data) {
-    const t = localStorage.getItem(TOKEN_KEY);
-    return jsonp({
-      action:"update",
-      token: t,
-      name: data.name,
-      address: data.address
-    });
-  },
-
-  logout() {
-    const t = localStorage.getItem(TOKEN_KEY);
+  logout: function() {
+    var t = localStorage.getItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
-    return t ? jsonp({ action:"logout", token:t }) : null;
+    if (!t) return null;
+    return jsonp({ action: "logout", token: t });
   }
 };
