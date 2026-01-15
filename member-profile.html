@@ -34,79 +34,33 @@
 
 <!-- 你原本的 HTML / style 全部保留 -->
 <script src="./include-member.js"></script>
-
 <script>
-(() => {
-  const $ = (id) => document.getElementById(id);
-  const toast = (id, msg, ok=true) => {
-    const el=$(id); if(!el) return;
-    el.textContent = msg || "";
-    el.style.color = ok ? "rgba(47,58,44,.9)" : "#8a3b3b";
+document.addEventListener("DOMContentLoaded", async () => {
+  const $ = id => document.getElementById(id);
+
+  const r = await TEN_MEMBER.me();
+  if (!r || !r.ok) return location.href = "member.html";
+
+  const m = r.profile;
+  $("m_phone").value = m.phone;
+  $("m_name").value = m.name;
+  $("m_addr").value = m.address;
+
+  $("btnSave").onclick = async () => {
+    const u = await TEN_MEMBER.update({
+      name: $("m_name").value,
+      address: $("m_addr").value
+    });
+    $("saveToast").textContent = u.ok ? "已保存" : "失敗";
   };
 
-  function needLogin(){ location.href = "./member.html"; }
-
-  function money(n){
-    return "NT$ " + Math.round(Number(n||0));
-  }
-
-  function renderOrders(list){
-    if (!list.length){
-      toast("ordersToast","目前沒有訂單");
-      return;
-    }
-    $("ordersBody").innerHTML = list.map(o => `
-      <tr>
-        <td>${o.created_at||""}</td>
-        <td><strong>${o.order_id||""}</strong></td>
-        <td class="items">${o.items||""}</td>
-        <td><strong>${money(o.total)}</strong></td>
-        <td class="items">${o.shipping||""}</td>
-      </tr>
-    `).join("");
-    $("ordersTable").hidden = false;
-  }
-
-  async function load() {
-    const me = await TEN_MEMBER.me();
-    if (!me) return needLogin();
-
-    $("subline").textContent = "已登入，可編輯資料";
-    $("m_id").value = localStorage.getItem("ten_member_id") || "";
-    $("m_phone").value = me.phone || "";
-    $("m_name").value = me.name || "";
-    $("m_addr").value = me.address || "";
-    $("m_birth").value = me.birth || "";
-
-    toast("ordersToast","讀取訂單中…");
-    const ord = await TEN_MEMBER.orders();
-    if (ord.ok) renderOrders(ord.orders || []);
-    else toast("ordersToast","讀取訂單失敗", false);
-  }
-
-  $("btnSave").addEventListener("click", async () => {
-    toast("saveToast","保存中…");
-    $("btnSave").disabled = true;
-
-    const res = await TEN_MEMBER.update({
-      name: $("m_name").value.trim(),
-      address: $("m_addr").value.trim()
-    });
-
-    toast("saveToast", res.ok ? "✅ 已保存" : "保存失敗", res.ok);
-    $("btnSave").disabled = false;
-  });
-
-  $("btnLogout").addEventListener("click", async () => {
+  $("btnLogout").onclick = async () => {
     await TEN_MEMBER.logout();
-    needLogin();
-  });
-
-  $("btnReload").addEventListener("click", load);
-
-  load();
-})();
+    location.href = "member.html";
+  };
+});
 </script>
+
 
 </body>
 </html>
