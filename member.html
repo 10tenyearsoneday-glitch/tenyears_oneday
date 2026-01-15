@@ -37,25 +37,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const $ = id => document.getElementById(id);
 
   $("btnRegister").addEventListener("click", async () => {
-    const birth = $("r_birth").value.trim(); // YYYY-MM-DD
-    let y = "", m = "", d = "";
+    const birth = $("r_birth").value.trim();
+let y="", m="", d="";
+if (birth.includes("-")) {
+  const p = birth.split("-");
+  y = p[0]; m = p[1]; d = p[2];
+}
 
-    if (birth && birth.includes("-")) {
-      const parts = birth.split("-");
-      y = parts[0] || "";
-      m = parts[1] || "";
-      d = parts[2] || "";
-    }
+const r = await TEN_MEMBER.register({
+  phone: $("r_phone").value.trim(),
+  password: $("r_pw").value.trim(),   // 🔴 這行不能少
+  name: $("r_name").value.trim(),
+  birth_y: y,
+  birth_m: m,
+  birth_d: d,
+  address: $("r_addr").value.trim()
+});
 
-    const r = await TEN_MEMBER.register({
-      phone: $("r_phone").value.trim(),
-      password: $("r_pw").value.trim(),
-      name: $("r_name").value.trim(),
-      address: $("r_addr").value.trim(),
-      birth_y: y,
-      birth_m: m,
-      birth_d: d
-    });
 
     console.log("REGISTER RESULT:", r);
 
