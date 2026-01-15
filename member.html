@@ -5,44 +5,47 @@
   <title>會員登入｜十年一日</title>
 </head>
 <body>
-<h2>會員登入 / 註冊</h2>
 
-<input id="phone" placeholder="手機">
-<input id="password" type="password" placeholder="密碼">
-<input id="name" placeholder="姓名（註冊用）">
-<input id="birth" placeholder="生日 YYYY-MM-DD">
-
-<button onclick="login()">登入</button>
-<button onclick="register()">註冊</button>
-
-<div id="msg"></div>
-
+<script src="./include-shop.js"></script>
 <script src="./include-member.js"></script>
+
+<main style="max-width:420px;margin:40px auto;">
+  <h2>會員登入 / 註冊</h2>
+
+  <input id="phone" placeholder="手機"><br>
+  <input id="password" type="password" placeholder="密碼"><br>
+  <input id="name" placeholder="姓名（註冊）"><br>
+  <input id="birth" placeholder="生日 YYYY-MM-DD"><br>
+
+  <button onclick="login()">登入</button>
+  <button onclick="register()">註冊</button>
+
+  <div id="msg"></div>
+</main>
+
 <script>
+(async () => {
+  const me = await TEN_MEMBER.me();
+  if (me.ok) location.href = "member-profile.html";
+})();
+
 async function login() {
-  const phone = phoneInput.value;
-  const password = passwordInput.value;
-  const res = await TEN_MEMBER.login(phone, password);
+  const res = await TEN_MEMBER.login(phone.value, password.value);
   if (res.ok) location.href = "member-profile.html";
-  else msg.textContent = "登入失敗：" + res.error;
+  else msg.textContent = "登入失敗";
 }
 
 async function register() {
   const res = await TEN_MEMBER.register({
-    phone: phoneInput.value,
-    password: passwordInput.value,
-    name: nameInput.value,
-    birth: birthInput.value
+    phone: phone.value,
+    password: password.value,
+    name: name.value,
+    birth: birth.value
   });
   if (res.ok) location.href = "member-profile.html";
-  else msg.textContent = "註冊失敗：" + res.error;
+  else msg.textContent = "註冊失敗";
 }
-
-const phoneInput = document.getElementById("phone");
-const passwordInput = document.getElementById("password");
-const nameInput = document.getElementById("name");
-const birthInput = document.getElementById("birth");
-const msg = document.getElementById("msg");
 </script>
+
 </body>
 </html>
