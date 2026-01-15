@@ -20,8 +20,23 @@
     <section style="margin-bottom:32px;">
       <h3>基本資料</h3>
 
-      <div id="memberInfo" class="muted">載入中…</div>
-    </section>
+     <script src="./include-member.js"></script>
+<script>
+(async () => {
+  const me = await TEN_MEMBER.me();
+
+  if (!me.ok) {
+    // ❌ 沒登入 → 踢回登入頁
+    location.href = "member.html";
+    return;
+  }
+
+  // ✅ 已登入 → 顯示資料
+  document.getElementById("mName").textContent = me.profile.name;
+  document.getElementById("mPhone").textContent = me.profile.phone;
+})();
+</script>
+
 
     <!-- 修改資料 -->
     <section>
