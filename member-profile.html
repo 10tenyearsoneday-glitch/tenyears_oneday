@@ -29,10 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const $ = id => document.getElementById(id);
 
   const r = await TEN_MEMBER.me();
-  if (!r || !r.ok) {
-    location.href = "member.html";
-    return;
-  }
+  if (!r || !r.ok) return location.href = "member.html";
 
   const m = r.profile;
   $("m_phone").value = m.phone;
