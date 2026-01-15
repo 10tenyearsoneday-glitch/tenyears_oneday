@@ -32,61 +32,37 @@
 
 <!-- 你原本的 HTML / style 全部保留 -->
 <script src="./include-member.js"></script>
-
 <script>
-(() => {
-  const $ = (id) => document.getElementById(id);
-  const toast = (id, msg, ok=true) => {
-    const el=$(id); if(!el) return;
-    el.textContent = msg || "";
-    el.style.color = ok ? "rgba(47,58,44,.9)" : "#8a3b3b";
+document.addEventListener("DOMContentLoaded", () => {
+  const $ = id => document.getElementById(id);
+
+  $("btnRegister").onclick = async () => {
+    const r = await TEN_MEMBER.register({
+      phone: $("r_phone").value,
+      password: $("r_pw").value,
+      name: $("r_name").value,
+      address: $("r_addr").value,
+      birth: `${$("r_by").value}-${$("r_bm").value}-${$("r_bd").value}`
+    });
+    if (r.ok) {
+      localStorage.setItem("ten_member_token", r.token);
+      location.href = "member-profile.html";
+    } else {
+      $("regToast").textContent = "註冊失敗";
+    }
   };
 
-  function goProfile(){ location.href = "./member-profile.html"; }
-
-  // 已登入直接進會員中心
-  (async () => {
-    const me = await TEN_MEMBER.me();
-    if (me) goProfile();
-  })();
-
-  $("btnRegister").addEventListener("click", async () => {
-    toast("regToast","註冊中…");
-    $("btnRegister").disabled = true;
-
-    try {
-      await TEN_MEMBER.register({
-        phone: $("r_phone").value.trim(),
-        password: $("r_pw").value.trim(),
-        name: $("r_name").value.trim(),
-        address: $("r_addr").value.trim(),
-        birth: `${$("r_by").value}-${$("r_bm").value}-${$("r_bd").value}`
-      });
-      toast("regToast","✅ 註冊成功，前往資料頁…");
-      setTimeout(goProfile, 400);
-    } catch (e) {
-      toast("regToast", e.msg === "PHONE_EXISTS" ? "手機已註冊" : "註冊失敗", false);
-      $("btnRegister").disabled = false;
+  $("btnLogin").onclick = async () => {
+    const r = await TEN_MEMBER.login($("l_phone").value, $("l_pw").value);
+    if (r.ok) {
+      localStorage.setItem("ten_member_token", r.token);
+      location.href = "member-profile.html";
+    } else {
+      $("loginToast").textContent = "登入失敗";
     }
-  });
-
-  $("btnLogin").addEventListener("click", async () => {
-    toast("loginToast","登入中…");
-    $("btnLogin").disabled = true;
-
-    try {
-      await TEN_MEMBER.login(
-        $("l_phone").value.trim(),
-        $("l_pw").value.trim()
-      );
-      toast("loginToast","✅ 登入成功，前往資料頁…");
-      setTimeout(goProfile, 300);
-    } catch {
-      toast("loginToast","登入失敗", false);
-      $("btnLogin").disabled = false;
-    }
-  });
-})();
+  };
+});
 </script>
+
 </body>
 </html>
