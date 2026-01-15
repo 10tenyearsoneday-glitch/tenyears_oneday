@@ -1,58 +1,248 @@
 <!doctype html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="utf-8">
-  <title>會員登入｜十年一日</title>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>會員｜十年一日 TEN YEARS ONE DAY</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    body{background:linear-gradient(135deg,#F8F9F7 0%,#D4E7D1 55%,#A8BCA5 100%);}
+    .wrap{max-width:980px;margin:0 auto;padding:22px 16px 46px;}
+    .card{background:rgba(255,255,255,.88);border:1px solid rgba(0,0,0,.08);border-radius:22px;box-shadow:0 12px 40px rgba(0,0,0,.08);overflow:hidden}
+    .head{padding:18px 18px 6px}
+    .ttl{font-size:1.35rem;font-weight:900;letter-spacing:.08em}
+    .sub{margin-top:6px;opacity:.75;line-height:1.6}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 18px 0}
+    .tabbtn{border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);border-radius:16px;padding:12px 10px;font-weight:900;letter-spacing:.12em;cursor:pointer}
+    .tabbtn.active{background:#8ea08e;color:#fff;border-color:#8ea08e}
+    .body{padding:14px 18px 18px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .inp,select{width:100%;padding:12px;border-radius:14px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.92);outline:none}
+    .btn{width:100%;border:none;border-radius:16px;padding:14px 12px;font-size:1rem;font-weight:900;letter-spacing:.12em;cursor:pointer;background:#8ea08e;color:#fff}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .toast{margin-top:10px;font-size:.92rem;opacity:.92}
+    .muted{opacity:.7;font-size:.9rem;line-height:1.6}
+    .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .mini{font-size:.85rem;opacity:.75}
+    .bdayRow{display:grid;grid-template-columns:1.1fr .9fr .9fr;gap:10px}
+    @media (max-width:720px){.grid{grid-template-columns:1fr}.bdayRow{grid-template-columns:1fr 1fr 1fr}}
+  </style>
 </head>
 <body>
+  <script src="./include.js" defer></script>
 
-<script src="./include-shop.js"></script>
-<script src="./include-member.js"></script>
+  <div class="wrap">
+    <div class="card">
+      <div class="head">
+        <div class="ttl">會員中心</div>
+        <div class="sub">註冊成功會自動登入並跳轉到「資料頁」。資料會寫入 Google Sheet（members）。</div>
+      </div>
 
-<main style="max-width:420px;margin:40px auto;">
-  <h2>會員登入 / 註冊</h2>
+      <div class="tabs">
+        <button class="tabbtn active" id="tabReg" type="button">註冊</button>
+        <button class="tabbtn" id="tabLogin" type="button">登入</button>
+      </div>
 
-  <input id="phone" placeholder="手機"><br>
-  <input id="password" type="password" placeholder="密碼"><br>
-  <input id="name" placeholder="姓名（註冊）"><br>
-  <input id="birth" placeholder="生日 YYYY-MM-DD"><br>
+      <div class="body">
+        <section id="secReg">
+          <div class="grid">
+            <div>
+              <label class="mini">手機（09xxxxxxxx）*</label>
+              <input class="inp" id="r_phone" inputmode="tel" autocomplete="tel" placeholder="09xxxxxxxx" />
+            </div>
+            <div>
+              <label class="mini">密碼（至少 6 碼）*</label>
+              <input class="inp" id="r_pw" type="password" autocomplete="new-password" placeholder="******" />
+            </div>
+          </div>
 
-  <button onclick="login()">登入</button>
-  <button onclick="register()">註冊</button>
+          <div class="grid" style="margin-top:10px">
+            <div>
+              <label class="mini">姓名 *</label>
+              <input class="inp" id="r_name" autocomplete="name" placeholder="王小明" />
+            </div>
+            <div>
+              <label class="mini">配送地址 *</label>
+              <input class="inp" id="r_addr" autocomplete="street-address" placeholder="縣市區路段號樓" />
+            </div>
+          </div>
 
-  <div id="msg"></div>
-</main>
+          <div class="bdayRow" style="margin-top:10px">
+            <div>
+              <label class="mini">出生年 *</label>
+              <select id="r_by" class="inp"></select>
+            </div>
+            <div>
+              <label class="mini">月 *</label>
+              <select id="r_bm" class="inp"></select>
+            </div>
+            <div>
+              <label class="mini">日 *</label>
+              <select id="r_bd" class="inp"></select>
+            </div>
+          </div>
+
+          <button class="btn" id="btnRegister" type="button" style="margin-top:14px">註冊並進入資料頁</button>
+          <div class="toast" id="regToast"></div>
+          <div class="muted" style="margin-top:10px">
+            提醒：會員 token / memberId 會存到 localStorage，之後結帳/訂單查詢會用到。
+          </div>
+        </section>
+
+        <section id="secLogin" hidden>
+          <div class="grid">
+            <div>
+              <label class="mini">手機 *</label>
+              <input class="inp" id="l_phone" inputmode="tel" autocomplete="tel" placeholder="09xxxxxxxx" />
+            </div>
+            <div>
+              <label class="mini">密碼 *</label>
+              <input class="inp" id="l_pw" type="password" autocomplete="current-password" placeholder="******" />
+            </div>
+          </div>
+
+          <button class="btn" id="btnLogin" type="button" style="margin-top:14px">登入並進入資料頁</button>
+          <div class="toast" id="loginToast"></div>
+
+          <div class="row" style="margin-top:10px">
+            <div class="muted">尚未註冊？切換到「註冊」分頁。</div>
+            <button class="tabbtn" type="button" id="btnGoReg" style="padding:10px 12px">去註冊</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
 
 <script>
-(async () => {
-  const profile = await TEN_MEMBER.me();
-  if (profile) location.href = "member-profile.html";
-})();
+(() => {
+  // ✅ 改成你目前部署的 GAS Web App /exec（很重要）
+  const GAS_URL = (window.TEN_CONFIG && window.TEN_CONFIG.members_gas_url) || "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
 
-async function login() {
-  try {
-    await TEN_MEMBER.login(phone.value, password.value);
-  } catch {
-    msg.textContent = "登入失敗";
+  // localStorage keys（跟 include.js 相容）
+  const TOKEN_KEY = "ten_member_token";
+  const MID_KEY   = "ten_member_id";
+
+  const $ = (id) => document.getElementById(id);
+  const toast = (id, msg, ok=true) => {
+    const el=$(id); if(!el) return;
+    el.textContent=msg||"";
+    el.style.color= ok ? "rgba(47,58,44,.9)" : "#8a3b3b";
+  };
+
+  function setTab(which){
+    const reg = which==="reg";
+    $("tabReg").classList.toggle("active", reg);
+    $("tabLogin").classList.toggle("active", !reg);
+    $("secReg").hidden = !reg;
+    $("secLogin").hidden = reg;
+    toast("regToast",""); toast("loginToast","");
   }
-}
 
-async function register() {
-  try {
-    await TEN_MEMBER.register({
-      phone: phone.value,
-      password: password.value,
-      name: name.value,
-      birth: birth.value
+  $("tabReg").addEventListener("click", () => setTab("reg"));
+  $("tabLogin").addEventListener("click", () => setTab("login"));
+  $("btnGoReg").addEventListener("click", () => setTab("reg"));
+
+  // birth selects
+  const nowY = new Date().getFullYear();
+  const by = $("r_by"), bm=$("r_bm"), bd=$("r_bd");
+  for (let y=nowY; y>=1900; y--) { const o=document.createElement("option"); o.value=y; o.textContent=y+" 年"; by.appendChild(o); }
+  for (let m=1; m<=12; m++) { const o=document.createElement("option"); o.value=m; o.textContent=m+" 月"; bm.appendChild(o); }
+  for (let d=1; d<=31; d++) { const o=document.createElement("option"); o.value=d; o.textContent=d+" 日"; bd.appendChild(o); }
+  by.value = String(nowY-20); bm.value="1"; bd.value="1";
+
+  // ---------- JSONP ----------
+  function jsonp(path, params){
+    return new Promise((resolve, reject) => {
+      const cb = "__ten_cb_" + Math.random().toString(36).slice(2);
+      const qs = new URLSearchParams(Object.assign({ path, callback: cb, _: Date.now() }, params || {}));
+      const url = GAS_URL + "?" + qs.toString();
+
+      const s = document.createElement("script");
+      let done = false;
+
+      window[cb] = (data) => {
+        done = true;
+        try { delete window[cb]; } catch {}
+        s.remove();
+        resolve(data);
+      };
+
+      s.onerror = () => {
+        if (done) return;
+        try { delete window[cb]; } catch {}
+        s.remove();
+        reject(new Error("JSONP_LOAD_FAILED"));
+      };
+
+      document.head.appendChild(s);
+
+      setTimeout(() => {
+        if (done) return;
+        try { delete window[cb]; } catch {}
+        s.remove();
+        reject(new Error("JSONP_TIMEOUT"));
+      }, 12000);
     });
-  } catch {
-    msg.textContent = "註冊失敗";
   }
-}
-</script>
 
+  function saveAuth(memberId, token){
+    if (memberId) localStorage.setItem(MID_KEY, String(memberId));
+    if (token) localStorage.setItem(TOKEN_KEY, String(token));
+  }
+
+  function goProfile(){ location.href = "./member-profile.html"; }
+
+  $("btnRegister").addEventListener("click", async () => {
+    toast("regToast","註冊中…");
+    $("btnRegister").disabled = true;
+
+    const phone = String($("r_phone").value||"").trim();
+    const password = String($("r_pw").value||"").trim();
+    const name = String($("r_name").value||"").trim();
+    const address = String($("r_addr").value||"").trim();
+    const birth_y = String(by.value||"").trim();
+    const birth_m = String(bm.value||"").trim();
+    const birth_d = String(bd.value||"").trim();
+
+    try{
+      const out = await jsonp("member_register_jsonp", { phone, password, name, address, birth_y, birth_m, birth_d });
+      if (!out || out.ok !== true){
+        toast("regToast","註冊失敗：" + (out && out.error ? out.error : "UNKNOWN"), false);
+        $("btnRegister").disabled = false;
+        return;
+      }
+      saveAuth(out.memberId, out.token);
+      toast("regToast","✅ 註冊成功，前往資料頁…");
+      setTimeout(goProfile, 450);
+    }catch(e){
+      toast("regToast","系統忙碌（" + e.message + "），請重試", false);
+      $("btnRegister").disabled = false;
+    }
+  });
+
+  $("btnLogin").addEventListener("click", async () => {
+    toast("loginToast","登入中…");
+    $("btnLogin").disabled = true;
+
+    const phone = String($("l_phone").value||"").trim();
+    const password = String($("l_pw").value||"").trim();
+
+    try{
+      const out = await jsonp("member_login_jsonp", { phone, password });
+      if (!out || out.ok !== true){
+        toast("loginToast","登入失敗：" + (out && out.error ? out.error : "UNKNOWN"), false);
+        $("btnLogin").disabled = false;
+        return;
+      }
+      saveAuth(out.memberId, out.token);
+      toast("loginToast","✅ 登入成功，前往資料頁…");
+      setTimeout(goProfile, 350);
+    }catch(e){
+      toast("loginToast","系統忙碌（" + e.message + "），請重試", false);
+      $("btnLogin").disabled = false;
+    }
+  });
+})();
+</script>
 </body>
 </html>
