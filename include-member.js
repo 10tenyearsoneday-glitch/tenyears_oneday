@@ -1,38 +1,88 @@
-// include-member.js — TEN YEARS ONE DAY (FINAL)
-
+<script>
+/* include-member.js — TEN YEARS ONE DAY (FINAL STABLE) */
 (() => {
-  const API =
-    "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
+  if (window.TEN_MEMBER) return;
 
-  const KEY = "ten_member_token";
+  const GAS =
+    "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec"; // ←換成你的
 
-  async function call(path, data = {}) {
-    const token = localStorage.getItem(KEY);
-    const params = new URLSearchParams({ path, ...data });
-    if (token) params.append("token", token);
+  const KEY_TOKEN = "ten_member_token";
+  const KEY_MEMBER = "ten_member_id";
 
-    const res = await fetch(`${API}?${params.toString()}`);
-    return await res.json();
+  function jsonp(url) {
+    return new Promise((resolve, reject) => {
+      const cb = "cb_" + Math.random().toString(36).slice(2);
+      const s = document.createElement("script");
+      s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
+
+      window[cb] = (res) => {
+        delete window[cb];
+        s.remove();
+        resolve(res);
+      };
+
+      s.onerror = () => {
+        delete window[cb];
+        s.remove();
+        reject(new Error("JSONP_FAILED"));
+      };
+
+      document.body.appendChild(s);
+    });
+  }
+
+  function saveAuth(res) {
+    if (!res?.token || !res?.memberId) return;
+    localStorage.setItem(KEY_TOKEN, res.token);
+    localStorage.setItem(KEY_MEMBER, res.memberId);
+  }
+
+  function clearAuth() {
+    localStorage.removeItem(KEY_TOKEN);
+    localStorage.removeItem(KEY_MEMBER);
+  }
+
+  async function call(path, params = {}) {
+    const qs = new URLSearchParams({ path, ...params }).toString();
+    return jsonp(`${GAS}?${qs}`);
   }
 
   window.TEN_MEMBER = {
+    get token() {
+      return localStorage.getItem(KEY_TOKEN);
+    },
+    get memberId() {
+      return localStorage.getItem(KEY_MEMBER);
+    },
+
     async register(data) {
-      const out = await call("register", data);
-      if (out.ok && out.token) localStorage.setItem(KEY, out.token);
-      return out;
+      const res = await call("register", data);
+      if (res.ok) saveAuth(res);
+      return res;
     },
-    async login(data) {
-      const out = await call("login", data);
-      if (out.ok && out.token) localStorage.setItem(KEY, out.token);
-      return out;
+
+    async login(phone, password) {
+      const res = await call("login", { phone, password });
+      if (res.ok) saveAuth(res);
+      return res;
     },
+
     async me() {
-      return await call("me");
+      const token = this.token;
+      if (!token) return { ok:false };
+      return call("me", { token });
     },
-    async logout() {
-      const out = await call("logout");
-      localStorage.removeItem(KEY);
-      return out;
+
+    async update(data) {
+      const token = this.token;
+      if (!token) return { ok:false };
+      return call("update", { token, ...data });
+    },
+
+    logout() {
+      clearAuth();
+      location.href = "member.html";
     }
   };
 })();
+</script>
