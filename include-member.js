@@ -1,83 +1,73 @@
-// include-member.js — FINAL STABLE
-(() => {
-  if (window.TEN_MEMBER) return;
+/* =========================
+   TEN MEMBER - JSONP CORE
+========================= */
 
-  const GAS =
-    "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec"; // 換你的
+const MEMBER_API =
+  "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec"; // ⚠️ 用你「已部署」的
 
-  const KEY_TOKEN = "ten_member_token";
-  const KEY_MEMBER = "ten_member_id";
+function jsonp(url) {
+  return new Promise((resolve, reject) => {
+    const cb = "__cb_" + Math.random().toString(36).slice(2);
+    const s = document.createElement("script");
 
-  function jsonp(url) {
-    return new Promise((resolve, reject) => {
-      const cb = "cb_" + Math.random().toString(36).slice(2);
-      const s = document.createElement("script");
-      s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
+    window[cb] = (data) => {
+      delete window[cb];
+      s.remove();
+      resolve(data);
+    };
 
-      window[cb] = (res) => {
-        delete window[cb];
-        s.remove();
-        resolve(res);
-      };
+    s.onerror = () => {
+      delete window[cb];
+      s.remove();
+      reject(new Error("JSONP_FAILED"));
+    };
 
-      s.onerror = () => {
-        delete window[cb];
-        s.remove();
-        reject(new Error("JSONP_FAILED"));
-      };
+    s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
+    document.body.appendChild(s);
+  });
+}
 
-      document.body.appendChild(s);
+function call(action, params = {}) {
+  const q = new URLSearchParams({ action, ...params }).toString();
+  return jsonp(`${MEMBER_API}?${q}`);
+}
+
+/* =========================
+   Public API
+========================= */
+
+window.TEN_MEMBER = {
+  async register(data) {
+    const res = await call("register", {
+      phone: data.phone,
+      password: data.password,
+      name: encodeURIComponent(data.name),
+      birth: data.birth || "",
+      email: data.email || "",
+      address: data.address || ""
     });
+
+    if (!res.ok) throw res;
+    localStorage.setItem("ten_token", res.token);
+    location.href = "member-profile.html";
+  },
+
+  async login(phone, password) {
+    const res = await call("login", { phone, password });
+    if (!res.ok) throw res;
+    localStorage.setItem("ten_token", res.token);
+    location.href = "member-profile.html";
+  },
+
+  async me() {
+    const token = localStorage.getItem("ten_token");
+    if (!token) return null;
+    const res = await call("me", { token });
+    return res.ok ? res.profile : null;
+  },
+
+  logout() {
+    localStorage.removeItem("ten_token");
+    location.href = "member.html";
   }
-
-  function saveAuth(res) {
-    localStorage.setItem(KEY_TOKEN, res.token);
-    localStorage.setItem(KEY_MEMBER, res.memberId);
-  }
-
-  function clearAuth() {
-    localStorage.removeItem(KEY_TOKEN);
-    localStorage.removeItem(KEY_MEMBER);
-  }
-
-  function call(path, params = {}) {
-    return jsonp(
-      GAS + "?" + new URLSearchParams({ path, ...params }).toString()
-    );
-  }
-
-  window.TEN_MEMBER = {
-    get token() {
-      return localStorage.getItem(KEY_TOKEN);
-    },
-    get memberId() {
-      return localStorage.getItem(KEY_MEMBER);
-    },
-
-    async register(data) {
-      const res = await call("register", data);
-      if (res.ok) saveAuth(res);
-      return res;
-    },
-
-    async login(phone, password) {
-      const res = await call("login", { phone, password });
-      if (res.ok) saveAuth(res);
-      return res;
-    },
-
-    async me() {
-      if (!this.token) return { ok:false };
-      return call("me", { token: this.token });
-    },
-
-    async update(data) {
-      return call("update", { token: this.token, ...data });
-    },
-
-    logout() {
-      clearAuth();
-      location.href = "member.html";
-    }
-  };
-})();
+};
