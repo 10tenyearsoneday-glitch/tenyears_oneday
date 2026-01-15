@@ -1,44 +1,51 @@
-const MEMBER_API =
-  "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
+const MEMBER_API = "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
 
-async function post(action, payload = {}) {
+async function api(action, payload = {}) {
   const res = await fetch(MEMBER_API, {
     method: "POST",
-    headers: { "Content-Type":"application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action, ...payload })
   });
   return res.json();
 }
 
+const TOKEN_KEY = "ten_member_token";
+const MID_KEY   = "ten_member_id";
+
 window.TEN_MEMBER = {
   async register(data) {
-    const res = await post("register", data);
+    const res = await api("register", data);
     if (!res.ok) throw res;
-    localStorage.setItem("ten_token", res.token);
-    location.href = "member-profile.html";
+    localStorage.setItem(TOKEN_KEY, res.token);
+    if (res.memberId) localStorage.setItem(MID_KEY, res.memberId);
+    return res;
   },
 
   async login(phone, password) {
-    const res = await post("login", { phone, password });
+    const res = await api("login", { phone, password });
     if (!res.ok) throw res;
-    localStorage.setItem("ten_token", res.token);
-    location.href = "member-profile.html";
+    localStorage.setItem(TOKEN_KEY, res.token);
+    if (res.memberId) localStorage.setItem(MID_KEY, res.memberId);
+    return res;
   },
 
   async me() {
-    const token = localStorage.getItem("ten_token");
+    const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return null;
-    const res = await post("me", { token });
+    const res = await api("me", { token });
     return res.ok ? res.profile : null;
   },
 
   async update(data) {
-    const token = localStorage.getItem("ten_token");
-    return post("update", { token, ...data });
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return { ok:false };
+    return api("update", { token, ...data });
   },
 
-  logout() {
-    localStorage.removeItem("ten_token");
-    location.href = "member.html";
+  async logout() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) await api("logout", { token }).catch(()=>{});
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(MID_KEY);
   }
 };
