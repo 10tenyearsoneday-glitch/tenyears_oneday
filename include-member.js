@@ -32,19 +32,15 @@ function jsonp(params) {
   });
 }
 
-window.TEN_MEMBER = {
-  register: function(d) {
-    return jsonp({
-      action:"register",
-      phone:d.phone,
-      password:d.password,
-      name:d.name,
-      birth_y:d.birth_y,
-      birth_m:d.birth_m,
-      birth_d:d.birth_d,
-      address:d.address
-    });
-  },
+const r = await TEN_MEMBER.register({
+  phone: $("r_phone").value.trim(),
+  password: $("r_pw").value.trim(),   // ← 這行現在一定是 ""
+  name: $("r_name").value.trim(),
+  birth_y: $("r_by").value,           // ← 現在一定是 ""
+  birth_m: $("r_bm").value,
+  birth_d: $("r_bd").value,
+  address: $("r_addr").value.trim()
+});
 
   login: function(phone,pw) {
     return jsonp({
