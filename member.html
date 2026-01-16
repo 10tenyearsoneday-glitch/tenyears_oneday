@@ -48,38 +48,71 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const $ = id => document.getElementById(id);
+  // ===== 生日下拉 =====
+(function initBirthSelect() {
+  const by = document.getElementById("r_by");
+  const bm = document.getElementById("r_bm");
+  const bd = document.getElementById("r_bd");
 
-  $("btnRegister").addEventListener("click", async () => {
-    const birth = $("r_birth").value.trim();
-let y="", m="", d="";
-if (birth.includes("-")) {
-  const p = birth.split("-");
-  y = p[0]; m = p[1]; d = p[2];
-}
+  const nowYear = new Date().getFullYear();
 
-const r = await TEN_MEMBER.register({
-  phone: $("r_phone").value.trim(),
-  password: $("r_pw").value.trim(),   // 🔴 這行不能少
-  name: $("r_name").value.trim(),
-  birth_y: y,
-  birth_m: m,
-  birth_d: d,
-  address: $("r_addr").value.trim()
-});
+  // 年：1900 ~ 今年
+  for (let y = nowYear; y >= 1900; y--) {
+    const opt = document.createElement("option");
+    opt.value = y;
+    opt.textContent = y;
+    by.appendChild(opt);
+  }
 
+  // 月：1 ~ 12
+  for (let m = 1; m <= 12; m++) {
+    const opt = document.createElement("option");
+    opt.value = String(m).padStart(2, "0");
+    opt.textContent = m;
+    bm.appendChild(opt);
+  }
 
-    console.log("REGISTER RESULT:", r);
+  function updateDays() {
+    bd.innerHTML = '<option value="">日</option>';
+    if (!by.value || !bm.value) return;
 
-    if (r && r.ok) {
-      localStorage.setItem("ten_member_token", r.token);
-      location.href = "member-profile.html";
-    } else {
-      $("regToast").textContent =
-        (r && r.msg === "PHONE_EXISTS")
-          ? "此手機已註冊"
-          : "註冊失敗";
+    const days = new Date(by.value, bm.value, 0).getDate();
+    for (let d = 1; d <= days; d++) {
+      const opt = document.createElement("option");
+      opt.value = String(d).padStart(2, "0");
+      opt.textContent = d;
+      bd.appendChild(opt);
     }
+  }
+
+  by.addEventListener("change", updateDays);
+  bm.addEventListener("change", updateDays);
+})();
+
+
+$("btnRegister").addEventListener("click", async () => {
+  const r = await TEN_MEMBER.register({
+    phone: $("r_phone").value.trim(),
+    password: $("r_pw").value.trim(),
+    name: $("r_name").value.trim(),
+    birth_y: $("r_by").value,   // ✅ 一定有 or 空字串
+    birth_m: $("r_bm").value,
+    birth_d: $("r_bd").value,
+    address: $("r_addr").value.trim()
   });
+
+  console.log("REGISTER RESULT:", r);
+
+  if (r && r.ok) {
+    localStorage.setItem("ten_member_token", r.token);
+    location.href = "member-profile.html";
+  } else {
+    $("regToast").textContent =
+      r && r.msg === "PHONE_EXISTS"
+        ? "此手機已註冊"
+        : "註冊失敗";
+  }
+});
 
   $("btnLogin").addEventListener("click", async () => {
     const r = await TEN_MEMBER.login(
