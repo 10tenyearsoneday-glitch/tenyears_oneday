@@ -1,7 +1,9 @@
-/* include-member.js — FINAL / WORKING
+/* include-member.js — FINAL COMPLETE
  * TEN YEARS ONE DAY 會員系統
- * ✔ JSONP（GitHub Pages 可用）
- * ✔ 對齊 members.GAS.JSONP.v4.final.gs（使用 action）
+ * ✔ 登入 / 註冊 Tabs
+ * ✔ JSONP（GitHub Pages）
+ * ✔ 對齊 members.GAS.JSONP.v4.final.gs（action）
+ * ✔ member.html / member-profile.html
  */
 
 (() => {
@@ -22,7 +24,7 @@
   const $ = (id) => document.getElementById(id);
 
   /* =========================
-     工具
+     Utilities
   ========================= */
   function genId() {
     return "M-" + Math.random().toString(36).slice(2, 10).toUpperCase();
@@ -143,11 +145,11 @@
   window.TEN_MEMBER = API;
 
   /* =========================
-     生日選單
+     Birthday selects
   ========================= */
   function ymdFromSelect(y, m, d) {
     if (!y || !m || !d) return "";
-    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
   }
 
   function initBirthSelects() {
@@ -177,35 +179,18 @@
     m.addEventListener("change", fillDays);
     fillDays();
   }
-  // ===== Tabs（登入 / 註冊切換）=====
-  const tabLogin = $("tabLogin");
-  const tabRegister = $("tabRegister");
-  const panelLogin = $("panelLogin");
-  const panelRegister = $("panelRegister");
-
-  if (tabLogin && tabRegister && panelLogin && panelRegister) {
-    const show = (mode) => {
-      const isLogin = mode === "login";
-      panelLogin.hidden = !isLogin;
-      panelRegister.hidden = isLogin;
-      tabLogin.classList.toggle("active", isLogin);
-      tabRegister.classList.toggle("active", !isLogin);
-    };
-
-    tabLogin.onclick = () => show("login");
-    tabRegister.onclick = () => show("register");
-
-    // 預設顯示登入
-    show("login");
-  }
 
   /* =========================
      member.html
   ========================= */
-  
   function initMemberPage() {
+    const tabLogin = $("tabLogin");
+    const tabRegister = $("tabRegister");
+    const panelLogin = $("panelLogin");
+    const panelRegister = $("panelRegister");
     const btnLogin = $("btnLogin");
     const btnRegister = $("btnRegister");
+
     if (!btnLogin || !btnRegister) return;
 
     initBirthSelects();
@@ -213,8 +198,25 @@
     const loginToast = $("loginToast");
     const regToast   = $("regToast");
 
+    /* Tabs */
+    const show = (mode) => {
+      const isLogin = mode === "login";
+      panelLogin.hidden = !isLogin;
+      panelRegister.hidden = isLogin;
+      tabLogin.classList.toggle("active", isLogin);
+      tabRegister.classList.toggle("active", !isLogin);
+      toast(loginToast, "");
+      toast(regToast, "");
+    };
+
+    tabLogin.onclick = () => show("login");
+    tabRegister.onclick = () => show("register");
+    show("login");
+
+    /* Register */
     btnRegister.onclick = async () => {
       toast(regToast, "送出中…");
+
       const name = $("regName").value.trim();
       let phone  = normalizePhone($("regPhone").value);
       const pw   = $("regPw").value.trim();
@@ -230,7 +232,7 @@
       if (!name) return toast(regToast, "請輸入姓名", false);
       if (!phone) return toast(regToast, "請輸入手機", false);
       if (pw.length < 6) return toast(regToast, "密碼至少 6 碼", false);
-      if (pw !== pw2) return toast(regToast, "密碼不一致", false);
+      if (pw !== pw2) return toast(regToast, "兩次密碼不一致", false);
 
       const out = await API.register({
         memberId: getMemberId(),
@@ -243,14 +245,19 @@
 
       toast(regToast, "✅ 註冊成功，請登入");
       $("loginPhone").value = phone;
+      show("login");
     };
 
+    /* Login */
     btnLogin.onclick = async () => {
       toast(loginToast, "登入中…");
+
       let phone = normalizePhone($("loginPhone").value);
       const pw  = $("loginPw").value.trim();
 
-      if (!phone || !pw) return toast(loginToast, "請輸入帳號密碼", false);
+      if (!phone || !pw) {
+        return toast(loginToast, "請輸入帳號密碼", false);
+      }
 
       const out = await API.login(phone, pw);
       if (!out?.ok) {
@@ -258,7 +265,9 @@
       }
 
       toast(loginToast, "✅ 登入成功");
-      setTimeout(() => location.href = "./member-profile.html", 400);
+      setTimeout(() => {
+        location.href = "./member-profile.html";
+      }, 400);
     };
   }
 
@@ -288,12 +297,14 @@
 
     $("btnSaveProfile").onclick = async () => {
       toast(toastEl, "儲存中…");
+
       const out = await API.updateProfile({
         name: $("pfName").value.trim(),
         email: $("pfEmail").value.trim(),
         address: $("pfAddress").value.trim(),
         birth: $("pfBirth").value
       });
+
       toast(toastEl, out?.ok ? "✅ 已儲存" : "儲存失敗", !!out?.ok);
     };
 
