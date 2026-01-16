@@ -1,4 +1,6 @@
-const MEMBER_API = "你的 GAS exec URL";
+const MEMBER_API =
+  "https://script.google.com/macros/s/AKfycbwf5bVyoiFTtN6SIPmdyTtlFk9Ja9zejWc_yZTVP8PNkpmyx1XVpTSiVwa4tUUBIqI-tg/exec";
+
 const TOKEN_KEY = "ten_member_token";
 
 function jsonp(params) {
@@ -12,11 +14,13 @@ function jsonp(params) {
     qs += "callback=" + cb;
 
     var s = document.createElement("script");
+
     window[cb] = function(data) {
       delete window[cb];
       s.remove();
       resolve(data);
     };
+
     s.onerror = function() {
       delete window[cb];
       s.remove();
@@ -41,16 +45,24 @@ window.TEN_MEMBER = {
       address:d.address
     });
   },
+
   login: function(phone,pw) {
-    return jsonp({ action:"login", phone:phone, password:pw });
+    return jsonp({
+      action:"login",
+      phone:phone,
+      password:pw
+    });
   },
+
   me: function() {
     var t = localStorage.getItem(TOKEN_KEY);
     if (!t) return Promise.resolve({ ok:false });
     return jsonp({ action:"me", token:t });
   },
+
   update: function(d) {
     var t = localStorage.getItem(TOKEN_KEY);
+    if (!t) return Promise.resolve({ ok:false });
     return jsonp({
       action:"update",
       token:t,
@@ -58,6 +70,7 @@ window.TEN_MEMBER = {
       address:d.address
     });
   },
+
   logout: function() {
     var t = localStorage.getItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
