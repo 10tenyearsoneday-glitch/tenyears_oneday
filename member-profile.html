@@ -49,6 +49,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     location.href = "member.html";
   });
 });
+  const r = await TEN_MEMBER.me();
+if (!r || !r.ok) {
+  location.href = "member.html";
+  return;
+}
+
 </script>
 
 </body>
