@@ -1,6 +1,4 @@
-const MEMBER_API =
-  "https://script.google.com/macros/s/AKfycbwf5bVyoiFTtN6SIPmdyTtlFk9Ja9zejWc_yZTVP8PNkpmyx1XVpTSiVwa4tUUBIqI-tg/exec";
-
+const MEMBER_API = "你的 GAS exec URL";
 const TOKEN_KEY = "ten_member_token";
 
 function jsonp(params) {
@@ -9,20 +7,16 @@ function jsonp(params) {
     var qs = "";
 
     for (var k in params) {
-      if (params.hasOwnProperty(k)) {
-        qs += encodeURIComponent(k) + "=" + encodeURIComponent(params[k] || "") + "&";
-      }
+      qs += encodeURIComponent(k) + "=" + encodeURIComponent(params[k] || "") + "&";
     }
     qs += "callback=" + cb;
 
     var s = document.createElement("script");
-
     window[cb] = function(data) {
       delete window[cb];
       s.remove();
       resolve(data);
     };
-
     s.onerror = function() {
       delete window[cb];
       s.remove();
@@ -35,48 +29,38 @@ function jsonp(params) {
 }
 
 window.TEN_MEMBER = {
-  register: function(data) {
+  register: function(d) {
     return jsonp({
-      action: "register",
-      phone: data.phone,
-      password: data.password,   // 🔴 一定要有
-      name: data.name,
-      birth_y: data.birth_y,     // 🔴 一定要有
-      birth_m: data.birth_m,
-      birth_d: data.birth_d,
-      address: data.address
+      action:"register",
+      phone:d.phone,
+      password:d.password,
+      name:d.name,
+      birth_y:d.birth_y,
+      birth_m:d.birth_m,
+      birth_d:d.birth_d,
+      address:d.address
     });
   },
-update: function(data) {
-  var t = localStorage.getItem(TOKEN_KEY);
-  if (!t) return Promise.resolve({ ok:false });
-
-  return jsonp({
-    action: "update",
-    token: t,
-    name: data.name,
-    address: data.address
-  });
-}
-
-  login: function(phone, password) {
-    return jsonp({
-      action: "login",
-      phone: phone,
-      password: password
-    });
+  login: function(phone,pw) {
+    return jsonp({ action:"login", phone:phone, password:pw });
   },
-
   me: function() {
     var t = localStorage.getItem(TOKEN_KEY);
-    if (!t) return null;
-    return jsonp({ action: "me", token: t });
+    if (!t) return Promise.resolve({ ok:false });
+    return jsonp({ action:"me", token:t });
   },
-
+  update: function(d) {
+    var t = localStorage.getItem(TOKEN_KEY);
+    return jsonp({
+      action:"update",
+      token:t,
+      name:d.name,
+      address:d.address
+    });
+  },
   logout: function() {
     var t = localStorage.getItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
-    if (!t) return null;
-    return jsonp({ action: "logout", token: t });
+    return jsonp({ action:"logout", token:t });
   }
 };
