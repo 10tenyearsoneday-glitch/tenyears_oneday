@@ -47,6 +47,17 @@ window.TEN_MEMBER = {
       address: data.address
     });
   },
+update: function(data) {
+  var t = localStorage.getItem(TOKEN_KEY);
+  if (!t) return Promise.resolve({ ok:false });
+
+  return jsonp({
+    action: "update",
+    token: t,
+    name: data.name,
+    address: data.address
+  });
+}
 
   login: function(phone, password) {
     return jsonp({
