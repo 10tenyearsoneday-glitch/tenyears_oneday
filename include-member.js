@@ -177,10 +177,32 @@
     m.addEventListener("change", fillDays);
     fillDays();
   }
+  // ===== Tabs（登入 / 註冊切換）=====
+  const tabLogin = $("tabLogin");
+  const tabRegister = $("tabRegister");
+  const panelLogin = $("panelLogin");
+  const panelRegister = $("panelRegister");
+
+  if (tabLogin && tabRegister && panelLogin && panelRegister) {
+    const show = (mode) => {
+      const isLogin = mode === "login";
+      panelLogin.hidden = !isLogin;
+      panelRegister.hidden = isLogin;
+      tabLogin.classList.toggle("active", isLogin);
+      tabRegister.classList.toggle("active", !isLogin);
+    };
+
+    tabLogin.onclick = () => show("login");
+    tabRegister.onclick = () => show("register");
+
+    // 預設顯示登入
+    show("login");
+  }
 
   /* =========================
      member.html
   ========================= */
+  
   function initMemberPage() {
     const btnLogin = $("btnLogin");
     const btnRegister = $("btnRegister");
