@@ -36,7 +36,7 @@ window.TEN_MEMBER = {
     return jsonp({
       action:"register",
       phone:d.phone,
-      password:d.r_pw,
+      password:d.pw,
       name:d.name,
       birth_y:d.birth_y,
       birth_m:d.birth_m,
