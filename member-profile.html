@@ -12,50 +12,36 @@
 </head>
 <body>
 
-<div class="box">
-  <h2>會員中心</h2>
-  <input id="m_phone" disabled>
-  <input id="m_name">
-  <input id="m_addr">
-  <button id="btnSave">儲存</button>
-  <div id="saveToast"></div>
-
-  <button id="btnLogout" style="margin-top:20px">登出</button>
-</div>
+<h2>會員資料</h2>
+<div>手機：<span id="m_phone"></span></div>
+<input id="m_name">
+<input id="m_addr">
+<button id="btnSave">儲存</button>
+<button id="btnLogout">登出</button>
 
 <script src="./include-member.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", async () => {
-  const $ = id => document.getElementById(id);
+(async()=>{
+  const $=id=>document.getElementById(id);
+  const r=await TEN_MEMBER.me();
+  if(!r.ok){ location.href="member.html"; return; }
 
-  const r = await TEN_MEMBER.me();
-  if (!r || !r.ok) return location.href = "member.html";
+  $("m_phone").textContent=r.profile.phone;
+  $("m_name").value=r.profile.name;
+  $("m_addr").value=r.profile.address;
 
-  const m = r.profile;
-  $("m_phone").value = m.phone;
-  $("m_name").value = m.name;
-  $("m_addr").value = m.address;
-
-  $("btnSave").addEventListener("click", async () => {
-    const u = await TEN_MEMBER.update({
-      name: $("m_name").value,
-      address: $("m_addr").value
+  $("btnSave").onclick=async()=>{
+    await TEN_MEMBER.update({
+      name:$("m_name").value,
+      address:$("m_addr").value
     });
-    $("saveToast").textContent = u.ok ? "已儲存" : "儲存失敗";
-  });
-
-  $("btnLogout").addEventListener("click", async () => {
-    await TEN_MEMBER.logout();
-    location.href = "member.html";
-  });
-});
-  const r = await TEN_MEMBER.me();
-if (!r || !r.ok) {
-  location.href = "member.html";
-  return;
-}
-
+    alert("已更新");
+  };
+  $("btnLogout").onclick=()=>{
+    TEN_MEMBER.logout();
+    location.href="member.html";
+  };
+})();
 </script>
-
 </body>
 </html>
