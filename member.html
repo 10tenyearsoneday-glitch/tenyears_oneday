@@ -50,29 +50,39 @@
   }
   y.onchange=m.onchange=upd;
 
-  $("btnRegister").onclick=async()=>{
-    const r=await TEN_MEMBER.register({
-      phone:$("r_phone").value,
-      password:$("r_pw").value,
-      name:$("r_name").value,
-      birth_y:y.value,
-      birth_m:m.value,
-      birth_d:d.value,
-      address:$("r_addr").value
-    });
-    if(r.ok){
-      localStorage.setItem("ten_member_token",r.token);
-      location.href="member-profile.html";
-    } else alert("註冊失敗");
-  };
+ $("btnRegister").onclick = async () => {
+  const phone = $("r_phone")?.value.trim();
+  const pw    = $("r_pw")?.value.trim();
+  const name  = $("r_name")?.value.trim();
+  const addr  = $("r_addr")?.value.trim();
+  const by    = $("r_by")?.value;
+  const bm    = $("r_bm")?.value;
+  const bd    = $("r_bd")?.value;
 
-  $("btnLogin").onclick=async()=>{
-    const r=await TEN_MEMBER.login($("l_phone").value,$("l_pw").value);
-    if(r.ok){
-      localStorage.setItem("ten_member_token",r.token);
-      location.href="member-profile.html";
-    } else alert("登入失敗");
-  };
+  // 🔒 必填檢查
+  if (!phone || !pw || !name || !addr || !by || !bm || !bd) {
+    alert("請完整填寫所有欄位");
+    return;
+  }
+
+  const r = await TEN_MEMBER.register({
+    phone,
+    password: pw,
+    name,
+    birth_y: by,
+    birth_m: bm,
+    birth_d: bd,
+    address: addr
+  });
+
+  if (r.ok) {
+    localStorage.setItem("ten_member_token", r.token);
+    location.href = "member-profile.html";
+  } else {
+    alert("此手機已註冊");
+  }
+};
+
 })();
 </script>
 </body>
