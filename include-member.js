@@ -16,7 +16,7 @@
   const TOKEN_KEY  = "ten_member_token";
 
   window.TEN_CONFIG = window.TEN_CONFIG || {};
-  const GAS_URL = window.TEN_CONFIG.members_gas_url || "https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec";
+  const GAS_URL = window.TEN_CONFIG.members_gas_url || "https://script.google.com/macros/s/AKfycbwf5bVyoiFTtN6SIPmdyTtlFk9Ja9zejWc_yZTVP8PNkpmyx1XVpTSiVwa4tUUBIqI-tg/exec";
 
   function $(id) { return document.getElementById(id); }
 
