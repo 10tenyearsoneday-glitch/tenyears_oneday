@@ -2,8 +2,7 @@
  * Member-only JS for TEN YEARS ONE DAY
  * - Uses JSONP to avoid CORS on GitHub Pages
  * - Works with members GAS:
- *   https://script.google.com/macros/s/AKfycbxV6GCa_MUn-s-bNMH7Y7HJzF1DL1oJ2mb9taU8tGprY8fqb-DxknfFfOBzRWHi3RZzMw/exec
- *
+ *   https://script.google.com/macros/s/AKfycbwf5bVyoiFTtN6SIPmdyTtlFk9Ja9zejWc_yZTVP8PNkpmyx1XVpTSiVwa4tUUBIqI-tg/exec
  * Pages supported:
  * - member.html (login/register)
  * - member-profile.html (profile)
