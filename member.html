@@ -12,126 +12,70 @@
 </head>
 <body>
 
-<div class="box">
-  <h2>會員登入</h2>
-  <input id="l_phone" placeholder="手機">
-  <input id="l_pw" type="password" placeholder="密碼">
-  <button id="btnLogin">登入</button>
-  <div id="loginToast"></div>
+<h2>登入</h2>
+<input id="l_phone" placeholder="手機">
+<input id="l_pw" type="password" placeholder="密碼">
+<button id="btnLogin">登入</button>
 
-  <hr>
+<hr>
 
-  <h2>註冊</h2>
-  <input id="r_phone" placeholder="手機">
-  <input id="r_pw" type="password" placeholder="密碼">
-  <input id="r_name" placeholder="姓名">
-  <input id="r_addr" placeholder="地址">
-<div style="display:flex; gap:20px;">
-  <select id="r_by">
-    <option value="">年</option>
-  </select>
+<h2>註冊</h2>
+<input id="r_phone" placeholder="手機">
+<input id="r_pw" type="password" placeholder="密碼">
+<input id="r_name" placeholder="姓名">
+<input id="r_addr" placeholder="地址">
 
-  <select id="r_bm">
-    <option value="">月</option>
-  </select>
+<select id="r_by"></select>
+<select id="r_bm"></select>
+<select id="r_bd"></select>
 
-  <select id="r_bd">
-    <option value="">日</option>
-  </select>
-</div>
-
-  <button id="btnRegister">註冊</button>
-  <div id="regToast"></div>
-</div>
+<button id="btnRegister">註冊</button>
 
 <script src="./include-member.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+(function(){
   const $ = id => document.getElementById(id);
-  // ===== 生日下拉 =====
-(function initBirthSelect() {
-  const by = document.getElementById("r_by");
-  const bm = document.getElementById("r_bm");
-  const bd = document.getElementById("r_bd");
 
-  const nowYear = new Date().getFullYear();
-
-  // 年：1900 ~ 今年
-  for (let y = nowYear; y >= 1900; y--) {
-    const opt = document.createElement("option");
-    opt.value = y;
-    opt.textContent = y;
-    by.appendChild(opt);
+  const y = $("r_by"), m = $("r_bm"), d = $("r_bd");
+  const now = new Date().getFullYear();
+  y.innerHTML = "<option value=''>年</option>";
+  for(let i=now;i>=1900;i--) y.innerHTML+=`<option>${i}</option>`;
+  m.innerHTML="<option value=''>月</option>";
+  for(let i=1;i<=12;i++) m.innerHTML+=`<option>${i}</option>`;
+  function upd(){
+    d.innerHTML="<option value=''>日</option>";
+    if(!y.value||!m.value) return;
+    const days=new Date(y.value,m.value,0).getDate();
+    for(let i=1;i<=days;i++) d.innerHTML+=`<option>${i}</option>`;
   }
+  y.onchange=m.onchange=upd;
 
-  // 月：1 ~ 12
-  for (let m = 1; m <= 12; m++) {
-    const opt = document.createElement("option");
-    opt.value = String(m).padStart(2, "0");
-    opt.textContent = m;
-    bm.appendChild(opt);
-  }
+  $("btnRegister").onclick=async()=>{
+    const r=await TEN_MEMBER.register({
+      phone:$("r_phone").value,
+      password:$("r_pw").value,
+      name:$("r_name").value,
+      birth_y:y.value,
+      birth_m:m.value,
+      birth_d:d.value,
+      address:$("r_addr").value
+    });
+    if(r.ok){
+      localStorage.setItem("ten_member_token",r.token);
+      location.href="member-profile.html";
+    } else alert("註冊失敗");
+  };
 
-  function updateDays() {
-    bd.innerHTML = '<option value="">日</option>';
-    if (!by.value || !bm.value) return;
-
-    const days = new Date(by.value, bm.value, 0).getDate();
-    for (let d = 1; d <= days; d++) {
-      const opt = document.createElement("option");
-      opt.value = String(d).padStart(2, "0");
-      opt.textContent = d;
-      bd.appendChild(opt);
-    }
-  }
-
-  by.addEventListener("change", updateDays);
-  bm.addEventListener("change", updateDays);
+  $("btnLogin").onclick=async()=>{
+    const r=await TEN_MEMBER.login($("l_phone").value,$("l_pw").value);
+    if(r.ok){
+      localStorage.setItem("ten_member_token",r.token);
+      location.href="member-profile.html";
+    } else alert("登入失敗");
+  };
 })();
-
-
-$("btnRegister").addEventListener("click", async () => {
-  const r = await TEN_MEMBER.register({
-    phone: $("r_phone").value.trim(),
-    password: $("r_pw").value.trim(),
-    name: $("r_name").value.trim(),
-    birth_y: $("r_by").value,   // ✅ 一定有 or 空字串
-    birth_m: $("r_bm").value,
-    birth_d: $("r_bd").value,
-    address: $("r_addr").value.trim()
-  });
-
-  console.log("REGISTER RESULT:", r);
-
-  if (r && r.ok) {
-    localStorage.setItem("ten_member_token", r.token);
-    location.href = "member-profile.html";
-  } else {
-    $("regToast").textContent =
-      r && r.msg === "PHONE_EXISTS"
-        ? "此手機已註冊"
-        : "註冊失敗";
-  }
-});
-
-  $("btnLogin").addEventListener("click", async () => {
-    const r = await TEN_MEMBER.login(
-      $("l_phone").value.trim(),
-      $("l_pw").value.trim()
-    );
-
-    console.log("LOGIN RESULT:", r);
-
-    if (r && r.ok) {
-      localStorage.setItem("ten_member_token", r.token);
-      location.href = "member-profile.html";
-    } else {
-      $("loginToast").textContent = "登入失敗";
-    }
-  });
-});
 </script>
-
-
 </body>
 </html>
+
+
