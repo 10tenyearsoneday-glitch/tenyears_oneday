@@ -44,15 +44,17 @@
         <div class="grid2">
           <div class="field">
             <label>手機（帳號）*</label>
-            <input id="loginPhone" inputmode="tel" autocomplete="tel" placeholder="09xxxxxxxx">
+            <input id="loginPhone" inputmode="tel" autocomplete="tel" 
+                   placeholder="09xxxxxxxx" pattern="^09\\d{8}$" required>
           </div>
           <div class="field">
             <label>密碼 *</label>
-            <input id="loginPw" type="password" autocomplete="current-password" placeholder="••••••">
+            <input id="loginPw" type="password" autocomplete="current-password" 
+                   placeholder="••••••" minlength="6" required>
           </div>
         </div>
         <button id="btnLogin" class="btn" type="button">登入</button>
-        <div id="loginToast" class="toast"></div>
+        <div id="loginToast" class="toast" aria-live="polite"></div>
       </section>
 
       <!-- Register -->
@@ -61,11 +63,12 @@
         <div class="grid2">
           <div class="field">
             <label>姓名 *</label>
-            <input id="regName" autocomplete="name" placeholder="姓名">
+            <input id="regName" autocomplete="name" placeholder="姓名" required>
           </div>
           <div class="field">
             <label>手機（帳號）*</label>
-            <input id="regPhone" inputmode="tel" autocomplete="tel" placeholder="09xxxxxxxx">
+            <input id="regPhone" inputmode="tel" autocomplete="tel" 
+                   placeholder="09xxxxxxxx" pattern="^09\\d{8}$" required>
           </div>
           <div class="field">
             <label>Email（選填）</label>
@@ -80,29 +83,30 @@
         <div class="field" style="margin-top:10px">
           <label>生日（選填）</label>
           <div class="birth3">
-            <select id="birthY"></select>
-            <select id="birthM"></select>
-            <select id="birthD"></select>
+            <select id="birthY"><option value="">年</option></select>
+            <select id="birthM"><option value="">月</option></select>
+            <select id="birthD"><option value="">日</option></select>
           </div>
         </div>
 
         <div class="grid2" style="margin-top:10px">
           <div class="field">
             <label>密碼 *</label>
-            <input id="regPw" type="password" autocomplete="new-password" placeholder="至少 6 碼">
+            <input id="regPw" type="password" autocomplete="new-password" 
+                   placeholder="至少 6 碼" minlength="6" required>
           </div>
           <div class="field">
             <label>再次輸入密碼 *</label>
-            <input id="regPw2" type="password" autocomplete="new-password" placeholder="再輸入一次">
+            <input id="regPw2" type="password" autocomplete="new-password" 
+                   placeholder="再輸入一次" minlength="6" required>
           </div>
         </div>
 
         <button id="btnRegister" class="btn" type="button">建立帳號</button>
-        <div id="regToast" class="toast"></div>
+        <div id="regToast" class="toast" aria-live="polite"></div>
       </section>
     </div>
   </div>
-    <script src="./include-shop.js"></script>
   <script src="./include-member.js"></script>
 </body>
 </html>
