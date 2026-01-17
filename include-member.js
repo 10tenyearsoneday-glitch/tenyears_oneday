@@ -47,12 +47,10 @@
     return localStorage.getItem(TOKEN_KEY) || "";
   }
 
-  function normalizePhone(phone) {
-    phone = String(phone || "").trim().replace(/[\s-]/g, "");
-    phone = phone.replace(/^\+886/, "0");
-    if (/^9\d{8}$/.test(phone)) phone = "0" + phone;
-    return phone;
-  }
+function normalizePhone(phone) {
+  return String(phone || "").replace(/\D/g, "");
+}
+
 
   function toast(el, msg, ok = true) {
     if (!el) return;
