@@ -26,99 +26,83 @@
   </style>
 </head>
 <body>
-  <div class="page-wrap">
-    <div class="card">
-      <div class="brand">
-        <h1>會員中心</h1>
-        <div class="sub">十年一日 TEN YEARS ONE DAY</div>
-      </div>
+ <div class="page-wrap">
+  <div class="card">
 
-      <div class="tabs">
-        <button id="tabLogin" class="tab active" type="button">登入</button>
-        <button id="tabRegister" class="tab" type="button">註冊</button>
-      </div>
-
-      <!-- Login -->
-      <section id="panelLogin" class="panel">
-        <div class="title">登入</div>
-        <div class="grid2">
-          <div class="field">
-            <label>手機（帳號）*</label>
-            <input
-  id="regPhone"
-  type="text"
-  inputmode="numeric"
-  autocomplete="tel"
-  placeholder="09xxxxxxxx"
->
-
-          </div>
-          <div class="field">
-            <label>密碼 *</label>
-            <input id="loginPw" type="password" autocomplete="current-password" 
-                   placeholder="••••••" minlength="6" required>
-          </div>
-        </div>
-        <button id="btnLogin" class="btn" type="button">登入</button>
-        <div id="loginToast" class="toast" aria-live="polite"></div>
-      </section>
-
-      <!-- Register -->
-      <section id="panelRegister" class="panel" hidden>
-        <div class="title">註冊</div>
-        <div class="grid2">
-          <div class="field">
-            <label>姓名 *</label>
-            <input id="regName" autocomplete="name" placeholder="姓名" required>
-          </div>
-          <div class="field">
-            <label>手機（帳號）*</label>
-           <input
-  id="regPhone"
-  type="text"
-  inputmode="numeric"
-  autocomplete="tel"
-  placeholder="09xxxxxxxx"
->
-
-          </div>
-          <div class="field">
-            <label>Email（選填）</label>
-            <input id="regEmail" inputmode="email" autocomplete="email" placeholder="you@example.com">
-          </div>
-          <div class="field">
-            <label>地址（選填）</label>
-            <input id="regAddress" autocomplete="street-address" placeholder="縣市區路段號樓">
-          </div>
-        </div>
-
-        <div class="field" style="margin-top:10px">
-          <label>生日（選填）</label>
-          <div class="birth3">
-            <select id="birthY"><option value="">年</option></select>
-            <select id="birthM"><option value="">月</option></select>
-            <select id="birthD"><option value="">日</option></select>
-          </div>
-        </div>
-
-        <div class="grid2" style="margin-top:10px">
-          <div class="field">
-            <label>密碼 *</label>
-            <input id="regPw" type="password" autocomplete="new-password" 
-                   placeholder="至少 6 碼" minlength="6" required>
-          </div>
-          <div class="field">
-            <label>再次輸入密碼 *</label>
-            <input id="regPw2" type="password" autocomplete="new-password" 
-                   placeholder="再輸入一次" minlength="6" required>
-          </div>
-        </div>
-
-        <button id="btnRegister" class="btn" type="button">建立帳號</button>
-        <div id="regToast" class="toast" aria-live="polite"></div>
-      </section>
+    <div class="brand">
+      <h1>會員中心</h1>
+      <div class="sub">十年一日 TEN YEARS ONE DAY</div>
     </div>
+
+    <div class="tabs">
+      <button id="tabLogin" class="tab active" type="button">登入</button>
+      <button id="tabRegister" class="tab" type="button">註冊</button>
+    </div>
+
+    <!-- Login -->
+    <section id="panelLogin" class="panel">
+      <div class="title">登入</div>
+      <div class="grid2">
+        <div class="field">
+          <label>手機（帳號）*</label>
+          <input
+            id="loginPhone"
+            type="text"
+            inputmode="numeric"
+            autocomplete="tel"
+            placeholder="09xxxxxxxx">
+        </div>
+        <div class="field">
+          <label>密碼 *</label>
+          <input
+            id="loginPw"
+            type="password"
+            autocomplete="current-password"
+            placeholder="••••••">
+        </div>
+      </div>
+      <button id="btnLogin" class="btn" type="button">登入</button>
+      <div id="loginToast" class="toast"></div>
+    </section>
+
+    <!-- Register -->
+    <section id="panelRegister" class="panel" hidden>
+      <div class="title">註冊</div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>姓名 *</label>
+          <input id="regName" placeholder="姓名">
+        </div>
+        <div class="field">
+          <label>手機（帳號）*</label>
+          <input
+            id="regPhone"
+            type="text"
+            inputmode="numeric"
+            autocomplete="tel"
+            placeholder="09xxxxxxxx">
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>密碼 *</label>
+          <input id="regPw" type="password" placeholder="至少 6 碼">
+        </div>
+        <div class="field">
+          <label>再次輸入密碼 *</label>
+          <input id="regPw2" type="password">
+        </div>
+      </div>
+
+      <button id="btnRegister" class="btn" type="button">建立帳號</button>
+      <div id="regToast" class="toast"></div>
+    </section>
+
   </div>
-  <script src="./include-member.js"></script>
+</div>
+
+<script src="./include-member.js"></script>
 </body>
 </html>
