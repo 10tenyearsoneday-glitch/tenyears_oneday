@@ -31,37 +31,36 @@
       </div>
 
       <section class="panel">
-       <div class="grid2">
-  <div class="field">
-    <label>姓名 *</label>
-    <input id="pfName" placeholder="姓名" required>
-  </div>
-  <div class="field">
-    <label>手機（帳號）</label>
-    <input id="pfPhone" disabled>
-  </div>
-  <div class="field">
-    <label>Email（選填）</label>
-    <input id="pfEmail" type="email" autocomplete="email" placeholder="you@example.com">
-  </div>
-  <div class="field">
-    <label>生日（選填）</label>
-    <input id="pfBirth" type="date">
-  </div>
-</div>
+        <div class="grid2">
+          <div class="field">
+            <label>姓名 *</label>
+            <input id="pfName" placeholder="姓名">
+          </div>
+          <div class="field">
+            <label>手機（帳號）</label>
+            <input id="pfPhone" disabled>
+          </div>
+          <div class="field">
+            <label>Email（選填）</label>
+            <input id="pfEmail" inputmode="email" autocomplete="email" placeholder="you@example.com">
+          </div>
+          <div class="field">
+            <label>生日（選填）</label>
+            <input id="pfBirth" type="date">
+          </div>
+        </div>
 
-<div class="field" style="margin-top:10px">
-  <label>地址（選填）</label>
-  <input id="pfAddress" autocomplete="street-address" placeholder="縣市區路段號樓">
-</div>
+        <div class="field" style="margin-top:10px">
+          <label>地址（選填）</label>
+          <input id="pfAddress" autocomplete="street-address" placeholder="縣市區路段號樓">
+        </div>
 
-<div class="row">
-  <button id="btnSaveProfile" class="btn" type="button">儲存</button>
-  <button id="btnLogout" class="btn outline" type="button">登出</button>
-</div>
+        <div class="row">
+          <button id="btnSaveProfile" class="btn" type="button">儲存</button>
+          <button id="btnLogout" class="btn outline" type="button">登出</button>
+        </div>
 
-<div id="profileToast" class="toast" aria-live="polite"></div>
-
+        <div id="profileToast" class="toast"></div>
       </section>
     </div>
   </div>
