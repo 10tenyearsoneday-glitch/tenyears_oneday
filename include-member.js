@@ -253,6 +253,7 @@ window.__meCb = res => {
       localStorage.removeItem("ten_token");
       location.href = "member.html";
     });
+  loadMyOrders();
 });
 // 讀取我的訂單
 function loadMyOrders() {
@@ -285,6 +286,5 @@ function loadMyOrders() {
   document.body.appendChild(s);
 }
 
-// 在 DOMContentLoaded 裡呼叫
-loadMyOrders();
+
 
