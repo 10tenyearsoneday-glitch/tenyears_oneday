@@ -266,21 +266,59 @@ function loadMyOrders() {
   if (!list) return;
 
   window.__myOrdersCb = res => {
-    if (!res.ok || !res.orders || !res.orders.length) {
-      list.textContent = "尚無訂單";
-      return;
-    }
+  if (!res.ok || !res.orders || !res.orders.length) {
+    list.textContent = "尚無訂單";
+    return;
+  }
 
-    list.innerHTML = res.orders.map(o => `
-      <div style="border-bottom:1px dashed rgba(0,0,0,.2);padding:10px 0">
-        <div>訂單編號：${o.order_id}</div>
+  list.innerHTML = res.orders.map((o, idx) => {
+    let items = [];
+    try {
+      items = JSON.parse(o.items_json || "[]");
+    } catch (e) {}
+
+    const itemsHtml = items.length
+      ? items.map(it => `
+          <div style="display:flex;justify-content:space-between">
+            <span>・${it.title || it.name} × ${it.qty || 1}</span>
+            <span>NT$ ${it.price}</span>
+          </div>
+        `).join("")
+      : `<div>（無商品明細）</div>`;
+
+    return `
+      <div style="border-bottom:1px dashed rgba(0,0,0,.2);padding:12px 0">
+        <div><b>訂單編號：</b>${o.order_id}</div>
         <div>下單時間：${new Date(o.created_at).toLocaleString()}</div>
         <div>金額：NT$ ${o.total}</div>
         <div>折扣：${o.discount_note || "—"}</div>
         <div>狀態：${o.pay_status}</div>
+
+        <div
+          style="margin-top:8px;cursor:pointer;color:#556b5f;font-size:13px"
+          onclick="toggleOrderItems(${idx})"
+        >
+          ▶ 查看商品明細
+        </div>
+
+        <div
+          id="order-items-${idx}"
+          style="display:none;margin-top:8px;
+                 padding:8px 10px;
+                 background:rgba(0,0,0,.03);
+                 border-radius:8px;
+                 font-size:13px"
+        >
+          ${itemsHtml}
+          <div style="margin-top:6px;text-align:right">
+            小計：NT$ ${o.subtotal}
+          </div>
+        </div>
       </div>
-    `).join("");
-  };
+    `;
+  }).join("");
+};
+
 
   const s = document.createElement("script");
   s.src =
