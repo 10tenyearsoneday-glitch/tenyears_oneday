@@ -189,13 +189,19 @@
         discount_note: labels.join(" ＋ ")
       };
 
-      const res = await fetch(`${GAS_URL}?path=orders`, {
-        method: "POST",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify(payload)
-      });
+     const form = document.createElement("form");
+form.method = "POST";
+form.action = `${GAS_URL}?path=orders`;
 
-      const out = await res.json();
+const input = document.createElement("input");
+input.type = "hidden";
+input.name = "data";
+input.value = JSON.stringify(payload);
+
+form.appendChild(input);
+document.body.appendChild(form);
+form.submit();
+
 
       if (out.ok) {
         localStorage.removeItem(CART_KEY);
