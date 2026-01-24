@@ -255,72 +255,81 @@ window.__meCb = res => {
     });
   loadMyOrders();
 });
-// 讀取我的訂單
-// 讀取我的訂單（FINAL SAFE）
+// 讀取我的訂單（FINAL FINAL）
 function loadMyOrders() {
   const token = localStorage.getItem("ten_token");
   if (!token) return;
 
-  // ✅ 修正二就在這裡：先抓 DOM，沒有就直接結束
   const list = document.getElementById("orderList");
   if (!list) return;
 
   window.__myOrdersCb = res => {
-  if (!res.ok || !res.orders || !res.orders.length) {
-    list.textContent = "尚無訂單";
-    return;
-  }
+    if (!res.ok || !res.orders || !res.orders.length) {
+      list.textContent = "尚無訂單";
+      return;
+    }
 
-  list.innerHTML = res.orders.map((o, idx) => {
-    let items = [];
-    try {
-      items = JSON.parse(o.items_json || "[]");
-    } catch (e) {}
+    list.innerHTML = res.orders.map((o, idx) => {
+      let items = [];
+      try {
+        items = JSON.parse(o.items_json || "[]");
+      } catch (e) {}
 
-    const itemsHtml = items.length
-      ? items.map(it => `
-          <div style="display:flex;justify-content:space-between">
-            <span>・${it.title || it.name} × ${it.qty || 1}</span>
-            <span>NT$ ${it.price}</span>
+      const itemsHtml = items.length
+        ? items.map(it => `
+            <div style="display:flex;justify-content:space-between">
+              <span>・${it.title || it.name} × ${it.qty || 1}</span>
+              <span>NT$ ${it.price}</span>
+            </div>
+          `).join("")
+        : `<div>（無商品明細）</div>`;
+
+      return `
+        <div style="border-bottom:1px dashed rgba(0,0,0,.2);padding:12px 0">
+          <div><b>訂單編號：</b>${o.order_id}</div>
+          <div>下單時間：${new Date(o.created_at).toLocaleString()}</div>
+          <div>金額：NT$ ${o.total}</div>
+          <div>折扣：${o.discount_note || "—"}</div>
+          <div>狀態：${o.pay_status}</div>
+
+          <div
+            id="toggle-${idx}"
+            style="margin-top:8px;cursor:pointer;color:#556b5f;font-size:13px"
+            onclick="toggleOrderItems(${idx})"
+          >
+            ▶ 查看商品明細
           </div>
-        `).join("")
-      : `<div>（無商品明細）</div>`;
 
-    return `
-      <div style="border-bottom:1px dashed rgba(0,0,0,.2);padding:12px 0">
-        <div><b>訂單編號：</b>${o.order_id}</div>
-        <div>下單時間：${new Date(o.created_at).toLocaleString()}</div>
-        <div>金額：NT$ ${o.total}</div>
-        <div>折扣：${o.discount_note || "—"}</div>
-        <div>狀態：${o.pay_status}</div>
+          <div
+            id="order-items-${idx}"
+            style="display:none;margin-top:8px;
+                   padding:10px;
+                   background:rgba(0,0,0,.03);
+                   border-radius:10px;
+                   font-size:13px"
+          >
+            ${itemsHtml}
+            <div style="margin-top:6px;text-align:right">
+              小計：NT$ ${o.subtotal}
+            </div>
 
-        <div
-          style="margin-top:8px;cursor:pointer;color:#556b5f;font-size:13px"
-          onclick="toggleOrderItems(${idx})"
-        >
-          ▶ 查看商品明細
-        </div>
-
-        <div
-          id="order-items-${idx}"
-          style="display:none;margin-top:8px;
-                 padding:8px 10px;
-                 background:rgba(0,0,0,.03);
-                 border-radius:8px;
-                 font-size:13px"
-        >
-          ${itemsHtml}
-          <div style="margin-top:6px;text-align:right">
-            小計：NT$ ${o.subtotal}
+            <div style="margin-top:14px;border-top:1px dashed rgba(0,0,0,.2);padding-top:10px">
+              <div style="font-weight:600;margin-bottom:6px">訂單狀態</div>
+              ${renderOrderStatus(o)}
+            </div>
           </div>
         </div>
-      </div>
-    `;
-  }).join("");
-};
+      `;
+    }).join("");
+  };
 
+  // 🔥 正確位置：在 function 裡
+  document
+    .querySelectorAll("script[data-jsonp='my_orders']")
+    .forEach(s => s.remove());
 
   const s = document.createElement("script");
+  s.dataset.jsonp = "my_orders";
   s.src =
     GAS_URL +
     "?path=my_orders" +
@@ -328,6 +337,52 @@ function loadMyOrders() {
     "&callback=__myOrdersCb";
   document.body.appendChild(s);
 }
+
+function toggleOrderItems(idx) {
+  const el = document.getElementById("order-items-" + idx);
+  const btn = document.getElementById("toggle-" + idx);
+  if (!el || !btn) return;
+
+  const open = el.style.display === "none";
+  el.style.display = open ? "block" : "none";
+  btn.textContent = open ? "▼ 收合商品明細" : "▶ 查看商品明細";
+}
+function renderOrderStatus(o) {
+  const steps = [
+    {
+      label: "已下單",
+      done: true,
+      time: o.created_at
+    },
+    {
+      label: "已付款",
+      done: o.pay_status === "PAID",
+      time: o.paid_at
+    },
+    {
+      label: "已出貨",
+      done: !!o.shipped_at,
+      time: o.shipped_at
+    }
+  ];
+
+  return steps.map(s => `
+    <div style="display:flex;align-items:center;margin:6px 0">
+      <span style="
+        display:inline-block;
+        width:10px;height:10px;
+        border-radius:50%;
+        margin-right:8px;
+        background:${s.done ? "#556b5f" : "#ccc"};
+      "></span>
+      <span style="flex:1">${s.label}</span>
+      <span style="color:#777;font-size:12px">
+        ${s.done && s.time ? new Date(s.time).toLocaleString() : "—"}
+      </span>
+    </div>
+  `).join("");
+}
+
 
 
 
