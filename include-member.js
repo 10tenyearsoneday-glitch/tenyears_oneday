@@ -254,4 +254,37 @@ window.__meCb = res => {
       location.href = "member.html";
     });
 });
+// 讀取我的訂單
+function loadMyOrders() {
+  const token = localStorage.getItem("ten_token");
+  if (!token) return;
+
+  window.__myOrdersCb = res => {
+    if (!res.ok || !res.orders?.length) {
+      document.getElementById("orderList").textContent = "尚無訂單";
+      return;
+    }
+
+    document.getElementById("orderList").innerHTML = res.orders.map(o => `
+      <div style="border-bottom:1px dashed rgba(0,0,0,.2);padding:10px 0">
+        <div>訂單編號：${o.order_id}</div>
+        <div>下單時間：${new Date(o.created_at).toLocaleString()}</div>
+        <div>金額：NT$ ${o.total}</div>
+        <div>折扣：${o.discount_note || "—"}</div>
+        <div>狀態：${o.pay_status}</div>
+      </div>
+    `).join("");
+  };
+
+  const s = document.createElement("script");
+  s.src =
+    GAS_URL +
+    "?path=my_orders" +
+    "&token=" + encodeURIComponent(token) +
+    "&callback=__myOrdersCb";
+  document.body.appendChild(s);
+}
+
+// 在 DOMContentLoaded 裡呼叫
+loadMyOrders();
 
