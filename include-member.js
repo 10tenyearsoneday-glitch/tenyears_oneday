@@ -189,3 +189,51 @@ document.querySelectorAll("script[data-jsonp='register']")
   ========================= */
   initBirthSelect();
 })();
+/* =========================
+   Profile Page
+========================= */
+(function initProfile(){
+  const token = localStorage.getItem("ten_token");
+  if (!token) return;
+
+  // 讀取會員資料
+  window.__meCb = res => {
+    if (!res.ok) return;
+    const p = res.profile || {};
+    $("pfName") && ($("pfName").value = p.name || "");
+    $("pfPhone") && ($("pfPhone").value = p.phone || "");
+    $("pfEmail") && ($("pfEmail").value = p.email || "");
+    $("pfBirth") && ($("pfBirth").value = p.birth || "");
+    $("pfAddress") && ($("pfAddress").value = p.address || "");
+  };
+
+  const s = document.createElement("script");
+  s.src = GAS_URL + "?action=me&token=" + encodeURIComponent(token) + "&callback=__meCb";
+  document.body.appendChild(s);
+
+  // 儲存
+  $("btnSaveProfile")?.addEventListener("click", () => {
+    toast($("profileToast"), "儲存中…", true);
+    const qs =
+      "?action=update" +
+      "&token=" + encodeURIComponent(token) +
+      "&name=" + encodeURIComponent($("pfName")?.value || "") +
+      "&email=" + encodeURIComponent($("pfEmail")?.value || "") +
+      "&address=" + encodeURIComponent($("pfAddress")?.value || "") +
+      "&birth=" + encodeURIComponent($("pfBirth")?.value || "") +
+      "&callback=__profileSaveCb";
+
+    window.__profileSaveCb = r =>
+      toast($("profileToast"), r.ok ? "已儲存" : "儲存失敗", r.ok);
+
+    const s2 = document.createElement("script");
+    s2.src = GAS_URL + qs;
+    document.body.appendChild(s2);
+  });
+
+  // 登出
+  $("btnLogout")?.addEventListener("click", () => {
+    localStorage.removeItem("ten_token");
+    location.href = "member.html";
+  });
+})();
