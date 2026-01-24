@@ -256,17 +256,22 @@ window.__meCb = res => {
   loadMyOrders();
 });
 // 讀取我的訂單
+// 讀取我的訂單（FINAL SAFE）
 function loadMyOrders() {
   const token = localStorage.getItem("ten_token");
   if (!token) return;
 
+  // ✅ 修正二就在這裡：先抓 DOM，沒有就直接結束
+  const list = document.getElementById("orderList");
+  if (!list) return;
+
   window.__myOrdersCb = res => {
-    if (!res.ok || !res.orders?.length) {
-      document.getElementById("orderList").textContent = "尚無訂單";
+    if (!res.ok || !res.orders || !res.orders.length) {
+      list.textContent = "尚無訂單";
       return;
     }
 
-    document.getElementById("orderList").innerHTML = res.orders.map(o => `
+    list.innerHTML = res.orders.map(o => `
       <div style="border-bottom:1px dashed rgba(0,0,0,.2);padding:10px 0">
         <div>訂單編號：${o.order_id}</div>
         <div>下單時間：${new Date(o.created_at).toLocaleString()}</div>
