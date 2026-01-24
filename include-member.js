@@ -199,15 +199,21 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!token) return;
 
   // 讀取會員資料
-  window.__meCb = res => {
-    if (!res.ok) return;
-    const p = res.profile || {};
-    document.getElementById("pfName").value = p.name || "";
-    document.getElementById("pfPhone").value = p.phone || "";
-    document.getElementById("pfEmail").value = p.email || "";
-    document.getElementById("pfBirth").value = p.birth || "";
-    document.getElementById("pfAddress").value = p.address || "";
-  };
+window.__meCb = res => {
+  if (!res.ok) return;
+  const p = res.profile || {};
+  document.getElementById("pfName").value = p.name || "";
+  document.getElementById("pfPhone").value = p.phone || "";
+  document.getElementById("pfEmail").value = p.email || "";
+  document.getElementById("pfBirth").value = p.birth || "";
+  document.getElementById("pfAddress").value = p.address || "";
+
+  // 🔒 已填生日就鎖住
+  if (p.birth) {
+    document.getElementById("pfBirth").disabled = true;
+  }
+};
+
 
   const s = document.createElement("script");
   s.src =
