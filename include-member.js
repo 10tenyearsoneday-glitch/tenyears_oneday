@@ -1,9 +1,11 @@
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwf5bVyoiFTtN6SIPmdyTtlFk9Ja9zejWc_yZTVP8PNkpmyx1XVpTSiVwa4tUUBIqI-tg/exec"; // ←換成你的
+
 (() => {
   /* =========================
      基本工具
   ========================= */
   const $ = id => document.getElementById(id);
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwf5bVyoiFTtN6SIPmdyTtlFk9Ja9zejWc_yZTVP8PNkpmyx1XVpTSiVwa4tUUBIqI-tg/exec"; // ←換成你的
+
 
  function normalizePhone(v) {
   v = String(v || "").trim();
