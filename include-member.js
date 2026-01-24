@@ -190,9 +190,9 @@ document.querySelectorAll("script[data-jsonp='register']")
   initBirthSelect();
 })();
 /* =========================
-   Profile Page
+   Profile Page (FINAL FIX)
 ========================= */
-(function initProfile(){
+document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("ten_token");
   if (!token) return;
 
@@ -200,40 +200,50 @@ document.querySelectorAll("script[data-jsonp='register']")
   window.__meCb = res => {
     if (!res.ok) return;
     const p = res.profile || {};
-    $("pfName") && ($("pfName").value = p.name || "");
-    $("pfPhone") && ($("pfPhone").value = p.phone || "");
-    $("pfEmail") && ($("pfEmail").value = p.email || "");
-    $("pfBirth") && ($("pfBirth").value = p.birth || "");
-    $("pfAddress") && ($("pfAddress").value = p.address || "");
+    document.getElementById("pfName").value = p.name || "";
+    document.getElementById("pfPhone").value = p.phone || "";
+    document.getElementById("pfEmail").value = p.email || "";
+    document.getElementById("pfBirth").value = p.birth || "";
+    document.getElementById("pfAddress").value = p.address || "";
   };
 
   const s = document.createElement("script");
-  s.src = GAS_URL + "?action=me&token=" + encodeURIComponent(token) + "&callback=__meCb";
+  s.src =
+    GAS_URL +
+    "?action=me" +
+    "&token=" + encodeURIComponent(token) +
+    "&callback=__meCb";
   document.body.appendChild(s);
 
   // 儲存
-  $("btnSaveProfile")?.addEventListener("click", () => {
-    toast($("profileToast"), "儲存中…", true);
-    const qs =
-      "?action=update" +
-      "&token=" + encodeURIComponent(token) +
-      "&name=" + encodeURIComponent($("pfName")?.value || "") +
-      "&email=" + encodeURIComponent($("pfEmail")?.value || "") +
-      "&address=" + encodeURIComponent($("pfAddress")?.value || "") +
-      "&birth=" + encodeURIComponent($("pfBirth")?.value || "") +
-      "&callback=__profileSaveCb";
+  document.getElementById("btnSaveProfile")
+    .addEventListener("click", () => {
+      document.getElementById("profileToast").textContent = "儲存中…";
 
-    window.__profileSaveCb = r =>
-      toast($("profileToast"), r.ok ? "已儲存" : "儲存失敗", r.ok);
+      window.__profileSaveCb = r => {
+        document.getElementById("profileToast").textContent =
+          r.ok ? "已儲存" : "儲存失敗";
+      };
 
-    const s2 = document.createElement("script");
-    s2.src = GAS_URL + qs;
-    document.body.appendChild(s2);
-  });
+      const qs =
+        "?action=update" +
+        "&token=" + encodeURIComponent(token) +
+        "&name=" + encodeURIComponent(document.getElementById("pfName").value || "") +
+        "&email=" + encodeURIComponent(document.getElementById("pfEmail").value || "") +
+        "&address=" + encodeURIComponent(document.getElementById("pfAddress").value || "") +
+        "&birth=" + encodeURIComponent(document.getElementById("pfBirth").value || "") +
+        "&callback=__profileSaveCb";
+
+      const s2 = document.createElement("script");
+      s2.src = GAS_URL + qs;
+      document.body.appendChild(s2);
+    });
 
   // 登出
-  $("btnLogout")?.addEventListener("click", () => {
-    localStorage.removeItem("ten_token");
-    location.href = "member.html";
-  });
-})();
+  document.getElementById("btnLogout")
+    .addEventListener("click", () => {
+      localStorage.removeItem("ten_token");
+      location.href = "member.html";
+    });
+});
+
