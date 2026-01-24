@@ -5,9 +5,24 @@
   const $ = id => document.getElementById(id);
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwf5bVyoiFTtN6SIPmdyTtlFk9Ja9zejWc_yZTVP8PNkpmyx1XVpTSiVwa4tUUBIqI-tg/exec"; // ←換成你的
 
-  function normalizePhone(v) {
-    return String(v || "").replace(/\D/g, "");
+ function normalizePhone(v) {
+  v = String(v || "").trim();
+  v = v.replace(/[\s\-]/g, "");
+
+  // +8869xxxxxxxx → 09xxxxxxxx
+  if (v.startsWith("+886")) {
+    v = "0" + v.slice(4);
   }
+
+  // 9xxxxxxxx → 09xxxxxxxx
+  if (/^9\d{8}$/.test(v)) {
+    v = "0" + v;
+  }
+
+  if (!/^09\d{8}$/.test(v)) return "";
+  return v; // ⚠️ 一定保留 0
+}
+
 
   function toast(el, msg, ok = false) {
     if (!el) return;
@@ -73,14 +88,15 @@
   /* =========================
      Register
   ========================= */
-  window.__registerCb = res => {
-    if (res.ok) {
-      toast($("regToast"), "註冊成功，請登入", true);
-      show("login");
-    } else {
-      toast($("regToast"), res.message || "註冊失敗");
-    }
-  };
+window.__registerCb = res => {
+  if (res.ok && res.token) {
+    localStorage.setItem("ten_token", res.token);
+    location.href = "member-profile.html";
+    return;
+  }
+  toast($("regToast"), res.message || "註冊失敗");
+};
+
 
   $("btnRegister")?.addEventListener("click", () => {
     const phone = normalizePhone($("regPhone")?.value);
