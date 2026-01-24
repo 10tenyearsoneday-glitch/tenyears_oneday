@@ -99,6 +99,10 @@ window.__registerCb = res => {
 
 
   $("btnRegister")?.addEventListener("click", () => {
+    // 🔥 移除舊的 JSONP script，避免 callback 重複
+document.querySelectorAll("script[data-jsonp='register']")
+  .forEach(s => s.remove());
+
     const phone = normalizePhone($("regPhone")?.value);
     const pw = $("regPw")?.value || "";
     const pw2 = $("regPw2")?.value || "";
@@ -128,6 +132,7 @@ window.__registerCb = res => {
     toast($("regToast"), "註冊中…", true);
 
     const s = document.createElement("script");
+    s.dataset.jsonp = "register";
     s.src =
       GAS_URL +
       "?action=register" +
