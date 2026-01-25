@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+
+<body style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f4f6f3">
+
+<div style="background:white;padding:30px;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.15);width:320px">
+<h3>管理員登入</h3>
+
+<input id="user" placeholder="帳號" style="width:100%;padding:10px;margin:10px 0">
+<input id="pw" type="password" placeholder="密碼" style="width:100%;padding:10px;margin-bottom:10px">
+
+<button onclick="login()" style="width:100%;padding:10px">登入</button>
+
+<div id="msg"></div>
+</div>
+
+<script>
+const ADMIN_USER="admin";
+const ADMIN_PASS="10years1day911321";
+
+function login(){
+  if(user.value===ADMIN_USER && pw.value===ADMIN_PASS){
+    localStorage.setItem("ten_admin_token","ok");
+    localStorage.setItem("ten_admin_exp",Date.now()+30*60*1000);
+    location.href="admin.html";
+  }else{
+    msg.innerText="帳密錯誤";
+  }
+}
+</script>
+</body>
+</html>
