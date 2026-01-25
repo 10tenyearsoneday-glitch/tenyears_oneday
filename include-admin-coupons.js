@@ -80,7 +80,7 @@ window.ADMIN_KEY = "10years1day911321";
     `&key=${encodeURIComponent(ADMIN_KEY)}` +
     `&method=POST`;
 
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     const form = document.createElement("form");
     form.method = "POST";
     form.action = url;
@@ -94,11 +94,14 @@ window.ADMIN_KEY = "10years1day911321";
     form.appendChild(input);
     document.body.appendChild(form);
 
-    form.submit();
+    // 監聽 iframe load → 才代表 GAS 跑完
+    const frame = document.querySelector('iframe[name="gasFrame"]');
+    frame.onload = () => resolve({ ok:true });
 
-    setTimeout(() => resolve({ ok:true }), 400);
+    form.submit();
   });
 }
+
 
 
 
