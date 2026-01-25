@@ -106,7 +106,8 @@
       <a href="#" class="product-link js-open-product" data-id="${getPid(p)}">
         <div class="product">
           <div class="thumb">
-            <img src="${img}" alt="${(p.title||"").replaceAll('"','&quot;')}" loading="${i<2?'eager':'lazy'}">
+            <img src="${img}" alt="${String(p.title||"").replace(/"/g,'&quot;')}">
+
           </div>
           <div class="body">
             <div>
