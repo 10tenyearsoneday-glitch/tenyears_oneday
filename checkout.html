@@ -175,7 +175,7 @@
 
       const payload = {
         order_id: "OD" + Date.now(),
-        member_id: "GUEST",
+         token: localStorage.getItem("ten_token") || "",   // ⭐⭐⭐加這行⭐⭐⭐
         name: name.value,
         phone: phone.value,
         email: email.value,
