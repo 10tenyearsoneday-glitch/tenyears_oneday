@@ -162,7 +162,6 @@ coupon: coupon?{...coupon,code:couponCode}:null
 const pricing=calcTotal(cart,settings,ctx);
 
 let total=pricing.total;
-if(pay==="cod") total+=30;
 
 sumSubtotal.textContent=money(pricing.subtotal);
 sumDiscount.textContent=pricing.discount?`- ${money(pricing.discount)}`:money(0);
@@ -232,7 +231,6 @@ coupon: coupon?{...coupon,code:couponCode}:null
 const pricing=calcTotal(cart,settings,ctx);
 
 let total=pricing.total;
-if(pay==="cod") total+=30;
 
 const payload={
 order_id:"OD"+Date.now(),
