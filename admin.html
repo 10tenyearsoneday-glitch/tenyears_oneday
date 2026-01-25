@@ -410,25 +410,31 @@ async function loadProducts() {
   };
 }
 
-async function gasWrite(method, payload, id = "") {
+function gasWrite(method, payload, id = "") {
   const url =
     `${GAS_URL}?path=products` +
     (id ? `&id=${encodeURIComponent(id)}` : "") +
     `&key=${encodeURIComponent(ADMIN_KEY)}` +
     `&method=${encodeURIComponent(method)}`;
 
-  // ✅ 用 text/plain 避免觸發 CORS preflight (OPTIONS)
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload || {})
-  });
+  return new Promise(resolve => {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = url;
 
-  // GAS 有時候就算失敗也可能是 200，把 error 放 body，所以要一起判斷
-  const out = await res.json().catch(() => ({}));
-  if (!res.ok || out?.error) throw new Error(out?.error || "GAS_WRITE_FAILED");
-  return out;
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "data";
+    input.value = JSON.stringify(payload);
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+
+    resolve({ ok:true });
+  });
 }
+
 async function saveProduct(){
   const payload = buildPayload();
 
