@@ -93,7 +93,9 @@
 window.__registerCb = res => {
   if (res.ok && res.token) {
     localStorage.setItem("ten_token", res.token);
-    location.href = "member-profile.html";
+   const p = new URLSearchParams(location.search);
+location.href = p.get("redirect") || "member-profile.html";
+
     return;
   }
   toast($("regToast"), res.message || "註冊失敗");
@@ -382,6 +384,23 @@ function renderOrderStatus(o) {
     </div>
   `).join("");
 }
+(function showMemberStatus(){
+
+  const token = localStorage.getItem("ten_token");
+
+  const memberBtn = document.querySelector('[data-icon="member"]');
+
+  if(!memberBtn) return;
+
+  if(token){
+    memberBtn.title = "會員中心";
+    memberBtn.href = "member-profile.html";
+  }else{
+    memberBtn.title = "登入 / 註冊";
+    memberBtn.href = "member.html";
+  }
+
+})();
 
 
 
