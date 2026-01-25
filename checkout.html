@@ -7,6 +7,7 @@
 
   <link rel="stylesheet" href="assets/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://emap.pcsc.com.tw/EMapSDK/js/emap.js"></script>
 </head>
 
 <body class="min-h-screen bg-gradient-to-br from-[#F8F9F7] to-[#D4E7D1]">
@@ -33,40 +34,45 @@
 
     <!-- 配送方式 -->
     <section class="space-y-3">
-      <h2 class="font-black">配送方式</h2>
+<h2 class="font-black">配送方式</h2>
 
-      <label class="flex items-center gap-2">
-        <input type="radio" name="ship" value="home" checked>
-        宅配到府
-      </label>
+<label class="flex items-center gap-2">
+<input type="radio" name="ship" value="home" checked>
+宅配到府
+</label>
 
-      <label class="flex items-center gap-2">
-        <input type="radio" name="ship" value="store">
-        超商取貨
-      </label>
+<label class="flex items-center gap-2">
+<input type="radio" name="ship" value="store">
+超商取貨
+</label>
 
-      <input id="store" hidden placeholder="請輸入超商門市名稱"
-        class="input">
-    </section>
+<div id="storeWrap" hidden class="space-y-2">
+<button id="pick711" class="border px-3 py-2 rounded-xl">選擇 7-11 門市</button>
+
+<input id="store" placeholder="門市名稱"
+class="input">
+</div>
+</section>
 
     <!-- 付款 -->
-    <section class="space-y-3">
-      <h2 class="font-black">付款方式</h2>
+   <section class="space-y-3">
+<h2 class="font-black">付款方式</h2>
 
-      <label class="flex items-center gap-2">
-        <input type="radio" name="pay" value="credit" checked>
-        線上刷卡
-      </label>
+<label class="flex items-center gap-2">
+<input type="radio" name="pay" value="credit" checked>
+線上刷卡
+</label>
 
-      <label class="flex items-center gap-2">
-        <input type="radio" name="pay" value="cod">
-        貨到付款
-      </label>
+<label class="flex items-center gap-2">
+<input type="radio" name="pay" value="cod">
+貨到付款
+</label>
 
-      <div id="codHint" hidden class="text-sm opacity-70">
-        ⚠️ 貨到付款需另加 30 元手續費
-      </div>
-    </section>
+<div id="codHint" hidden class="text-sm opacity-70">
+⚠️ 貨到付款會加收 NT$30
+</div>
+</section>
+
 
     <!-- 金額 -->
     <section class="pt-4 border-t text-sm space-y-2">
@@ -169,6 +175,9 @@
       };
 
       const pricing = calcTotal(cart, settings, ctx);
+      const pay = document.querySelector('input[name="pay"]:checked')?.value;
+if(pay==="cod") pricing.total +=30;
+
       const labels = buildDiscountLabels(pricing);
 
       sumSubtotal.textContent = money(pricing.subtotal);
@@ -183,60 +192,92 @@
     /* =========================
        Submit order
     ========================= */
-    btnSubmit.onclick = async () => {
-      const cart = readCart();
-      if (!cart.length) {
-        toast.textContent = "購物車是空的";
-        return;
-      }
+btnSubmit.onclick = async () => {
 
-      const settings = await getSettings();
-      const subtotal = cart.reduce((s,i)=>s+Number(i.price)*Number(i.qty),0);
+const ship=document.querySelector('input[name="ship"]:checked').value;
+const pay=document.querySelector('input[name="pay"]:checked').value;
 
-      const couponCode = localStorage.getItem(COUPON_KEY);
-      const coupon = couponCode
-        ? await validateCoupon(couponCode, subtotal)
-        : null;
+if(!name.value||!phone.value){
+toast.textContent="請填姓名與電話";
+return;
+}
 
-      const ctx = {
-        firstPurchase: isFirstPurchase(),
-        birthday: isBirthday(),
-        coupon: coupon ? { ...coupon, code: couponCode } : null
-      };
+if(ship==="store"&&!store.value){
+toast.textContent="請選擇門市";
+return;
+}
 
-      const pricing = calcTotal(cart, settings, ctx);
-      const labels = buildDiscountLabels(settings, ctx);
+const cart=readCart();
+const settings=await getSettings();
+const pricing=calcTotal(cart,settings,{});
 
-      const payload = {
-        order_id: "OD" + Date.now(),
-         token: localStorage.getItem("ten_token") || "",   // ⭐⭐⭐加這行⭐⭐⭐
-        name: name.value,
-        phone: phone.value,
-        email: email.value,
-        address_or_store: address.value,
-        items: cart,
-        subtotal: pricing.subtotal,
-        discount: pricing.discount,
-        shipping_fee: pricing.shipping,
-        total: pricing.total,
-        coupon_code: couponCode || "",
-        discount_note: labels.join(" ＋ ")
-      };
+let total=pricing.total;
+if(pay==="cod") total+=30;
 
-     const form = document.createElement("form");
-form.method = "POST";
-form.action = `${GAS_URL}?path=orders`;
+const payload={
+order_id:"OD"+Date.now(),
+token:localStorage.getItem("ten_token")||"",
+name:name.value,
+phone:phone.value,
+email:email.value,
+address_or_store:ship==="home"?address.value:store.value,
+shipping_method:ship,
+payment_method:pay,
+items:cart,
+subtotal:pricing.subtotal,
+discount:pricing.discount,
+shipping_fee:pricing.shipping,
+total:total
+};
 
-const input = document.createElement("input");
-input.type = "hidden";
-input.name = "data";
-input.value = JSON.stringify(payload);
+/* COD = 直接寫單 */
+if(pay==="cod"){
+postOrder(payload);
+return;
+}
 
-form.appendChild(input);
-document.body.appendChild(form);
-form.submit();
+/* Credit = 綠界 */
+ecpay(payload);
+};
 
-    };
+/* shipping toggle */
+document.querySelectorAll('input[name="ship"]').forEach(r=>{
+r.onchange=()=>{
+storeWrap.hidden = r.value!=="store";
+render();
+};
+});
+
+/* payment toggle */
+document.querySelectorAll('input[name="pay"]').forEach(r=>{
+r.onchange=()=>{
+codHint.hidden = r.value!=="cod";
+render();
+};
+});
+
+/* 7-11 map */
+pick711.onclick=()=>{
+emap.open({
+callback(data){
+store.value = data.storeName;
+}
+});
+};
+
+/* member autofill */
+(async()=>{
+try{
+const r=await fetch(`${GAS_URL}?path=members_me&token=${localStorage.getItem("ten_token")}`);
+const o=await r.json();
+if(o.ok){
+name.value=o.data.name||"";
+phone.value=o.data.phone||"";
+email.value=o.data.email||"";
+address.value=o.data.address||"";
+}
+}catch(e){}
+})();
 
     render();
   </script>
