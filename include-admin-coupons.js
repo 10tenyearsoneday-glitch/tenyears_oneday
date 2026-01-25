@@ -1,6 +1,10 @@
 // include-admin-coupons.js
 (() => {
   // Assumes API_URL and ADMIN_KEY are defined in include-common.js
+  window.API_URL = "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+
+window.ADMIN_KEY = "10years1day911321";
+
   const $ = (id) => document.getElementById(id);
 
   const tabs = document.querySelectorAll(".tab");
@@ -71,7 +75,7 @@
 
  function gasPost(path, payload, id = "") {
   const url =
-    `${GAS_PRODUCTS_URL}?path=${path}` +
+    `${API_URL}?path=${path}` +
     (id ? `&id=${encodeURIComponent(id)}` : "") +
     `&key=${encodeURIComponent(ADMIN_KEY)}` +
     `&method=POST`;
@@ -80,6 +84,7 @@
     const form = document.createElement("form");
     form.method = "POST";
     form.action = url;
+    form.target = "gasFrame";
 
     const input = document.createElement("input");
     input.type = "hidden";
@@ -91,9 +96,10 @@
 
     form.submit();
 
-    resolve({ ok:true });
+    setTimeout(() => resolve({ ok:true }), 400);
   });
 }
+
 
 
 
