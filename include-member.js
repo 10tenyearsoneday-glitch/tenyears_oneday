@@ -159,9 +159,11 @@ document.querySelectorAll("script[data-jsonp='register']")
     if (res.ok) {
       localStorage.setItem("ten_token", res.token);
       toast($("loginToast"), "登入成功", true);
-      setTimeout(() => {
-        location.href = "member-profile.html";
-      }, 600);
+   setTimeout(() => {
+  const p = new URLSearchParams(location.search);
+  location.href = p.get("redirect") || "member-profile.html";
+}, 600);
+
     } else {
       toast($("loginToast"), res.message || "登入失敗");
     }
