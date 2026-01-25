@@ -16,6 +16,18 @@
 <script src="./discount-label.js"></script>
 <script src="./include-shop.js"></script>
   <script src="./include-member.js"></script>
+  <script>
+(function requireLogin(){
+
+  const token = localStorage.getItem("ten_token");
+
+  if(!token){
+    alert("請先登入會員再進行結帳");
+    location.href = "member.html?redirect=checkout.html";
+  }
+
+})();
+</script>
 
 
  <main class="max-w-3xl mx-auto px-4 pt-28 pb-16">
