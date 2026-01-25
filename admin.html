@@ -430,7 +430,8 @@ function gasWrite(method, payload, id = "") {
 
     form.appendChild(input);
     document.body.appendChild(form);
-    form.submit();
+   form.target = "gasFrame";
+form.submit();
 
     resolve({ ok:true });
   });
