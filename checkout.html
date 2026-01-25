@@ -254,6 +254,8 @@ discount_note:buildDiscountLabels(pricing).join("＋")
 
 if(pay==="cod"){
 postOrder(payload);
+location.href=`thanks.html?order_id=${payload.order_id}`;
+
 }else{
 ecpay(payload);
 }
