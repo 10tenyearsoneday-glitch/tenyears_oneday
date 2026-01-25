@@ -69,23 +69,33 @@
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  async function gasPost(path, method, body, id = "") {
-    const url =
-      `${API_URL}?path=${encodeURIComponent(path)}` +
-      `&key=${encodeURIComponent(ADMIN_KEY)}` +
-      (method ? `&method=${encodeURIComponent(method)}` : "") +
-      (id ? `&id=${encodeURIComponent(id)}` : "");
+ function gasPost(path, payload, id = "") {
+  const url =
+    `${GAS_PRODUCTS_URL}?path=${path}` +
+    (id ? `&id=${encodeURIComponent(id)}` : "") +
+    `&key=${encodeURIComponent(ADMIN_KEY)}` +
+    `&method=POST`;
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(body || {})
-    });
+  return new Promise(resolve => {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = url;
 
-    const out = await res.json().catch(() => ({}));
-    if (!res.ok || out?.error) throw new Error(out?.error || "GAS_WRITE_FAILED");
-    return out;
-  }
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "data";
+    input.value = JSON.stringify(payload || {});
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    form.submit();
+
+    resolve({ ok:true });
+  });
+}
+
+
 
   // -------------------- Settings --------------------
   async function loadSettings() {
@@ -118,7 +128,7 @@
         birthday_discount: Number(sBdayRate?.value || 1),
       };
 
-      await gasPost("settings_update", "", payload);
+      await gasPost("settings_update", payload);
       toast(toastSettings, "已儲存 ✅");
     } catch (e) {
       console.error(e);
@@ -273,12 +283,12 @@
       }
 
       if (editingCode === null) {
-        await gasPost("coupons", "POST", payload);
+        await gasPost("coupons", payload);
         closeModal();
         await loadCoupons();
         toast(toastCoupons, "新增成功 ✅");
       } else {
-        await gasPost("coupons", "PUT", payload, editingCode);
+        await gasPost("coupons", payload, editingCode);
         closeModal();
         await loadCoupons();
         toast(toastCoupons, "儲存成功 ✅");
@@ -295,7 +305,7 @@
     if (!ok) return;
 
     try {
-      await gasPost("coupons", "DELETE", {}, editingCode);
+      await gasPost("coupons", {}, editingCode);
       closeModal();
       await loadCoupons();
       toast(toastCoupons, "刪除成功 ✅");
