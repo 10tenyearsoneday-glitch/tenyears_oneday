@@ -56,11 +56,6 @@
     </div>
   </main>
 
-  <!-- 一定要先載 -->
-  <script src="./pricing.js"></script>
-  <script src="./discount-label.js"></script>
-  <script src="./include-shop.js"></script>
-
   <script>
     /* =========================
        Bridge
@@ -135,7 +130,7 @@
       };
 
       const pricing = calcTotal(cart, settings, ctx);
-      const labels = buildDiscountLabels(settings, ctx);
+      const labels = buildDiscountLabels(pricing);
 
       sumSubtotal.textContent = money(pricing.subtotal);
       sumDiscount.textContent =
