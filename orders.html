@@ -4,6 +4,17 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <body class="p-6 bg-gray-50">
+<script>
+(function(){
+ const t=localStorage.getItem("ten_admin_token");
+ const e=Number(localStorage.getItem("ten_admin_exp")||0);
+
+ if(t!=="ok"||Date.now()>e){
+   localStorage.clear();
+   location.href="admin-login.html";
+ }
+})();
+</script>
 
 <h1 class="text-xl font-black mb-4">訂單後台</h1>
 
