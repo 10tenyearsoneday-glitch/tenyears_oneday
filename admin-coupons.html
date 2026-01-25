@@ -258,9 +258,10 @@
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  function gasPost(path, payload) {
+function gasPost(path, payload, id = "") {
   const url =
-    `${GAS_URL}?path=${path}` +
+    `${GAS_PRODUCTS_URL}?path=${path}` +
+    (id ? `&id=${encodeURIComponent(id)}` : "") +
     `&key=${encodeURIComponent(ADMIN_KEY)}` +
     `&method=POST`;
 
@@ -278,9 +279,11 @@
     document.body.appendChild(form);
 
     form.submit();
+
     resolve({ ok:true });
   });
 }
+
 }
 
   async function loadSettings(){
@@ -313,7 +316,7 @@
         birthday_discount: Number(sBdayRate.value || 1),
       };
 
-      await gasPost("settings_update", "", payload);
+      await gasPost("settings_update", payload);
       toast(toastSettings, "已儲存 ✅");
       // 同步前台快取：你前台會抓 /settings，所以等下刷新就會更新
     }catch(e){
@@ -465,12 +468,12 @@
       }
 
       if(editingCode === null){
-        await gasPost("coupons", "POST", payload);
+        await gasPost("coupons", payload);
         closeModal();
         await loadCoupons();
         toast(toastCoupons, "新增成功 ✅");
       }else{
-        await gasPost("coupons", "PUT", payload, editingCode);
+        await gasPost("coupons", payload, editingCode);
         closeModal();
         await loadCoupons();
         toast(toastCoupons, "儲存成功 ✅");
@@ -487,7 +490,7 @@
     if(!ok) return;
 
     try{
-      await gasPost("coupons", "DELETE", {}, editingCode);
+      await gasPost("coupons", {}, editingCode);
       closeModal();
       await loadCoupons();
       toast(toastCoupons, "刪除成功 ✅");
