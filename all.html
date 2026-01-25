@@ -147,7 +147,7 @@
     if(!p) return;
 
     const imgs = getImages(p);
-    const title = p.title || "";
+    const title = String(p.title || "");
     const price = Number(p.price || 0);
     const desc = String(p.desc ?? p.description ?? "").trim();
 
