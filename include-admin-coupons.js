@@ -5,31 +5,30 @@ window.ADMIN_KEY = "10years1day911321";
 
 const $ = id => document.getElementById(id);
 
-function gasPost(path, payload={}, id="", method="POST") {
-
+function gasPost(path, payload, id="") {
   const url =
-    `${API_URL}?path=${path}` +
+    `${GAS_URL}?path=${path}` +
     (id ? `&id=${encodeURIComponent(id)}` : "") +
-    `&key=${ADMIN_KEY}` +
-    `&method=${method}`;
+    `&key=${encodeURIComponent(ADMIN_KEY)}` +
+    `&method=POST`;
 
   return new Promise(resolve => {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = url;
+    form.target = "gasFrame";
+    form.style.display = "none";
 
-    let f = document.createElement("form");
-    f.method = "POST";
-    f.action = url;
-    f.target = "gasFrame";
+    const input = document.createElement("input");
+    input.name = "data";
+    input.value = JSON.stringify(payload || {});
 
-    let i = document.createElement("input");
-    i.name = "data";
-    i.value = JSON.stringify(payload);
+    form.appendChild(input);
+    document.body.appendChild(form);
 
-    f.appendChild(i);
-    document.body.appendChild(f);
+    form.submit();
 
-    document.querySelector("iframe[name=gasFrame]").onload = () => resolve();
-
-    f.submit();
+    setTimeout(() => resolve({ ok:true }), 800);
   });
 }
 
