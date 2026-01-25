@@ -80,23 +80,18 @@ textarea{min-height:110px;resize:vertical}
   </style>
 </head>
 <body>
-  <script>
+<script>
 (function(){
-  const ADMIN_KEY = "10years1day911321"; // ←改成你自己的
+ const t=localStorage.getItem("ten_admin_token");
+ const e=Number(localStorage.getItem("ten_admin_exp")||0);
 
-  const saved = localStorage.getItem("ten_admin");
-  if(saved === ADMIN_KEY) return;
-
-  const pw = prompt("請輸入管理密碼");
-
-  if(pw !== ADMIN_KEY){
-    alert("密碼錯誤");
-    location.href = "/";
-  }else{
-    localStorage.setItem("ten_admin", pw);
-  }
+ if(t!=="ok"||Date.now()>e){
+   localStorage.clear();
+   location.href="admin-login.html";
+ }
 })();
 </script>
+
 
 <iframe name="gasFrame" style="display:none"></iframe>
 
