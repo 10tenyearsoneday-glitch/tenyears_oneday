@@ -258,23 +258,30 @@
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  async function gasPost(path, method, body, id=""){
-    const url =
-      `${GAS_PRODUCTS_URL}?path=${encodeURIComponent(path)}` +
-      `&key=${encodeURIComponent(ADMIN_KEY)}` +
-      (method ? `&method=${encodeURIComponent(method)}` : "") +
-      (id ? `&id=${encodeURIComponent(id)}` : "");
+  function gasPost(path, payload) {
+  const url =
+    `${GAS_URL}?path=${path}` +
+    `&key=${encodeURIComponent(ADMIN_KEY)}` +
+    `&method=POST`;
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" }, // ✅ 避免 preflight
-      body: JSON.stringify(body || {})
-    });
+  return new Promise(resolve => {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = url;
 
-    const out = await res.json().catch(()=> ({}));
-    if (!res.ok || out?.error) throw new Error(out?.error || "GAS_WRITE_FAILED");
-    return out;
-  }
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "data";
+    input.value = JSON.stringify(payload || {});
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    form.submit();
+    resolve({ ok:true });
+  });
+}
+}
 
   async function loadSettings(){
     toast(toastSettings, "載入設定中…");
