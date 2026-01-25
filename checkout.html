@@ -202,14 +202,6 @@ form.appendChild(input);
 document.body.appendChild(form);
 form.submit();
 
-
-      if (out.ok) {
-        localStorage.removeItem(CART_KEY);
-        localStorage.setItem("ten_has_purchase_v1", "1");
-        toast.textContent = "下單完成";
-      } else {
-        toast.textContent = "下單失敗";
-      }
     };
 
     render();
