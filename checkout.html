@@ -101,98 +101,107 @@ class="input">
   </div>
 </main>
 
-  <script>
-    /* =========================
-       Bridge
-    ========================= */
-    const { calcTotal, money } = window.TEN_PRICING;
-    const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL;
+ <script>
+const { calcTotal, money } = window.TEN_PRICING;
+const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL;
 
-    /* =========================
-       Constants
-    ========================= */
-    const CART_KEY = "ten_cart";
-    const COUPON_KEY = "ten_applied_coupon_v1";
-    const GAS_URL =
-      "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+const CART_KEY = "ten_cart";
+const COUPON_KEY = "ten_applied_coupon_v1";
+const GAS_URL =
+"https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
-    /* =========================
-       Utils
-    ========================= */
-    const readCart = () => {
-      try { return JSON.parse(localStorage.getItem(CART_KEY) || "[]"); }
-      catch { return []; }
-    };
+const readCart=()=>JSON.parse(localStorage.getItem(CART_KEY)||"[]");
 
-    const isFirstPurchase = () =>
-      !localStorage.getItem("ten_has_purchase_v1");
+const isFirstPurchase=()=>!localStorage.getItem("ten_has_purchase_v1");
 
-    const isBirthday = () => {
-      const m = localStorage.getItem("ten_birth_m");
-      const d = localStorage.getItem("ten_birth_d");
-      if (!m || !d) return false;
-      const now = new Date();
-      return now.getMonth()+1===Number(m) && now.getDate()===Number(d);
-    };
+const isBirthday=()=>{
+const m=localStorage.getItem("ten_birth_m");
+const d=localStorage.getItem("ten_birth_d");
+if(!m||!d) return false;
+const n=new Date();
+return n.getMonth()+1==m && n.getDate()==d;
+};
 
-    let SETTINGS = null;
-    async function getSettings(){
-      if (SETTINGS) return SETTINGS;
-      const r = await fetch(`${GAS_URL}?path=settings`, { cache:"no-store" });
-      const o = await r.json();
-      SETTINGS = o.ok && o.data ? o.data : o;
-      return SETTINGS;
-    }
+let SETTINGS=null;
+async function getSettings(){
+if(SETTINGS) return SETTINGS;
+const r=await fetch(`${GAS_URL}?path=settings`);
+const o=await r.json();
+SETTINGS=o.data||o;
+return SETTINGS;
+}
 
-    async function validateCoupon(code, subtotal){
-      const r = await fetch(
-        `${GAS_URL}?path=coupon_validate&code=${encodeURIComponent(code)}&subtotal=${subtotal}`,
-        { cache:"no-store" }
-      );
-      const o = await r.json();
-      return o.ok ? o.data : null;
-    }
+async function validateCoupon(code,subtotal){
+const r=await fetch(`${GAS_URL}?path=coupon_validate&code=${code}&subtotal=${subtotal}`);
+const o=await r.json();
+return o.ok?o.data:null;
+}
 
-    /* =========================
-       Render
-    ========================= */
-    async function render(){
-      const cart = readCart();
-      if (!cart.length) return;
+/* ================= render ================= */
 
-      const settings = await getSettings();
-      const subtotal = cart.reduce((s,i)=>s+Number(i.price)*Number(i.qty),0);
+async function render(){
 
-      const couponCode = localStorage.getItem(COUPON_KEY);
-      const coupon = couponCode
-        ? await validateCoupon(couponCode, subtotal)
-        : null;
+const cart=readCart();
+if(!cart.length) return;
 
-      const ctx = {
-        firstPurchase: isFirstPurchase(),
-        birthday: isBirthday(),
-        coupon: coupon ? { ...coupon, code: couponCode } : null
-      };
+const ship=document.querySelector('input[name="ship"]:checked').value;
+const pay=document.querySelector('input[name="pay"]:checked').value;
 
-      const pricing = calcTotal(cart, settings, ctx);
-      const pay = document.querySelector('input[name="pay"]:checked')?.value;
-if(pay==="cod") pricing.total +=30;
+const settings=await getSettings();
+const subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
 
-      const labels = buildDiscountLabels(pricing);
+const couponCode=localStorage.getItem(COUPON_KEY);
+const coupon=couponCode?await validateCoupon(couponCode,subtotal):null;
 
-      sumSubtotal.textContent = money(pricing.subtotal);
-      sumDiscount.textContent =
-        pricing.discount>0 ? `- ${money(pricing.discount)}` : money(0);
-      sumShipping.textContent =
-        pricing.shipping===0 ? "免運" : money(pricing.shipping);
-      sumTotal.textContent = money(pricing.total);
-      discountSummary.textContent = labels.join(" ＋ ");
-    }
+const ctx={
+firstPurchase:isFirstPurchase(),
+birthday:isBirthday(),
+coupon: coupon?{...coupon,code:couponCode}:null
+};
 
-    /* =========================
-       Submit order
-    ========================= */
-btnSubmit.onclick = async () => {
+const pricing=calcTotal(cart,settings,ctx);
+
+let total=pricing.total;
+if(pay==="cod") total+=30;
+
+sumSubtotal.textContent=money(pricing.subtotal);
+sumDiscount.textContent=pricing.discount?`- ${money(pricing.discount)}`:money(0);
+sumShipping.textContent=pricing.shipping===0?"免運":money(pricing.shipping);
+sumTotal.textContent=money(total);
+
+discountSummary.textContent=buildDiscountLabels(pricing).join(" ＋ ");
+}
+
+/* ================= toggles ================= */
+
+document.querySelectorAll('input[name="ship"]').forEach(r=>{
+r.onchange=()=>{
+storeWrap.hidden=r.value!=="store";
+if(r.value==="store") address.value="";
+render();
+};
+});
+
+document.querySelectorAll('input[name="pay"]').forEach(r=>{
+r.onchange=()=>{
+codHint.hidden=r.value!=="cod";
+render();
+};
+});
+
+/* ================= 7-11 ================= */
+
+pick711.onclick=()=>{
+emap.open({
+callback(d){
+store.value=d.storeName;
+}
+});
+};
+
+/* ================= submit ================= */
+
+btnSubmit.onclick=async()=>{
 
 const ship=document.querySelector('input[name="ship"]:checked').value;
 const pay=document.querySelector('input[name="pay"]:checked').value;
@@ -209,7 +218,18 @@ return;
 
 const cart=readCart();
 const settings=await getSettings();
-const pricing=calcTotal(cart,settings,{});
+const subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
+
+const couponCode=localStorage.getItem(COUPON_KEY);
+const coupon=couponCode?await validateCoupon(couponCode,subtotal):null;
+
+const ctx={
+firstPurchase:isFirstPurchase(),
+birthday:isBirthday(),
+coupon: coupon?{...coupon,code:couponCode}:null
+};
+
+const pricing=calcTotal(cart,settings,ctx);
 
 let total=pricing.total;
 if(pay==="cod") total+=30;
@@ -227,45 +247,44 @@ items:cart,
 subtotal:pricing.subtotal,
 discount:pricing.discount,
 shipping_fee:pricing.shipping,
-total:total
+total:total,
+coupon_code:couponCode||"",
+discount_note:buildDiscountLabels(pricing).join("＋")
 };
 
-/* COD = 直接寫單 */
 if(pay==="cod"){
 postOrder(payload);
-return;
-}
-
-/* Credit = 綠界 */
+}else{
 ecpay(payload);
-};
-
-/* shipping toggle */
-document.querySelectorAll('input[name="ship"]').forEach(r=>{
-r.onchange=()=>{
-storeWrap.hidden = r.value!=="store";
-render();
-};
-});
-
-/* payment toggle */
-document.querySelectorAll('input[name="pay"]').forEach(r=>{
-r.onchange=()=>{
-codHint.hidden = r.value!=="cod";
-render();
-};
-});
-
-/* 7-11 map */
-pick711.onclick=()=>{
-emap.open({
-callback(data){
-store.value = data.storeName;
 }
-});
 };
 
-/* member autofill */
+/* ================= helpers ================= */
+
+function postOrder(payload){
+const f=document.createElement("form");
+f.method="POST";
+f.action=`${GAS_URL}?path=orders`;
+const i=document.createElement("input");
+i.type="hidden";
+i.name="data";
+i.value=JSON.stringify(payload);
+f.appendChild(i);
+document.body.appendChild(f);
+f.submit();
+}
+
+function ecpay(payload){
+fetch(`${GAS_URL}?path=ecpay`,{
+method:"POST",
+body:JSON.stringify(payload)
+}).then(r=>r.text()).then(html=>{
+document.write(html);
+});
+}
+
+/* ================= member autofill ================= */
+
 (async()=>{
 try{
 const r=await fetch(`${GAS_URL}?path=members_me&token=${localStorage.getItem("ten_token")}`);
@@ -279,7 +298,8 @@ address.value=o.data.address||"";
 }catch(e){}
 })();
 
-    render();
-  </script>
+render();
+</script>
+
 </body>
 </html>
