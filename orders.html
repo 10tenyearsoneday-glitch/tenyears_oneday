@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-TW">
+<meta charset="utf-8">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<body class="p-6 bg-gray-50">
+
+<h1 class="text-xl font-black mb-4">訂單後台</h1>
+
+<div id="list">載入中…</div>
+
+<script>
+const GAS="https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+const KEY="10years1day911321";
+
+fetch(`${GAS}?path=admin_orders&key=${KEY}`)
+.then(r=>r.json())
+.then(o=>{
+if(!o.ok){
+list.innerHTML="無法讀取訂單";
+return;
+}
+
+list.innerHTML=o.orders.map(x=>`
+<div class="border rounded p-3 mb-3 bg-white">
+<b>${x.order_id}</b><br>
+${x.name}｜${x.phone}<br>
+金額：${x.total}<br>
+狀態：${x.status||"新訂單"}
+
+<button onclick="ship('${x.order_id}')"
+class="mt-2 border px-3 py-1 rounded">
+出貨
+</button>
+</div>
+`).join("");
+});
+
+function ship(id){
+fetch(`${GAS}?path=admin_ship&key=${KEY}`,{
+method:"POST",
+body:JSON.stringify({order_id:id})
+}).then(()=>alert("已標記出貨"));
+}
+</script>
+
+</body>
+</html>
