@@ -33,7 +33,7 @@ function gasPost(path, payload={}, id="", method="POST") {
   });
 }
 
-/* ========= Settings ========= */
+/* ===== Settings ===== */
 
 async function saveSettings(){
 
@@ -48,7 +48,7 @@ async function saveSettings(){
   $("toastSettings").textContent="已儲存 ✅";
 }
 
-/* ========= Coupons ========= */
+/* ===== Coupons ===== */
 
 async function saveCoupon(){
 
