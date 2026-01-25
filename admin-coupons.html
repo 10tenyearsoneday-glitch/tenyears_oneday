@@ -47,6 +47,17 @@
   </style>
 </head>
 <body>
+<script>
+(function(){
+ const t=localStorage.getItem("ten_admin_token");
+ const e=Number(localStorage.getItem("ten_admin_exp")||0);
+
+ if(t!=="ok"||Date.now()>e){
+   localStorage.clear();
+   location.href="admin-login.html";
+ }
+})();
+</script>
 
 <main class="admin-wrap">
   <div class="admin-top">
