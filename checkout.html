@@ -309,18 +309,14 @@ document.write(html);
 
 /* ================= member autofill ================= */
 
-(async()=>{
-try{
-const r=await fetch(`${GAS_URL}?path=members_me&token=${localStorage.getItem("ten_token")}`);
-const o=await r.json();
-if(o.ok){
-name.value=o.data.name||"";
-phone.value=o.data.phone||"";
-email.value=o.data.email||"";
-address.value=o.data.address||"";
-}
-}catch(e){}
-})();
+setTimeout(()=>{
+  if(window.TEN_MEMBER){
+    name.value = TEN_MEMBER.name || "";
+    phone.value = TEN_MEMBER.phone || "";
+    email.value = TEN_MEMBER.email || "";
+    address.value = TEN_MEMBER.address || "";
+  }
+},500);
 
 render();
 </script>
