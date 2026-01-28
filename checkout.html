@@ -126,6 +126,7 @@ const phone = document.getElementById("phone");
 const email = document.getElementById("email");
 const store = document.getElementById("store");
 const toast = document.getElementById("toast");
+const codHint = document.getElementById("codHint");
 const { calcTotal, money } = window.TEN_PRICING;
 const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL;
 
@@ -223,7 +224,6 @@ store.value=d.storeName;
 };
 
 /* ================= submit ================= */
-const btnSubmit = document.getElementById("btnSubmit");
 btnSubmit.onclick=async()=>{
 
 const ship=document.querySelector('input[name="ship"]:checked').value;
