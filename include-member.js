@@ -408,6 +408,48 @@ function renderOrderStatus(o) {
 
 })();
 
+/* =========================
+   AUTO LOGIN RESTORE
+========================= */
 
+(function(){
+
+  const token = localStorage.getItem("ten_token");
+  if(!token) return;
+
+  const s = document.createElement("script");
+  s.src =
+    GAS_URL +
+    "?action=me" +
+    "&token=" + encodeURIComponent(token) +
+    "&callback=__autoLoginCb";
+
+  window.__autoLoginCb = r => {
+    if(!r.ok){
+      localStorage.removeItem("ten_token");
+      return;
+    }
+
+    // 全站會員快取
+    window.TEN_MEMBER = r.profile;
+
+    // header
+    const btn = document.querySelector('[data-icon="member"]');
+    if(btn){
+      btn.href = "member-profile.html";
+      btn.title = "會員中心";
+    }
+
+    // 生日優惠用
+    if(r.profile.birth){
+      const [y,m,d] = r.profile.birth.split("-");
+      localStorage.setItem("ten_birth_m",m);
+      localStorage.setItem("ten_birth_d",d);
+    }
+  };
+
+  document.body.appendChild(s);
+
+})();
 
 
