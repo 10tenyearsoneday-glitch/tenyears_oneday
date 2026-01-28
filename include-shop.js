@@ -249,3 +249,44 @@ window.GAS_PRODUCTS_URL =
 
   window.addEventListener("DOMContentLoaded", loadHeader);
 })();
+/* =========================
+   GLOBAL MEMBER BOOTSTRAP
+========================= */
+
+(async function(){
+
+  const token = localStorage.getItem("ten_token");
+  if(!token) return;
+
+  try{
+
+    const r = await fetch(
+      `${window.GAS_MEMBERS_URL || ""}?action=me&token=${token}`
+    );
+
+    const o = await r.json();
+
+    if(!o.ok) return;
+
+    window.TEN_MEMBER = o.profile || o.data || {};
+
+    // 儲存生日（優惠用）
+    if(TEN_MEMBER.birth){
+      const [y,m,d] = TEN_MEMBER.birth.split("-");
+      localStorage.setItem("ten_birth_m", m);
+      localStorage.setItem("ten_birth_d", d);
+    }
+
+    // header 狀態
+    const mBtn = document.querySelector('[data-icon="member"]');
+    if(mBtn){
+      mBtn.href = "member-profile.html";
+      mBtn.title = "會員中心";
+    }
+
+  }catch(e){
+    console.warn("member bootstrap fail",e);
+  }
+
+})();
+
