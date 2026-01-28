@@ -215,12 +215,12 @@ render();
 
 /* ================= 7-11 ================= */
 
-pick711.onclick=()=>{
-emap.open({
-callback(d){
-store.value=d.storeName;
-}
-});
+pick711.onclick = () => {
+  emap.open({
+    callback: function(d){
+      document.getElementById("store").value = d.storeName || "";
+    }
+  });
 };
 
 /* ================= submit ================= */
