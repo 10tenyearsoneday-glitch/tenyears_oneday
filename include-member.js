@@ -133,6 +133,10 @@ document.querySelectorAll("script[data-jsonp='register']")
     const email = $("regEmail")?.value || "";
     const address = $("regAddress")?.value || "";
 
+    if(!email) return toast($("regToast"),"請填 Email");
+if(!birth) return toast($("regToast"),"請選生日");
+if(!address) return toast($("regToast"),"請填地址");
+
     toast($("regToast"), "註冊中…", true);
 
     const s = document.createElement("script");
