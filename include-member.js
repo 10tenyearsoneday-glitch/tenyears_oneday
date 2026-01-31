@@ -1,4 +1,50 @@
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwf5bVyoiFTtN6SIPmdyTtlFk9Ja9zejWc_yZTVP8PNkpmyx1XVpTSiVwa4tUUBIqI-tg/exec"; // ←換成你的
+/* =========================
+   GLOBAL MEMBER BOOT
+========================= */
+
+(function(){
+
+  const token = localStorage.getItem("ten_token");
+  if(!token) return;
+
+  window.__bootMemberCb = r => {
+    if(!r.ok){
+      localStorage.removeItem("ten_token");
+      return;
+    }
+
+    // 全站會員快取
+    window.TEN_MEMBER = r.profile;
+
+    // header 立即切換
+    const btn = document.querySelector('[data-icon="member"]');
+    if(btn){
+      btn.href = "member-profile.html";
+      btn.title = "會員中心";
+    }
+
+    // 存生日（月日）
+    if(r.profile.birth){
+      const [y,m,d] = r.profile.birth.split("-");
+      localStorage.setItem("ten_birth_m",m);
+      localStorage.setItem("ten_birth_d",d);
+    }
+
+    document.body.classList.add("is-login");
+  };
+
+  const s = document.createElement("script");
+  s.src =
+    GAS_URL +
+    "?action=me" +
+    "&token=" + encodeURIComponent(token) +
+    "&callback=__bootMemberCb";
+
+  document.body.appendChild(s);
+
+})();
+
 
 (() => {
   /* =========================
@@ -407,49 +453,3 @@ function renderOrderStatus(o) {
   }
 
 })();
-
-/* =========================
-   AUTO LOGIN RESTORE
-========================= */
-
-(function(){
-
-  const token = localStorage.getItem("ten_token");
-  if(!token) return;
-
-  const s = document.createElement("script");
-  s.src =
-    GAS_URL +
-    "?action=me" +
-    "&token=" + encodeURIComponent(token) +
-    "&callback=__autoLoginCb";
-
-  window.__autoLoginCb = r => {
-    if(!r.ok){
-      localStorage.removeItem("ten_token");
-      return;
-    }
-
-    // 全站會員快取
-    window.TEN_MEMBER = r.profile;
-
-    // header
-    const btn = document.querySelector('[data-icon="member"]');
-    if(btn){
-      btn.href = "member-profile.html";
-      btn.title = "會員中心";
-    }
-
-    // 生日優惠用
-    if(r.profile.birth){
-      const [y,m,d] = r.profile.birth.split("-");
-      localStorage.setItem("ten_birth_m",m);
-      localStorage.setItem("ten_birth_d",d);
-    }
-  };
-
-  document.body.appendChild(s);
-
-})();
-
-
