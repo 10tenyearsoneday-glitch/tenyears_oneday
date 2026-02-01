@@ -318,6 +318,21 @@ setTimeout(()=>{
 
 render();
 </script>
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+
+  const t = localStorage.getItem("ten_token");
+  if(!t || !window.TEN_MEMBER) return;
+
+  const p = window.TEN_MEMBER;
+
+  document.getElementById("ckName") && (ckName.value = p.name||"");
+  document.getElementById("ckPhone") && (ckPhone.value = p.phone||"");
+  document.getElementById("ckEmail") && (ckEmail.value = p.email||"");
+  document.getElementById("ckAddress") && (ckAddress.value = p.address||"");
+
+});
+</script>
 
 </body>
 </html>
