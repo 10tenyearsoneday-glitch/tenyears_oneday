@@ -8,6 +8,27 @@
   <link rel="stylesheet" href="assets/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://emap.pcsc.com.tw/EMapSDK/js/emap.js"></script>
+  <style>
+/* ===== Checkout UI polish ===== */
+.ck-wrap{max-width:860px;margin:0 auto;padding:14px}
+.ck-card{background:#fff;border-radius:18px;padding:14px 14px 16px;margin-bottom:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.05)}
+.ck-card h3{margin:2px 0 10px;font-size:1rem}
+.ck-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ck-grid.full{grid-template-columns:1fr}
+.ck-row{display:flex;flex-direction:column;gap:6px}
+.ck-row label{font-size:.82rem;opacity:.7}
+.ck-row input,.ck-row select,.ck-row textarea{
+  border-radius:12px;border:1px solid rgba(0,0,0,.15);padding:10px 12px;font-size:.95rem}
+.ck-summary{display:grid;grid-template-columns:1fr auto;gap:8px;font-size:.95rem}
+.ck-total{font-weight:800;font-size:1.1rem}
+.ck-cta{position:sticky;bottom:0;background:#fff;padding:10px 0}
+.ck-btn{width:100%;border-radius:14px;padding:12px 14px;font-weight:700}
+@media(max-width:640px){
+  .ck-grid{grid-template-columns:1fr}
+}
+</style>
+
 </head>
 
 <body class="min-h-screen bg-gradient-to-br from-[#F8F9F7] to-[#D4E7D1]">
@@ -332,6 +353,37 @@ document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById("ckAddress") && (ckAddress.value = p.address||"");
 
 });
+</script>
+<script>
+(function(){
+  const picked = document.getElementById("storePicked");
+  const n = document.getElementById("storeName");
+  const a = document.getElementById("storeAddr");
+  const re = document.getElementById("btnRePick");
+
+  // 你原本選完門市時，一定有把資料寫進 input 或 localStorage
+  // 這裡示範用 localStorage（依你現況改 key）
+  function refreshStore(){
+    const name = localStorage.getItem("ten_store_name");
+    const addr = localStorage.getItem("ten_store_addr");
+    if(name){
+      picked.style.display="block";
+      n.textContent = name;
+      a.textContent = addr || "";
+    }
+  }
+
+  re && re.addEventListener("click",()=>{
+    // 清掉舊門市，重新開地圖
+    localStorage.removeItem("ten_store_name");
+    localStorage.removeItem("ten_store_addr");
+    picked.style.display="none";
+    // 呼叫你原本開 EMap 的 function
+    window.openStoreMap && window.openStoreMap();
+  });
+
+  refreshStore();
+})();
 </script>
 
 </body>
