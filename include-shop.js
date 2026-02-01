@@ -250,7 +250,7 @@ window.GAS_PRODUCTS_URL =
   window.addEventListener("DOMContentLoaded", loadHeader);
 })();
 /* =========================
-   GLOBAL MEMBER BOOTSTRAP
+   GLOBAL MEMBER BOOTSTRAP (FIX)
 ========================= */
 
 (async function(){
@@ -258,26 +258,34 @@ window.GAS_PRODUCTS_URL =
   const token = localStorage.getItem("ten_token");
   if(!token) return;
 
+  const MEMBER_API =
+    "https://script.google.com/macros/s/AKfycbwf5bVyoiFTtN6SIPmdyTtlFk9Ja9zejWc_yZTVP8PNkpmyx1XVpTSiVwa4tUUBIqI-tg/exec";
+
   try{
 
-    const r = await fetch(
-      `${window.GAS_MEMBERS_URL || ""}?action=me&token=${token}`
-    );
+    let t = await fetch(
+      `${MEMBER_API}?action=me&token=${encodeURIComponent(token)}`
+    ).then(r => r.text());
 
-    const o = await r.json();
+    // JSONP → 剝 callback(...)
+    if(t.startsWith("callback")){
+      t = t.replace(/^callback\(|\);$/g,"");
+    }
+
+    const o = JSON.parse(t);
 
     if(!o.ok) return;
 
-    window.TEN_MEMBER = o.profile || o.data || {};
+    window.TEN_MEMBER = o.profile || {};
 
-    // 儲存生日（優惠用）
+    // 存生日
     if(TEN_MEMBER.birth){
       const [y,m,d] = TEN_MEMBER.birth.split("-");
       localStorage.setItem("ten_birth_m", m);
       localStorage.setItem("ten_birth_d", d);
     }
 
-    // header 狀態
+    // header
     const mBtn = document.querySelector('[data-icon="member"]');
     if(mBtn){
       mBtn.href = "member-profile.html";
@@ -285,8 +293,7 @@ window.GAS_PRODUCTS_URL =
     }
 
   }catch(e){
-    console.warn("member bootstrap fail",e);
+    console.warn("member bootstrap fail", e);
   }
 
 })();
-
