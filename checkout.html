@@ -27,6 +27,15 @@
 @media(max-width:640px){
   .ck-grid{grid-template-columns:1fr}
 }
+    .ck-loading{
+  position:fixed;inset:0;background:rgba(255,255,255,.85);
+  display:flex;align-items:center;justify-content:center;z-index:9999;
+  font-weight:700;font-size:1.1rem
+}
+.ck-loading.hidden{display:none}
+    .ship-box{transition:.25s ease;overflow:hidden}
+.ship-box.hide{max-height:0;opacity:0}
+.ship-box.show{max-height:300px;opacity:1}
 </style>
 
 </head>
@@ -36,6 +45,7 @@
 <script src="./pricing.js"></script>
 <script src="./discount-label.js"></script>
 <script src="./include-shop.js"></script>
+  
   <script>
 (function requireLogin(){
 
@@ -56,25 +66,34 @@
     <h1 class="text-xl font-black tracking-widest">結帳資訊</h1>
 
     <!-- 收件人 -->
+    <div class="ck-wrap">
+  <div class="ck-card">
+    <h3>收件資料</h3>
+    <div class="ck-grid">
     <section class="space-y-3">
       <h2 class="font-black">收件資訊</h2>
 
       <input id="name" placeholder="姓名" class="input">
       <input id="phone" placeholder="電話" class="input">
       <input id="email" placeholder="Email" class="input">
-
       <textarea id="address" placeholder="地址" class="input h-20"></textarea>
     </section>
-
+ </div>
+  </div>
+</div>
     <!-- 配送方式 -->
+     <div class="ck-card">
+    <h3>配送方式</h3>
     <section class="space-y-3">
 <h2 class="font-black">配送方式</h2>
-
+<div id="shipHome" class="ship-box show">
 <label class="flex items-center gap-2">
 <input type="radio" name="ship" value="home" checked>
 宅配到府
 </label>
-
+</div>
+      
+<div id="shipStore" class="ship-box hide">
 <label class="flex items-center gap-2">
 <input type="radio" name="ship" value="store">
 超商取貨
@@ -87,7 +106,8 @@
 class="input">
 </div>
 </section>
-
+</div>
+      </div>
     <!-- 付款 -->
    <section class="space-y-3">
 <h2 class="font-black">付款方式</h2>
@@ -102,12 +122,21 @@ class="input">
 貨到付款
 </label>
 
-
-</div>
 </section>
 
 
     <!-- 金額 -->
+    <div style="margin-top:8px">
+  <button type="button" id="ckToggleItems" class="secondary" style="width:100%">
+    ▶ 查看商品明細
+  </button>
+
+  <div id="ckItems" style="display:none;margin-top:8px"></div>
+</div>
+
+  <div class="ck-card">
+    <h3>訂單摘要</h3>
+    <div class="ck-summary">
     <section class="pt-4 border-t text-sm space-y-2">
       <div class="flex justify-between">
         <span>小計</span><strong id="sumSubtotal"></strong>
@@ -120,22 +149,34 @@ class="input">
       </div>
       <div class="flex justify-between text-base font-black">
         <span>合計</span><strong id="sumTotal"></strong>
+        <div id="ckShipTip" style="margin-top:6px;font-size:.85rem;opacity:.7"></div>
+
       </div>
       <div id="discountSummary" class="text-sm opacity-80"></div>
     </section>
-
-    <button id="btnSubmit"
-      class="w-full h-11 rounded-2xl bg-[#2f3a2c] text-white font-black">
-      確認下單
-    </button>
+  </div>
+    <div class="ck-total" id="ckTotal"></div>
+  </div>
+  <div class="ck-cta">
+    <button class="ck-btn primary" id="btnSubmitOrder">確認付款</button>
 
     <div id="toast" class="text-sm"></div>
-
+      <div id="ckConfirm" class="ck-loading hidden">
+  <div style="background:#fff;padding:20px;border-radius:16px;width:90%;max-width:360px">
+    <h3>確認付款</h3>
+    <div id="ckConfirmText" style="margin:10px 0;font-size:.9rem"></div>
+    <button id="ckYes" class="primary" style="width:100%">確認送出</button>
+    <button id="ckNo" class="secondary" style="width:100%;margin-top:6px">取消</button>
   </div>
+</div>
+  </div>
+   <div id="ckLoading" class="ck-loading hidden">
+  正在送出訂單…
+</div>
+
 </main>
 
  <script>
-const btnSubmit = document.getElementById("btnSubmit");
 const storeWrap = document.getElementById("storeWrap");
 const address = document.getElementById("address");
 const pick711 = document.getElementById("pick711");
@@ -145,7 +186,7 @@ const phone = document.getElementById("phone");
 const email = document.getElementById("email");
 const store = document.getElementById("store");
 const toast = document.getElementById("toast");
-const codHint = document.getElementById("codHint");
+   const btnSubmitOrder = document.getElementById("btnSubmitOrder");
 const { calcTotal, money } = window.TEN_PRICING;
 const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL;
 
@@ -217,20 +258,10 @@ discountSummary.textContent=buildDiscountLabels(pricing).join(" ＋ ");
 
 /* ================= toggles ================= */
 
-document.querySelectorAll('input[name="ship"]').forEach(r=>{
-r.onchange=()=>{
-storeWrap.hidden=r.value!=="store";
-if(r.value==="store") address.value="";
-render();
-};
+document.querySelectorAll('input[name="pay"]').forEach(r=>{
+  r.onchange=render;
 });
 
-document.querySelectorAll('input[name="pay"]').forEach(r=>{
-r.onchange=()=>{
-codHint.hidden=r.value!=="cod";
-render();
-};
-});
 
 /* ================= 7-11 ================= */
 
@@ -243,8 +274,7 @@ pick711.onclick = () => {
 };
 
 /* ================= submit ================= */
-btnSubmit.onclick=async()=>{
-
+btnSubmitOrder.onclick = async () => {
 const ship=document.querySelector('input[name="ship"]:checked').value;
 const pay=document.querySelector('input[name="pay"]:checked').value;
 
@@ -295,6 +325,7 @@ discount_note:buildDiscountLabels(pricing).join("＋")
 
 if(pay==="cod"){
 postOrder(payload);
+   document.getElementById("ckLoading")?.classList.add("hidden");
 location.href=`thanks.html?order_id=${payload.order_id}`;
 
 }else{
@@ -340,50 +371,137 @@ setTimeout(()=>{
 render();
 </script>
 <script>
-document.addEventListener("DOMContentLoaded",()=>{
+(function(){
+  const btn = document.getElementById("ckToggleItems");
+  const box = document.getElementById("ckItems");
+  if(!btn || !box) return;
 
-  const t = localStorage.getItem("ten_token");
-  if(!t || !window.TEN_MEMBER) return;
+  // 從購物車抓商品（沿用你現有 cart）
+  function readCart(){
+    try{ return JSON.parse(localStorage.getItem("ten_cart")||"[]"); }
+    catch{ return []; }
+  }
 
-  const p = window.TEN_MEMBER;
+  function render(){
+    const cart = readCart();
+    if(!cart.length){
+      box.innerHTML = "<div style='opacity:.6'>（無商品）</div>";
+      return;
+    }
+    box.innerHTML = cart.map(it=>`
+      <div style="display:flex;justify-content:space-between;font-size:.9rem;margin:4px 0">
+        <span>・${it.title} × ${it.qty}</span>
+        <span>NT$ ${it.price * it.qty}</span>
+      </div>
+    `).join("");
+  }
 
-  document.getElementById("ckName") && (ckName.value = p.name||"");
-  document.getElementById("ckPhone") && (ckPhone.value = p.phone||"");
-  document.getElementById("ckEmail") && (ckEmail.value = p.email||"");
-  document.getElementById("ckAddress") && (ckAddress.value = p.address||"");
+  btn.addEventListener("click",()=>{
+    const open = box.style.display==="none";
+    box.style.display = open?"block":"none";
+    btn.textContent = open?"▼ 收合商品明細":"▶ 查看商品明細";
+    if(open) render();
+  });
+})();
+</script>
+<script>
+(async function(){
+  try{
+   const GAS_URL =
+"https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+    const res = await fetch(`${GAS_URL}?path=settings`,{cache:"no-store"});
+    const s = await res.json();
+    const fee = Number(s.shipping_fee||0);
+    const free = Number(s.free_shipping_threshold||0);
 
-});
+    function cartSubtotal(){
+      try{
+        return (JSON.parse(localStorage.getItem("ten_cart")||"[]"))
+          .reduce((t,i)=>t+i.price*i.qty,0);
+      }catch{ return 0;}
+    }
+
+    const tip = document.getElementById("ckShipTip");
+    if(!tip || !free) return;
+
+    const sub = cartSubtotal();
+    if(sub < free){
+      tip.textContent = `再 NT$ ${Math.max(0,free-sub)} 即可免運`;
+    }else{
+      tip.textContent = "🎉 已達免運門檻";
+    }
+  }catch(e){}
+})();
 </script>
 <script>
 (function(){
-  const picked = document.getElementById("storePicked");
-  const n = document.getElementById("storeName");
-  const a = document.getElementById("storeAddr");
-  const re = document.getElementById("btnRePick");
+  const btn = document.getElementById("btnSubmitOrder");
+  const mask = document.getElementById("ckLoading");
+  if(!btn || !mask) return;
 
-  // 你原本選完門市時，一定有把資料寫進 input 或 localStorage
-  // 這裡示範用 localStorage（依你現況改 key）
-  function refreshStore(){
-    const name = localStorage.getItem("ten_store_name");
-    const addr = localStorage.getItem("ten_store_addr");
-    if(name){
-      picked.style.display="block";
-      n.textContent = name;
-      a.textContent = addr || "";
+  let locked=false;
+
+  btn.addEventListener("click",(e)=>{
+    if(locked){
+      e.preventDefault();
+      return;
     }
-  }
+    locked=true;
+    mask.classList.remove("hidden");
+  });
+})();
+</script>
+<script>
+(function(){
+  const radios = document.querySelectorAll('input[name="ship"]');
+  const home = document.getElementById("shipHome");
+  const store = document.getElementById("shipStore");
 
-  re && re.addEventListener("click",()=>{
-    // 清掉舊門市，重新開地圖
-    localStorage.removeItem("ten_store_name");
-    localStorage.removeItem("ten_store_addr");
-    picked.style.display="none";
-    // 呼叫你原本開 EMap 的 function
-    window.openStoreMap && window.openStoreMap();
+ radios.forEach(r=>{
+  r.addEventListener("change",()=>{
+    storeWrap.hidden = r.value !== "store";
+
+      if(r.value==="home"){
+        home.classList.add("show"); home.classList.remove("hide");
+        store.classList.add("hide"); store.classList.remove("show");
+      }else{
+        store.classList.add("show"); store.classList.remove("hide");
+        home.classList.add("hide"); home.classList.remove("show");
+      }
+    });
+  });
+})();
+</script>
+<script>
+(function(){
+  const btn = document.getElementById("btnSubmitOrder");
+  const pop = document.getElementById("ckConfirm");
+  const yes = document.getElementById("ckYes");
+  const no = document.getElementById("ckNo");
+  const txt = document.getElementById("ckConfirmText");
+
+  if(!btn||!pop) return;
+
+  let confirmed = false;
+
+  btn.addEventListener("click",(e)=>{
+    if(confirmed) return;     // 已確認就真的送
+    e.preventDefault();
+    txt.textContent = "請確認資料無誤後再付款";
+    pop.classList.remove("hidden");
   });
 
-  refreshStore();
+  yes.addEventListener("click",()=>{
+    confirmed = true;
+    pop.classList.add("hidden");
+    btn.click(); // 第二次才會進送單流程
+  });
+
+  no.addEventListener("click",()=>{
+    pop.classList.add("hidden");
+  });
 })();
+
 </script>
 
 </body>
