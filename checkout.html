@@ -77,8 +77,8 @@
   },150);
 
 })();
-    function autofill(){
-  const m = window.TEN_MEMBER;
+   function autofill(){
+  const m = window.TEN_MEMBER?.profile;
   if(!m) return;
 
   name.value = m.name || "";
@@ -86,6 +86,7 @@
   email.value = m.email || "";
   address.value = m.address || "";
 }
+
 
 </script>
 
