@@ -45,7 +45,8 @@
 <script src="./pricing.js"></script>
 <script src="./discount-label.js"></script>
 <script src="./include-shop.js"></script>
-  
+  <script src="./include-member.js"></script>
+
   <script>
 (function requireLogin(){
 
@@ -187,7 +188,16 @@ const email = document.getElementById("email");
 const store = document.getElementById("store");
 const toast = document.getElementById("toast");
    const btnSubmitOrder = document.getElementById("btnSubmitOrder");
-const { calcTotal, money } = window.TEN_PRICING;
+function waitPricing(){
+  if(!window.TEN_PRICING){
+    return setTimeout(waitPricing,50);
+  }
+
+  window.calcTotal = TEN_PRICING.calcTotal;
+  window.money = TEN_PRICING.money;
+}
+waitPricing();
+
 const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL;
 
 const CART_KEY = "ten_cart";
@@ -268,13 +278,14 @@ document.querySelectorAll('input[name="ship"]').forEach(r=>{
 
 /* ================= 7-11 ================= */
 
-pick711.onclick = () => {
-  emap.open({
-    callback: function(d){
-      document.getElementById("store").value = d.storeName || "";
+pick711.onclick = ()=>{
+  window.emap.open({
+    callback(d){
+      store.value = d.storeName || "";
     }
   });
 };
+
 
 /* ================= submit ================= */
 btnSubmitOrder.onclick = async () => {
