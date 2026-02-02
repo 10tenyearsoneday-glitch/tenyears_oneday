@@ -206,19 +206,28 @@ if(!address) return toast($("regToast"),"請填地址");
   /* =========================
      Login
   ========================= */
-  window.__loginCb = res => {
-    if (res.ok) {
-      localStorage.setItem("ten_token", res.token);
-      toast($("loginToast"), "登入成功", true);
-   setTimeout(() => {
-  const p = new URLSearchParams(location.search);
-  location.href = p.get("redirect") || "member-profile.html";
-}, 600);
+ window.__loginCb = res => {
+  console.log("LOGIN RESULT",res);
 
-    } else {
-      toast($("loginToast"), res.message || "登入失敗");
+  if (res.ok && res.token) {
+    localStorage.setItem("ten_token", res.token);
+
+    // 🔥 強制確認真的存進去了
+    const t = localStorage.getItem("ten_token");
+    if(!t){
+      alert("token 儲存失敗，請關閉無痕模式");
+      return;
     }
-  };
+
+    toast($("loginToast"), "登入成功", true);
+
+    const p = new URLSearchParams(location.search);
+    location.href = p.get("redirect") || "member-profile.html";
+
+  } else {
+    toast($("loginToast"), res.error || "登入失敗");
+  }
+};
 
   $("btnLogin")?.addEventListener("click", () => {
     const phone = normalizePhone($("loginPhone")?.value);
