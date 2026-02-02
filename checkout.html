@@ -290,37 +290,6 @@ sumTotal.textContent=money(total);
 discountSummary.textContent=buildDiscountLabels(pricing).join(" ＋ ");
 }
 
-/* ================= toggles ================= */
-
-document.querySelectorAll('input[name="pay"]').forEach(r=>{
-  r.onchange=render;
-});
-document.querySelectorAll('input[name="ship"]').forEach(r=>{
-  r.onchange = render;
-});
-
-
-/* ================= 7-11 ================= */
-function openStorePicker(){
-
-  if(typeof EMapSDK === "undefined"){
-    alert("超商系統尚未載入");
-    return;
-  }
-
-  const map = new EMapSDK();
-
-  map.open({
-    callback: function(d){
-      console.log("store:",d);
-      store.value = d.StoreName + "｜" + d.Address;
-    }
-  });
-
-}
-
-
-
 
 /* ================= submit ================= */
 btnSubmitOrder.onclick = async () => {
@@ -548,6 +517,19 @@ if(pick711Btn){
     e.preventDefault();
     openStorePicker();
   });
+}
+</script>
+  /* ================= 7-11 ================= */
+<script>
+function openStorePicker(){
+
+  const url = "https://emap.pcsc.com.tw/EMapSDK/EMap.html";
+
+  window.open(
+    url,
+    "emap",
+    "width=900,height=700,scrollbars=yes"
+  );
 }
 </script>
 
