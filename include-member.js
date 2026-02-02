@@ -9,10 +9,11 @@
   if(!token) return;
 
   window.__bootMemberCb = r => {
-    if(!r.ok){
-      localStorage.removeItem("ten_token");
-      return;
-    }
+  if(!r.ok){
+  console.warn("member boot failed");
+  return;
+}
+
 
     // 全站會員快取
     window.TEN_MEMBER = r.profile;
