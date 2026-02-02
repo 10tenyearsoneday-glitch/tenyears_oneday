@@ -209,6 +209,7 @@ const name = document.getElementById("name");
 const phone = document.getElementById("phone");
 const email = document.getElementById("email");
 const store = document.getElementById("store");
+   const storeAddr = document.getElementById("storeAddr");
 const toast = document.getElementById("toast");
    const btnSubmitOrder = document.getElementById("btnSubmitOrder");
 function waitPricing(){
@@ -462,8 +463,17 @@ const radios=document.querySelectorAll('input[name="ship"]');
 radios.forEach(r=>{
 r.addEventListener("change",()=>{
 storeWrap.hidden = r.value==="home";
+
+if(r.value!=="home"){
+  address.value="";
+}else{
+  store.value="";
+  storeAddr.value="";
+}
+
 });
 });
+
 })();
 (function(){
   const btn = document.getElementById("btnSubmitOrder");
@@ -512,8 +522,8 @@ encodeURIComponent(location.origin+location.pathname),
 }
   
 const pickFamily = document.getElementById("pickFamily");
-pick711.onclick=e=>{e.preventDefault();open711();}
-pickFamily.onclick=e=>{e.preventDefault();openFamily();}
+pick711 && (pick711.onclick=e=>{e.preventDefault();open711();});
+pickFamily && (pickFamily.onclick=e=>{e.preventDefault();openFamily();});
 </script>
 <script>
 const q=new URLSearchParams(location.search);
