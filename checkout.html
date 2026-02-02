@@ -231,9 +231,6 @@ const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL;
 
 const CART_KEY = "ten_cart";
 const COUPON_KEY = "ten_applied_coupon_v1";
-const GAS_URL =
-"https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-
 const readCart=()=>JSON.parse(localStorage.getItem(CART_KEY)||"[]");
 
 const isFirstPurchase=()=>!localStorage.getItem("ten_has_purchase_v1");
@@ -306,14 +303,25 @@ document.querySelectorAll('input[name="ship"]').forEach(r=>{
 
 
 /* ================= 7-11 ================= */
+function openStorePicker(){
 
-pick711.onclick = ()=>{
-  window.emap.open({
-    callback(d){
-      store.value = d.storeName || "";
+  if(typeof EMapSDK === "undefined"){
+    alert("超商系統尚未載入");
+    return;
+  }
+
+  const map = new EMapSDK();
+
+  map.open({
+    callback: function(d){
+      console.log("store:",d);
+      store.value = d.StoreName + "｜" + d.Address;
     }
   });
-};
+
+}
+
+
 
 
 /* ================= submit ================= */
@@ -402,17 +410,6 @@ document.write(html);
 });
 }
 
-/* ================= member autofill ================= */
-
-setTimeout(()=>{
-  if(window.TEN_MEMBER){
-    name.value = TEN_MEMBER.name || "";
-    phone.value = TEN_MEMBER.phone || "";
-    email.value = TEN_MEMBER.email || "";
-    address.value = TEN_MEMBER.address || "";
-  }
-},500);
-
 render();
 </script>
 <script>
@@ -452,9 +449,7 @@ render();
 <script>
 (async function(){
   try{
-   const GAS_URL =
-"https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-    const res = await fetch(`${GAS_URL}?path=settings`,{cache:"no-store"});
+      const res = await fetch(`${GAS_URL}?path=settings`,{cache:"no-store"});
     const s = await res.json();
     const fee = Number(s.shipping_fee||0);
     const free = Number(s.free_shipping_threshold||0);
