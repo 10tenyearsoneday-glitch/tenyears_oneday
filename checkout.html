@@ -298,11 +298,12 @@ toast.textContent="請填姓名與電話";
 return;
 }
 
-if(ship==="store"&&!store.value){
-toast.textContent="請選擇門市";
+if((ship==="711" || ship==="family") && !store.value){
+  toast.textContent="請選擇門市";
   document.getElementById("ckLoading")?.classList.add("hidden");
-return;
+  return;
 }
+
 
 const cart=readCart();
 const settings=await getSettings();
@@ -327,7 +328,8 @@ token:localStorage.getItem("ten_token")||"",
 name:name.value,
 phone:phone.value,
 email:email.value,
-address_or_store:ship==="home"?address.value:store.value,
+address_or_store:
+  ship==="home" ? address.value : `${store.value} ${storeAddr.value||""}`,
 shipping_method:ship,
 payment_method:pay,
 items:cart,
@@ -456,26 +458,13 @@ render();
 </script>
 <script>
 (function(){
-  const radios = document.querySelectorAll('input[name="ship"]');
-  const home = document.getElementById("shipHome");
-  const store = document.getElementById("shipStore");
-
- radios.forEach(r=>{
-  r.addEventListener("change",()=>{
-    storeWrap.hidden = r.value !== "store";
-
-      if(r.value==="home"){
-        home.classList.add("show"); home.classList.remove("hide");
-        store.classList.add("hide"); store.classList.remove("show");
-      }else{
-        store.classList.add("show"); store.classList.remove("hide");
-        home.classList.add("hide"); home.classList.remove("show");
-      }
-    });
-  });
+const radios=document.querySelectorAll('input[name="ship"]');
+radios.forEach(r=>{
+r.addEventListener("change",()=>{
+storeWrap.hidden = r.value==="home";
+});
+});
 })();
-</script>
-<script>
 (function(){
   const btn = document.getElementById("btnSubmitOrder");
   const pop = document.getElementById("ckConfirm");
@@ -506,28 +495,35 @@ render();
 })();
 
 </script>
-<script>
-const pick711Btn = document.getElementById("pick711");
-if(pick711Btn){
-  pick711Btn.addEventListener("click",(e)=>{
-    e.preventDefault();
-    openStorePicker();
-  });
-}
-</script>
   /* ================= 7-11 ================= */
 <script>
-function openStorePicker(){
-
-  const url = "https://emap.pcsc.com.tw/EMapSDK/EMap.html";
-
-  window.open(
-    url,
-    "emap",
-    "width=900,height=700,scrollbars=yes"
-  );
+function open711(){
+window.open(
+"https://emap.pcsc.com.tw/ecmap/default.aspx?returnUrl="+
+encodeURIComponent(location.origin+location.pathname),
+"_blank","width=1000,height=700");
 }
+
+function openFamily(){
+window.open(
+"https://famimap.famiport.com.tw/FPMap/FPMap.aspx?returnUrl="+
+encodeURIComponent(location.origin+location.pathname),
+"_blank","width=1000,height=700");
+}
+  
+const pickFamily = document.getElementById("pickFamily");
+pick711.onclick=e=>{e.preventDefault();open711();}
+pickFamily.onclick=e=>{e.preventDefault();openFamily();}
 </script>
+<script>
+const q=new URLSearchParams(location.search);
+if(q.get("store_name")){
+  store && (store.value=q.get("store_name"));
+  storeAddr && (storeAddr.value=q.get("store_address")||"");
+}
+
+</script>
+
 
 </body>
 </html>
