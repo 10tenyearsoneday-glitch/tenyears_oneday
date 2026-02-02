@@ -1,51 +1,4 @@
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwf5bVyoiFTtN6SIPmdyTtlFk9Ja9zejWc_yZTVP8PNkpmyx1XVpTSiVwa4tUUBIqI-tg/exec"; // ←換成你的
-/* =========================
-   GLOBAL MEMBER BOOT
-========================= */
-
-(function(){
-
-  const token = localStorage.getItem("ten_token");
-  if(!token) return;
-
-  window.__bootMemberCb = r => {
-  if(!r.ok){
-  console.warn("member boot failed");
-  return;
-}
-
-
-    // 全站會員快取
-    window.TEN_MEMBER = r.profile;
-
-    // header 立即切換
-    const btn = document.querySelector('[data-icon="member"]');
-    if(btn){
-      btn.href = "member-profile.html";
-      btn.title = "會員中心";
-    }
-
-    // 存生日（月日）
-    if(r.profile.birth){
-      const [y,m,d] = r.profile.birth.split("-");
-      localStorage.setItem("ten_birth_m",m);
-      localStorage.setItem("ten_birth_d",d);
-    }
-
-    document.body.classList.add("is-login");
-  };
-
-  const s = document.createElement("script");
-  s.src =
-    GAS_URL +
-    "?action=me" +
-    "&token=" + encodeURIComponent(token) +
-    "&callback=__bootMemberCb";
-
-  document.body.appendChild(s);
-
-})();
-
 
 (() => {
   /* =========================
@@ -249,20 +202,27 @@ if(!address) return toast($("regToast"),"請填地址");
 /* =========================
    Profile Page (FINAL FIX)
 ========================= */
-function setVal(id,v){
-  const el = document.getElementById(id);
-  if(el) el.value = v || "";
-}
+document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem("ten_token");
+  if (!token) return;
 
-setVal("pfName", p.name);
-setVal("pfPhone", p.phone);
-setVal("pfEmail", p.email);
-setVal("pfBirth", p.birth);
-setVal("pfAddress", p.address);
+  // 讀取會員資料
+window.__meCb = res => {
+  if (!res.ok) return;
+  const p = res.profile || {};
+  document.getElementById("pfName").value = p.name || "";
+  document.getElementById("pfPhone").value = p.phone || "";
+  document.getElementById("pfEmail").value = p.email || "";
+  document.getElementById("pfBirth").value = p.birth || "";
+  document.getElementById("pfAddress").value = p.address || "";
 
-// 🔒 已填生日就鎖住
-const birthEl = document.getElementById("pfBirth");
-if (birthEl && p.birth) birthEl.disabled = true;
+  // 🔒 已填生日就鎖住
+  if (p.birth) {
+    document.getElementById("pfBirth").disabled = true;
+  }
+};
+
+
   const s = document.createElement("script");
   s.src =
     GAS_URL +
@@ -272,7 +232,8 @@ if (birthEl && p.birth) birthEl.disabled = true;
   document.body.appendChild(s);
 
   // 儲存
-  document.getElementById("btnSaveProfile")?.addEventListener("click", () => {
+  document.getElementById("btnSaveProfile")
+    .addEventListener("click", () => {
       document.getElementById("profileToast").textContent = "儲存中…";
 
       window.__profileSaveCb = r => {
@@ -295,11 +256,13 @@ if (birthEl && p.birth) birthEl.disabled = true;
     });
 
   // 登出
-  document.getElementById("btnLogout")?.addEventListener("click", () => {
+  document.getElementById("btnLogout")
+    .addEventListener("click", () => {
       localStorage.removeItem("ten_token");
       location.href = "member.html";
     });
   loadMyOrders();
+});
 // 讀取我的訂單（FINAL FINAL）
 function loadMyOrders() {
   const token = localStorage.getItem("ten_token");
@@ -444,3 +407,49 @@ function renderOrderStatus(o) {
   }
 
 })();
+
+/* =========================
+   AUTO LOGIN RESTORE
+========================= */
+
+(function(){
+
+  const token = localStorage.getItem("ten_token");
+  if(!token) return;
+
+  const s = document.createElement("script");
+  s.src =
+    GAS_URL +
+    "?action=me" +
+    "&token=" + encodeURIComponent(token) +
+    "&callback=__autoLoginCb";
+
+  window.__autoLoginCb = r => {
+    if(!r.ok){
+      localStorage.removeItem("ten_token");
+      return;
+    }
+
+    // 全站會員快取
+    window.TEN_MEMBER = r.profile;
+
+    // header
+    const btn = document.querySelector('[data-icon="member"]');
+    if(btn){
+      btn.href = "member-profile.html";
+      btn.title = "會員中心";
+    }
+
+    // 生日優惠用
+    if(r.profile.birth){
+      const [y,m,d] = r.profile.birth.split("-");
+      localStorage.setItem("ten_birth_m",m);
+      localStorage.setItem("ten_birth_d",d);
+    }
+  };
+
+  document.body.appendChild(s);
+
+})();
+
+
