@@ -48,17 +48,47 @@
   <script src="./include-member.js"></script>
 
   <script>
-(function requireLogin(){
+(function waitMember(){
 
   const token = localStorage.getItem("ten_token");
-
   if(!token){
-    alert("請先登入會員再進行結帳");
     location.href = "member.html?redirect=checkout.html";
+    return;
   }
 
+  let tries = 0;
+
+  const timer = setInterval(()=>{
+    tries++;
+
+    if(window.TEN_MEMBER){
+      clearInterval(timer);
+      autofill();
+      return;
+    }
+
+    if(tries > 20){
+      clearInterval(timer);
+      alert("會員驗證失敗，請重新登入");
+      localStorage.removeItem("ten_token");
+      location.href = "member.html?redirect=checkout.html";
+    }
+
+  },150);
+
 })();
+    function autofill(){
+  const m = window.TEN_MEMBER;
+  if(!m) return;
+
+  name.value = m.name || "";
+  phone.value = m.phone || "";
+  email.value = m.email || "";
+  address.value = m.address || "";
+}
+
 </script>
+
 
 
  <main class="max-w-3xl mx-auto px-4 pt-28 pb-16">
