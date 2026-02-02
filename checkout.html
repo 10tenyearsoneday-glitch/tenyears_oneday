@@ -116,22 +116,18 @@ function autofill(){
 <h2 class="font-black">配送方式</h2>
 <div id="shipHome" class="ship-box show">
 <label class="flex items-center gap-2">
-   <input type="radio" name="ship" value="home">
-宅配到府
-</label>
-</div>
-<div id="shipStore" class="ship-box show">
-<label class="flex items-center gap-2">
-<input type="radio" name="ship" value="store">
-超商取貨
-</label>
+<input type="radio" name="ship" value="home" checked> 宅配</label>
+<label><input type="radio" name="ship" value="711"> 7-11</label>
+<label><input type="radio" name="ship" value="family"> 全家</label>
 </div>
 <div id="storeWrap" hidden class="space-y-2">
-<button id="pick711" class="border px-3 py-2 rounded-xl">選擇 7-11 門市</button>
+  <button id="pick711" class="border px-3 py-2 rounded-xl">選 7-11</button>
+  <button id="pickFamily" class="border px-3 py-2 rounded-xl">選全家</button>
 
-<input id="store" placeholder="門市名稱"
-class="input">
+  <input id="store" placeholder="門市名稱" class="input">
+  <input id="storeAddr" placeholder="門市地址" class="input">
 </div>
+
   
 
       </section>
