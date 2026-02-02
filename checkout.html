@@ -8,7 +8,35 @@
   <link rel="stylesheet" href="assets/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://emap.pcsc.com.tw/EMapSDK/js/emap.js"></script>
-
+  <style>
+/* ===== Checkout UI polish ===== */
+.ck-wrap{max-width:860px;margin:0 auto;padding:14px}
+.ck-card{background:#fff;border-radius:18px;padding:14px 14px 16px;margin-bottom:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.05)}
+.ck-card h3{margin:2px 0 10px;font-size:1rem}
+.ck-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ck-grid.full{grid-template-columns:1fr}
+.ck-row{display:flex;flex-direction:column;gap:6px}
+.ck-row label{font-size:.82rem;opacity:.7}
+.ck-row input,.ck-row select,.ck-row textarea{
+  border-radius:12px;border:1px solid rgba(0,0,0,.15);padding:10px 12px;font-size:.95rem}
+.ck-summary{display:grid;grid-template-columns:1fr auto;gap:8px;font-size:.95rem}
+.ck-total{font-weight:800;font-size:1.1rem}
+.ck-cta{position:sticky;bottom:0;background:#fff;padding:10px 0}
+.ck-btn{width:100%;border-radius:14px;padding:12px 14px;font-weight:700}
+@media(max-width:640px){
+  .ck-grid{grid-template-columns:1fr}
+}
+    .ck-loading{
+  position:fixed;inset:0;background:rgba(255,255,255,.85);
+  display:flex;align-items:center;justify-content:center;z-index:9999;
+  font-weight:700;font-size:1.1rem
+}
+.ck-loading.hidden{display:none}
+    .ship-box{transition:.25s ease;overflow:hidden}
+.ship-box.hide{max-height:0;opacity:0}
+.ship-box.show{max-height:250px;opacity:1}
+</style>
 </head>
 
 <body class="min-h-screen bg-gradient-to-br from-[#F8F9F7] to-[#D4E7D1]">
@@ -163,7 +191,8 @@ class="input">
     <div id="toast" class="text-sm"></div>
       <div id="ckConfirm" class="ck-loading hidden">
   <div style="background:# 2f3a2c;padding:20px;border-radius:16px;width:90%;max-width:360px">
-    <h3>確認付款</h3>
+       <button class="btn2" id="btnSave" type="button">確認付款</button>
+ 
     <div id="ckConfirmText" style="margin:10px 0;font-size:.9rem"></div>
     <button id="ckYes" class="primary" style="width:100%">確認送出</button>
     <button id="ckNo" class="secondary" style="width:100%;margin-top:6px">取消</button>
