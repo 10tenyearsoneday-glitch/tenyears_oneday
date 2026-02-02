@@ -543,6 +543,15 @@ render();
 })();
 
 </script>
+<script>
+const pick711Btn = document.getElementById("pick711");
+if(pick711Btn){
+  pick711Btn.addEventListener("click",(e)=>{
+    e.preventDefault();
+    openStorePicker();
+  });
+}
+</script>
 
 </body>
 </html>
