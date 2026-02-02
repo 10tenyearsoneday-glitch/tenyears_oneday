@@ -249,27 +249,20 @@ if(!address) return toast($("regToast"),"請填地址");
 /* =========================
    Profile Page (FINAL FIX)
 ========================= */
-document.addEventListener("DOMContentLoaded", () => {
-  const token = localStorage.getItem("ten_token");
-  if (!token) return;
+function setVal(id,v){
+  const el = document.getElementById(id);
+  if(el) el.value = v || "";
+}
 
-  // 讀取會員資料
-window.__meCb = res => {
-  if (!res.ok) return;
-  const p = res.profile || {};
-  document.getElementById("pfName").value = p.name || "";
-  document.getElementById("pfPhone").value = p.phone || "";
-  document.getElementById("pfEmail").value = p.email || "";
-  document.getElementById("pfBirth").value = p.birth || "";
-  document.getElementById("pfAddress").value = p.address || "";
+setVal("pfName", p.name);
+setVal("pfPhone", p.phone);
+setVal("pfEmail", p.email);
+setVal("pfBirth", p.birth);
+setVal("pfAddress", p.address);
 
-  // 🔒 已填生日就鎖住
-  if (p.birth) {
-    document.getElementById("pfBirth").disabled = true;
-  }
-};
-
-
+// 🔒 已填生日就鎖住
+const birthEl = document.getElementById("pfBirth");
+if (birthEl && p.birth) birthEl.disabled = true;
   const s = document.createElement("script");
   s.src =
     GAS_URL +
@@ -279,8 +272,7 @@ window.__meCb = res => {
   document.body.appendChild(s);
 
   // 儲存
-  document.getElementById("btnSaveProfile")
-    .addEventListener("click", () => {
+  document.getElementById("btnSaveProfile")?.addEventListener("click", () => {
       document.getElementById("profileToast").textContent = "儲存中…";
 
       window.__profileSaveCb = r => {
@@ -303,8 +295,7 @@ window.__meCb = res => {
     });
 
   // 登出
-  document.getElementById("btnLogout")
-    .addEventListener("click", () => {
+  document.getElementById("btnLogout")?.addEventListener("click", () => {
       localStorage.removeItem("ten_token");
       location.href = "member.html";
     });
