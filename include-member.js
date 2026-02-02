@@ -257,17 +257,22 @@ document.addEventListener("DOMContentLoaded", () => {
 window.__meCb = res => {
   if (!res.ok) return;
   const p = res.profile || {};
-  document.getElementById("pfName").value = p.name || "";
-  document.getElementById("pfPhone").value = p.phone || "";
-  document.getElementById("pfEmail").value = p.email || "";
-  document.getElementById("pfBirth").value = p.birth || "";
-  document.getElementById("pfAddress").value = p.address || "";
 
-  // 🔒 已填生日就鎖住
-  if (p.birth) {
-    document.getElementById("pfBirth").disabled = true;
-  }
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || "";
+  };
+
+  set("pfName", p.name);
+  set("pfPhone", p.phone);
+  set("pfEmail", p.email);
+  set("pfBirth", p.birth);
+  set("pfAddress", p.address);
+
+  const b = document.getElementById("pfBirth");
+  if (b && p.birth) b.disabled = true;
 };
+
 
 
   const s = document.createElement("script");
@@ -279,8 +284,9 @@ window.__meCb = res => {
   document.body.appendChild(s);
 
   // 儲存
-  document.getElementById("btnSaveProfile")
-    .addEventListener("click", () => {
+const saveBtn = document.getElementById("btnSaveProfile");
+if(saveBtn){
+  saveBtn.addEventListener("click", () => {
       document.getElementById("profileToast").textContent = "儲存中…";
 
       window.__profileSaveCb = r => {
@@ -303,8 +309,9 @@ window.__meCb = res => {
     });
 
   // 登出
-  document.getElementById("btnLogout")
-    .addEventListener("click", () => {
+const logoutBtn = document.getElementById("btnLogout");
+if(logoutBtn){
+  logoutBtn.addEventListener("click", () => {
       localStorage.removeItem("ten_token");
       location.href = "member.html";
     });
