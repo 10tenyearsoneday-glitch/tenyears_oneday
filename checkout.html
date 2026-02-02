@@ -74,8 +74,8 @@
       <h2 class="font-black">收件資訊</h2>
 
       <input id="name" placeholder="姓名" class="input">
-      <input id="phone" placeholder="電話" class="input">
-      <input id="email" placeholder="Email" class="input">
+      <input id="phone" inputmode="numeric" type="tel" placeholder="電話" class="input">
+<input id="email" type="email" placeholder="Email" class="input">
       <textarea id="address" placeholder="地址" class="input h-20"></textarea>
     </section>
  </div>
@@ -280,11 +280,13 @@ const pay=document.querySelector('input[name="pay"]:checked').value;
 
 if(!name.value||!phone.value){
 toast.textContent="請填姓名與電話";
+  document.getElementById("ckLoading")?.classList.add("hidden");
 return;
 }
 
 if(ship==="store"&&!store.value){
 toast.textContent="請選擇門市";
+  document.getElementById("ckLoading")?.classList.add("hidden");
 return;
 }
 
