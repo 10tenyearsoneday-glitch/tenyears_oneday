@@ -261,6 +261,9 @@ discountSummary.textContent=buildDiscountLabels(pricing).join(" ＋ ");
 document.querySelectorAll('input[name="pay"]').forEach(r=>{
   r.onchange=render;
 });
+document.querySelectorAll('input[name="ship"]').forEach(r=>{
+  r.onchange = render;
+});
 
 
 /* ================= 7-11 ================= */
