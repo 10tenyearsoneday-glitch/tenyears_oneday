@@ -67,12 +67,11 @@
       return;
     }
 
-    if(tries > 20){
-      clearInterval(timer);
-      alert("會員驗證失敗，請重新登入");
-      localStorage.removeItem("ten_token");
-      location.href = "member.html?redirect=checkout.html";
-    }
+if(tries > 60){
+  clearInterval(timer);
+  alert("會員載入逾時，請重新整理頁面");
+}
+
 
   },150);
 
