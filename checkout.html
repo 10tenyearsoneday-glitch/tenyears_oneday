@@ -505,12 +505,25 @@ syncShip();
 })();
 
 </script>
-<script>
+
 /* ===============================
    ECPay CVS Map FINAL
 =============================== */
+<script>
+function openEcpayStore(){
 
-function openEcpayStore(type){
+  const ship =
+    document.querySelector('input[name="ship"]:checked')?.value;
+
+  let sub = "";
+
+  if(ship==="711") sub="UNIMART";
+  if(ship==="family") sub="FAMI";
+
+  if(!sub){
+    alert("請先選擇配送方式");
+    return;
+  }
 
   const f = document.createElement("form");
   f.method = "POST";
@@ -519,35 +532,29 @@ function openEcpayStore(type){
   f.innerHTML = `
 <input name="MerchantID" value="3486030">
 <input name="LogisticsType" value="CVS">
-<input name="LogisticsSubType" value="${type}">
+<input name="LogisticsSubType" value="${sub}">
 <input name="IsCollection" value="N">
-<input name="ServerReplyURL" value="https://script.google.com/macros/s/AKfycbwf5bVyoiFTtN6SIPmdyTtlFk9Ja9zejWc_yZTVP8PNkpmyx1XVpTSiVwa4tUUBIqI-tg/exec">
-<input name="ExtraData" value="">
+<input name="ServerReplyURL" value="你的GAS_URL">
 `;
 
   document.body.appendChild(f);
   f.submit();
 }
 
-/* ===== bind buttons ===== */
+// 綁按鈕
+pick711.onclick = e=>{
+  e.preventDefault();
+  document.querySelector('input[value="711"]').checked=true;
+  openEcpayStore();
+};
 
-(function(){
-
-  const pick711 = document.getElementById("pick711");
-  const pickFamily = document.getElementById("pickFamily");
-
-  pick711 && pick711.addEventListener("click",e=>{
-    e.preventDefault();
-    openEcpayStore("UNIMARTC2C");   // 7-11
-  });
-
-  pickFamily && pickFamily.addEventListener("click",e=>{
-    e.preventDefault();
-    openEcpayStore("FAMIC2C");     // 全家
-  });
-
-})();
+pickFamily.onclick = e=>{
+  e.preventDefault();
+  document.querySelector('input[value="family"]').checked=true;
+  openEcpayStore();
+};
 </script>
+
 
 
 
