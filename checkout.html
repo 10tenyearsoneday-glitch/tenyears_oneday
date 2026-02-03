@@ -254,16 +254,19 @@ coupon: coupon?{...coupon,code:couponCode}:null
 const pricing = calcTotal(cart, settings, ctx);
 
 // ⛔ 強制取消會員免運（只看滿額）
-const free = Number(settings.free_shipping_threshold || 0);
-const fee  = Number(settings.shipping_fee || 0);
+const free = Number(settings.free_shipping_threshold);
+const fee  = Number(settings.shipping_fee);
 
-if (pricing.subtotal < free) {
-  pricing.shipping = fee;
-  pricing.total =
-    pricing.subtotal
-    - (pricing.discount||0)
-    + fee;
+if (!isNaN(fee) && fee > 0) {
+  if (pricing.subtotal < free || !free) {
+    pricing.shipping = fee;
+    pricing.total =
+      pricing.subtotal
+      - (pricing.discount||0)
+      + fee;
+  }
 }
+
 let total=pricing.total;
 
 sumSubtotal.textContent=money(pricing.subtotal);
