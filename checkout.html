@@ -547,6 +547,28 @@ function openEcpayStore(){
 
 })();
 </script>
+<script>
+(function(){
+
+  const pick711 = document.getElementById("pick711");
+  const pickFamily = document.getElementById("pickFamily");
+
+  if(pick711){
+    pick711.addEventListener("click",e=>{
+      e.preventDefault();
+      openEcpayStore();
+    });
+  }
+
+  if(pickFamily){
+    pickFamily.addEventListener("click",e=>{
+      e.preventDefault();
+      openEcpayStore();
+    });
+  }
+
+})();
+</script>
 
 
 </body>
