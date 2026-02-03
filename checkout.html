@@ -48,17 +48,26 @@
 
   <script>
 
-function autofill(){
+<script>
+(function waitMember(){
+
+  if(!window.TEN_MEMBER){
+    return setTimeout(waitMember,80);
+  }
+
   const m = window.TEN_MEMBER;
-  if(!m) return;
 
-  name.value = m.name || "";
-  phone.value = m.phone || "";
-  email.value = m.email || "";
-  address.value = m.address || "";
-}
+  const name = document.getElementById("name");
+  const phone = document.getElementById("phone");
+  const email = document.getElementById("email");
+  const address = document.getElementById("address");
 
+  if(name) name.value = m.name || "";
+  if(phone) phone.value = m.phone || "";
+  if(email) email.value = m.email || "";
+  if(address) address.value = m.address || "";
 
+})();
 </script>
 
 
