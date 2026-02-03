@@ -47,8 +47,6 @@
   <script src="./include-member.js"></script>
 
   <script>
-
-<script>
 (function waitMember(){
 
   if(!window.TEN_MEMBER){
@@ -456,21 +454,31 @@ render();
 <script>
 (function(){
 const radios=document.querySelectorAll('input[name="ship"]');
-radios.forEach(r=>{
-r.addEventListener("change",()=>{
-storeWrap.hidden = r.value==="home";
 
-if(r.value!=="home"){
-  address.value="";
-}else{
-  store.value="";
-  storeAddr.value="";
+function syncShip(){
+  const v = document.querySelector('input[name="ship"]:checked')?.value;
+  if(!v) return;
+
+  storeWrap.hidden = v==="home";
+
+  if(v!=="home"){
+    address.value="";
+  }else{
+    store.value="";
+    storeAddr.value="";
+  }
 }
 
-});
+// 綁事件
+radios.forEach(r=>{
+  r.addEventListener("change",syncShip);
 });
 
+// ⭐第一次載入也跑一次
+syncShip();
+
 })();
+
 (function(){
   const btn = document.getElementById("btnSubmitOrder");
   const pop = document.getElementById("ckConfirm");
@@ -543,6 +551,15 @@ pickFamily && (pickFamily.onclick = e => {
   e.preventDefault();
   openFamily();
 });
+</script>
+<script>
+(function(){
+  const q = new URLSearchParams(location.search);
+  if(q.get("store_name")){
+    store.value = q.get("store_name");
+    storeAddr.value = q.get("store_address") || "";
+  }
+})();
 </script>
 
 
