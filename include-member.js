@@ -260,7 +260,7 @@ if(!address) return toast($("regToast"),"請填地址");
 ========================= */
 document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("ten_token");
-  if (!token) return};
+  if (!token) return;
 
   // 讀取會員資料
 window.__meCb = res => {
@@ -300,7 +300,7 @@ if(saveBtn){
 
       window.__profileSaveCb = r => {
         document.getElementById("profileToast").textContent =
-          r.ok ? "已儲存" : "儲存失敗"};
+          r.ok ? "已儲存" : "儲存失敗";
       };
 
       const qs =
@@ -316,7 +316,7 @@ if(saveBtn){
       s2.src = GAS_URL + qs;
       document.body.appendChild(s2);
     });
-
+}
   // 登出
 const logoutBtn = document.getElementById("btnLogout");
 if(logoutBtn){
@@ -325,7 +325,7 @@ if(logoutBtn){
       location.href = "member.html";
     });
   loadMyOrders();
-};
+
 // 讀取我的訂單（FINAL FINAL）
 function loadMyOrders() {
   const token = localStorage.getItem("ten_token");
@@ -470,3 +470,4 @@ function renderOrderStatus(o) {
   }
 
 })();
+});
