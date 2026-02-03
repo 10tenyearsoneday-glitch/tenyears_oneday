@@ -325,7 +325,7 @@ if(logoutBtn){
       location.href = "member.html";
     });
   loadMyOrders();
-});
+};
 // 讀取我的訂單（FINAL FINAL）
 function loadMyOrders() {
   const token = localStorage.getItem("ten_token");
