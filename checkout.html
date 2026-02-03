@@ -7,7 +7,6 @@
 
   <link rel="stylesheet" href="assets/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://emap.pcsc.com.tw/EMapSDK/js/emap.js"></script>
   <style>
 /* ===== Checkout UI polish ===== */
 .ck-wrap{max-width:860px;margin:0 auto;padding:14px}
@@ -506,59 +505,48 @@ syncShip();
 })();
 
 </script>
-  /* ================= 7-11 ================= */
 <script>
-function open711(){
-  if(!window.EMap){
-    alert("7-11 地圖尚未載入");
-    return;
-  }
+/* ===============================
+   ECPay CVS Map (7-11 + 全家)
+=============================== */
 
-  EMap.init({
-    serviceType: "1",
-    showStoreList: "Y",
-    callback: function(data){
-      if(!data) return;
+function openEcpayStore(){
 
-      document.getElementById("store").value = data.storeName || "";
-      document.getElementById("storeAddr").value = data.storeAddress || "";
-    }
-  });
-}
-</script>
-<script>
-function openFamily(){
-  const url =
-    "https://famimap.famiport.com.tw/FPMap/FPMap.aspx" +
-    "?c=store" +
-    "&return=" + encodeURIComponent(location.href);
+  const f = document.createElement("form");
+  f.method = "POST";
+  f.action = "https://logistics.ecpay.com.tw/Express/map";
 
-  window.open(url,"_blank","width=1000,height=700");
+  f.innerHTML = `
+<input name="MerchantID" value="3486030">
+<input name="LogisticsType" value="CVS">
+<input name="LogisticsSubType" value="">
+<input name="IsCollection" value="N">
+<input name="ServerReplyURL" value="${location.origin + location.pathname}">
+<input name="ExtraData" value="">
+`;
+
+  document.body.appendChild(f);
+  f.submit();
 }
 
-const pick711 = document.getElementById("pick711");
-const pickFamily = document.getElementById("pickFamily");
-
-pick711 && (pick711.onclick = e => {
-  e.preventDefault();
-  open711();
-});
-
-pickFamily && (pickFamily.onclick = e => {
-  e.preventDefault();
-  openFamily();
-});
 </script>
 <script>
+/* ===== 接收綠界回傳門市 ===== */
+
 (function(){
+
   const q = new URLSearchParams(location.search);
-  if(q.get("store_name")){
-    store.value = q.get("store_name");
-    storeAddr.value = q.get("store_address") || "";
+
+  if(q.get("CVSStoreName")){
+    document.getElementById("store").value =
+      q.get("CVSStoreName") || "";
+
+    document.getElementById("storeAddr").value =
+      q.get("CVSAddress") || "";
   }
+
 })();
 </script>
-
 
 
 </body>
