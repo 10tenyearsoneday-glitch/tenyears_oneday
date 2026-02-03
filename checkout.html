@@ -47,34 +47,7 @@
   <script src="./include-member.js"></script>
 
   <script>
-(function waitMember(){
 
-  const token = localStorage.getItem("ten_token");
-  if(!token){
-    location.href = "member.html?redirect=checkout.html";
-    return;
-  }
-
-  let tries = 0;
-
-  const timer = setInterval(()=>{
-    tries++;
-
-    if(window.TEN_MEMBER){
-      clearInterval(timer);
-      autofill();
-      return;
-    }
-
-if(tries > 60){
-  clearInterval(timer);
-  alert("會員載入逾時，請重新整理頁面");
-}
-
-
-  },150);
-
-})();
 function autofill(){
   const m = window.TEN_MEMBER;
   if(!m) return;
