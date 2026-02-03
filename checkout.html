@@ -507,10 +507,10 @@ syncShip();
 </script>
 <script>
 /* ===============================
-   ECPay CVS Map (7-11 + 全家)
+   ECPay CVS Map FINAL
 =============================== */
 
-function openEcpayStore(){
+function openEcpayStore(type){
 
   const f = document.createElement("form");
   f.method = "POST";
@@ -519,7 +519,7 @@ function openEcpayStore(){
   f.innerHTML = `
 <input name="MerchantID" value="3486030">
 <input name="LogisticsType" value="CVS">
-<input name="LogisticsSubType" value="">
+<input name="LogisticsSubType" value="${type}">
 <input name="IsCollection" value="N">
 <input name="ServerReplyURL" value="${location.origin + location.pathname}">
 <input name="ExtraData" value="">
@@ -529,46 +529,26 @@ function openEcpayStore(){
   f.submit();
 }
 
-</script>
-<script>
-/* ===== 接收綠界回傳門市 ===== */
+/* ===== bind buttons ===== */
 
-(function(){
-
-  const q = new URLSearchParams(location.search);
-
-  if(q.get("CVSStoreName")){
-    document.getElementById("store").value =
-      q.get("CVSStoreName") || "";
-
-    document.getElementById("storeAddr").value =
-      q.get("CVSAddress") || "";
-  }
-
-})();
-</script>
-<script>
 (function(){
 
   const pick711 = document.getElementById("pick711");
   const pickFamily = document.getElementById("pickFamily");
 
-  if(pick711){
-    pick711.addEventListener("click",e=>{
-      e.preventDefault();
-      openEcpayStore();
-    });
-  }
+  pick711 && pick711.addEventListener("click",e=>{
+    e.preventDefault();
+    openEcpayStore("UNIMARTC2C");   // 7-11
+  });
 
-  if(pickFamily){
-    pickFamily.addEventListener("click",e=>{
-      e.preventDefault();
-      openEcpayStore();
-    });
-  }
+  pickFamily && pickFamily.addEventListener("click",e=>{
+    e.preventDefault();
+    openEcpayStore("FAMIC2C");     // 全家
+  });
 
 })();
 </script>
+
 
 
 </body>
