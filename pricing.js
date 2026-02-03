@@ -84,6 +84,14 @@ function calcShipping(subtotal, s) {
     const d = calcDiscount(subtotal, s, ctx);
     const shipping = calcShipping(subtotal - d.discount, s);
     const total = subtotal - d.discount + shipping;
+// 🔥 強制用 settings 運費（完全不看會員）
+const fee  = Number(settings.shipping_fee || 0);
+const free = Number(settings.free_shipping_threshold || 0);
+
+if (fee > 0 && pricing.subtotal < free) {
+  pricing.shipping = fee;
+  pricing.total = pricing.subtotal - (pricing.discount||0) + fee;
+}
 
     return {
       subtotal,
