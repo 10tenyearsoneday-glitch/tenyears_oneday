@@ -40,15 +40,20 @@
   function calcSubtotal(items) {
     return items.reduce((s, it) => s + num(it.price) * num(it.qty), 0);
   }
+function calcShipping(subtotal, s) {
+  if (!s || s.shipping_enabled !== "true") return 0;
 
-  function calcShipping(subtotal, s) {
-    if (!truthy(s.shipping_enabled)) return 0;
-    const fee = num(s.shipping_fee, 0);
-    const th = num(s.free_shipping_threshold, 0);
-    if (fee <= 0) return 0;
-    if (th > 0 && subtotal >= th) return 0;
-    return fee;
-  }
+  const fee = Number(s.shipping_fee || 0);
+  const th = Number(s.free_shipping_threshold || 0);
+
+  if (fee <= 0) return 0;
+
+  // 只看滿額，不看會員
+  if (th > 0 && subtotal >= th) return 0;
+
+  return fee;
+}
+
 
   function calcDiscount(subtotal, s, ctx = {}) {
     let bestRate = 1;
