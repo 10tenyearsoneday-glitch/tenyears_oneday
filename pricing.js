@@ -78,29 +78,34 @@ function calcShipping(subtotal, s) {
     const discount = Math.round(subtotal * (1 - bestRate));
     return { discount, label };
   }
+function calcTotal(items, s, ctx = {}) {
+  const subtotal = calcSubtotal(items);
+  const d = calcDiscount(subtotal, s, ctx);
 
-  function calcTotal(items, s, ctx = {}) {
-    const subtotal = calcSubtotal(items);
-    const d = calcDiscount(subtotal, s, ctx);
-    const shipping = calcShipping(subtotal - d.discount, s);
-    const total = subtotal - d.discount + shipping;
-// 🔥 強制用 settings 運費（完全不看會員）
-const fee  = Number(settings.shipping_fee || 0);
-const free = Number(settings.free_shipping_threshold || 0);
+  // ===== 運費（只看滿額）=====
+  const fee  = Number(s.shipping_fee || 0);
+  const free = Number(s.free_shipping_threshold || 0);
 
-if (fee > 0 && pricing.subtotal < free) {
-  pricing.shipping = fee;
-  pricing.total = pricing.subtotal - (pricing.discount||0) + fee;
+  let shipping = 0;
+
+  if (fee > 0) {
+    shipping = fee;
+    if (free > 0 && subtotal >= free) {
+      shipping = 0;
+    }
+  }
+
+  const total = subtotal - d.discount + shipping;
+
+  return {
+    subtotal,
+    discount: d.discount,
+    discountLabel: d.label,
+    shipping,
+    total,
+  };
 }
 
-    return {
-      subtotal,
-      discount: d.discount,
-      discountLabel: d.label,
-      shipping,
-      total,
-    };
-  }
 
   // 🌍 expose to window
   window.TEN_PRICING = {
