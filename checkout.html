@@ -348,10 +348,14 @@ f.submit();
 
 function submitOrder(orderData){
 
-  fetch(GAS_URL + "?path=orders",{
-    method:"POST",
-    body:JSON.stringify(orderData)
-  })
+ fetch(GAS_URL + "?path=orders", {
+  method: "POST",
+  headers:{
+    "Content-Type":"application/json"
+  },
+  body: JSON.stringify(orderData)
+})
+
   .then(r=>r.text())
   .then(html=>{
     // 🔥 GAS 會回傳自動送出的 FORM
