@@ -261,6 +261,9 @@ birthday:isBirthday(),
 coupon: coupon?{...coupon,code:couponCode}:null
 };
 const pricing = calcTotal(cart, settings, ctx);
+console.log("SETTINGS >>>", settings);
+console.log("CTX >>>", ctx);
+console.log("PRICING >>>", pricing);
 
 
 
