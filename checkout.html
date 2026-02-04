@@ -325,16 +325,17 @@ discount_note:buildDiscountLabels(pricing).join("＋")
 };
 
 if(pay==="cod"){
-postOrder(payload);
-   document.getElementById("ckLoading")?.classList.add("hidden");
-location.href=`thanks.html?order_id=${payload.order_id}`;
+  localStorage.setItem("ten_has_purchase_v1","1");
+  postOrder(payload);
+
+  setTimeout(()=>{
+    document.getElementById("ckLoading")?.classList.add("hidden");
+    location.href=`thanks.html?order_id=${payload.order_id}`;
+  },800);
 
 }else{
   submitOrder(payload);
 }
-
-};
-
 /* ================= helpers ================= */
 
 function postOrder(payload){
@@ -351,14 +352,10 @@ f.submit();
 }
 
 function submitOrder(orderData){
+  localStorage.setItem("ten_has_purchase_v1","1");
+  postOrder(orderData);
+}
 
- fetch(GAS_URL + "?path=orders", {
-  method: "POST",
-  headers:{
-    "Content-Type":"application/json"
-  },
-  body: JSON.stringify(orderData)
-})
 
   .then(r=>r.text())
   .then(html=>{
@@ -410,33 +407,7 @@ render();
   });
 })();
 </script>
-<script>
-(async function(){
-  try{
-      const res = await fetch(`${GAS_URL}?path=settings`,{cache:"no-store"});
-    const s = await res.json();
-    const fee = Number(s.shipping_fee||0);
-    const free = Number(s.free_shipping_threshold||0);
 
-    function cartSubtotal(){
-      try{
-        return (JSON.parse(localStorage.getItem("ten_cart")||"[]"))
-          .reduce((t,i)=>t+i.price*i.qty,0);
-      }catch{ return 0;}
-    }
-
-    const tip = document.getElementById("ckShipTip");
-    if(!tip || !free) return;
-
-    const sub = cartSubtotal();
-    if(sub < free){
-      tip.textContent = `再 NT$ ${Math.max(0,free-sub)} 即可免運`;
-    }else{
-      tip.textContent = "🎉 已達免運門檻";
-    }
-  }catch(e){}
-})();
-</script>
 <script>
 (function(){
   const btn = document.getElementById("btnSubmitOrder");
