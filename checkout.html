@@ -356,21 +356,6 @@ function submitOrder(orderData){
   postOrder(orderData);
 }
 
-
-  .then(r=>r.text())
-  .then(html=>{
-    // 🔥 GAS 會回傳自動送出的 FORM
-    document.open();
-    document.write(html);
-    document.close();
-  })
-  .catch(err=>{
-    console.error(err);
-    alert("送出訂單失敗，請稍後再試");
-  });
-
-}
-
 render();
 </script>
 <script>
