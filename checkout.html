@@ -46,6 +46,8 @@
 <script src="./include-member.js"></script>
 
 <script>
+window.money = n => `NT$ ${Math.round(n||0)}`;
+
 window.calcTotal = async function(cart, settings, ctx){
   const p = await window.__TEN_PRICING__();
   return {
@@ -56,6 +58,7 @@ window.calcTotal = async function(cart, settings, ctx){
   };
 };
 </script>
+
 
   <script>
 (function waitMember(){
@@ -255,7 +258,8 @@ firstPurchase:isFirstPurchase(),
 birthday:isBirthday(),
 coupon: coupon?{...coupon,code:couponCode}:null
 };
-const pricing = calcTotal(cart, settings, ctx);
+const pricing = await calcTotal(cart, settings, ctx);
+
 
 // ⛔ 強制取消會員免運（只看滿額）
 const free = Number(settings.free_shipping_threshold);
