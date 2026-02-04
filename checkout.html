@@ -236,6 +236,9 @@ return o.ok?o.data:null;
 
 /* ================= render ================= */
 
+   const pricing = calcTotal(cart, settings, ctx);
+console.log("SETTINGS", settings);
+console.log("PRICING", pricing);
 async function render(){
 
 const cart=readCart();
