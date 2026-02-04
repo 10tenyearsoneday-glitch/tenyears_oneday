@@ -209,7 +209,9 @@ const toast = document.getElementById("toast");
 
 
 const buildDiscountLabels =
-  window.TEN_DISCOUNT_LABEL?.buildDiscountLabels || (()=>[]);
+  (window.TEN_DISCOUNT_LABEL && window.TEN_DISCOUNT_LABEL.buildDiscountLabels)
+  ? window.TEN_DISCOUNT_LABEL.buildDiscountLabels
+  : function(){ return []; };
 
 
 const CART_KEY = "ten_cart";
