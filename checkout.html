@@ -208,7 +208,9 @@ const toast = document.getElementById("toast");
    const btnSubmitOrder = document.getElementById("btnSubmitOrder");
 
 
-const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL;
+const buildDiscountLabels =
+  window.TEN_DISCOUNT_LABEL?.buildDiscountLabels || (()=>[]);
+
 
 const CART_KEY = "ten_cart";
 const COUPON_KEY = "ten_applied_coupon_v1";
@@ -240,6 +242,11 @@ return o.ok?o.data:null;
 }
 
 /* ================= render ================= */
+const sumSubtotal = document.getElementById("sumSubtotal");
+const sumDiscount = document.getElementById("sumDiscount");
+const sumShipping = document.getElementById("sumShipping");
+const sumTotal = document.getElementById("sumTotal");
+const discountSummary = document.getElementById("discountSummary");
 
 async function render(){
 
