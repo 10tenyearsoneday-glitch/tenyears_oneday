@@ -25,13 +25,52 @@ window.GAS_PRODUCTS_URL =
   }
 
   /* ===== pricing bridge ===== */
-  const PRICING = window.TEN_PRICING || {};
-  const calcTotal =
-    PRICING.calcTotal ||
-    function (items) {
-      const subtotal = items.reduce((s, it) => s + it.price * it.qty, 0);
-      return { subtotal, discount: 0, shipping: 0, total: subtotal };
+ const PRICING = window.TEN_PRICING || {};
+
+const calcTotal =
+  PRICING.calcTotal ||
+  function (items, settings = {}, ctx = {}) {
+
+    const num = v => Number(v || 0);
+
+    const subtotal = items.reduce(
+      (s, it) => s + num(it.price) * num(it.qty || 1),
+      0
+    );
+
+    let discount = 0;
+
+    // ===== 首購 =====
+    if (ctx.firstPurchase && settings.first_purchase_rate) {
+      discount += Math.round(
+        subtotal * num(settings.first_purchase_rate) / 100
+      );
+    }
+
+    // ===== 運費 =====
+    const fee  = num(settings.shipping_fee);
+    const free = num(settings.free_shipping_threshold);
+
+    let shipping = 0;
+
+    if (fee) {
+      if (free && subtotal >= free) {
+        shipping = 0;
+      } else {
+        shipping = fee;
+      }
+    }
+
+    const total = subtotal - discount + shipping;
+
+    return {
+      subtotal,
+      discount,
+      shipping,
+      total
     };
+  };
+
 
   /* ===== cart storage ===== */
   function readCart() {
