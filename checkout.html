@@ -267,8 +267,7 @@ sumShipping.textContent=pricing.shipping===0?"免運":money(pricing.shipping);
 sumTotal.textContent=money(total);
 
 discountSummary.textContent=buildDiscountLabels(pricing).join(" ＋ ");
-}
-
+};
 
 /* ================= submit ================= */
 btnSubmitOrder.onclick = async () => {
