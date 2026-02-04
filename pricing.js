@@ -1,11 +1,13 @@
-// pricing.js — TEN YEARS ONE DAY (GLOBAL VERSION)
+// pricing.js — TEN YEARS ONE DAY (FINAL SYNC VERSION)
 
 (function () {
   const GAS_PRODUCTS_URL =
     "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
 
+  const CART_KEY = "ten_cart";
+  const TOKEN_KEY = "ten_token";
+
   let SETTINGS = null;
-  let LOADING = false;
 
   const truthy = (v) =>
     v === true ||
@@ -18,103 +20,105 @@
     return Number.isFinite(n) ? n : d;
   };
 
-  const money = (n) => `NT$ ${Math.round(Number(n || 0))}`;
+  const money = (n) => `NT$ ${Math.round(n || 0)}`;
 
-  async function getSettings() {
-    if (SETTINGS || LOADING) return SETTINGS || {};
-    LOADING = true;
+  function getCart() {
     try {
-      const res = await fetch(`${GAS_PRODUCTS_URL}?path=settings`, {
-        cache: "no-store",
-      });
-      const out = await res.json();
-      SETTINGS = out.ok && out.data ? out.data : out;
+      return JSON.parse(localStorage.getItem(CART_KEY) || "[]");
     } catch {
-      SETTINGS = {};
-    } finally {
-      LOADING = false;
+      return [];
     }
+  }
+
+  async function loadSettings() {
+    if (SETTINGS) return SETTINGS;
+    const r = await fetch(GAS_PRODUCTS_URL + "?path=settings");
+    SETTINGS = await r.json();
     return SETTINGS;
   }
 
-  function calcSubtotal(items) {
-    return items.reduce((s, it) => s + num(it.price) * num(it.qty), 0);
+  async function isFirstPurchase(memberId) {
+    if (!memberId) return false;
+    try {
+      const r = await fetch(
+        GAS_PRODUCTS_URL + "?path=my_orders&member_id=" + memberId
+      );
+      const j = await r.json();
+      return j.ok && (j.orders || []).length === 0;
+    } catch {
+      return false;
+    }
   }
-function calcShipping(subtotal, s) {
-  if (!s || s.shipping_enabled !== "true") return 0;
 
-  const fee = Number(s.shipping_fee || 0);
-  const th = Number(s.free_shipping_threshold || 0);
+  async function calcPricing() {
+    await loadSettings();
 
-  if (fee <= 0) return 0;
+    const cart = getCart();
+    let subtotal = 0;
 
-  // 只看滿額，不看會員
-  if (th > 0 && subtotal >= th) return 0;
+    cart.forEach((i) => (subtotal += num(i.price) * num(i.qty || 1)));
 
-  return fee;
-}
+    const shippingEnabled = truthy(SETTINGS.shipping_enabled);
+    const shippingFee = num(SETTINGS.shipping_fee);
+    const freeThreshold = num(SETTINGS.free_shipping_threshold);
 
+    let shipping = 0;
 
-  function calcDiscount(subtotal, s, ctx = {}) {
-    let bestRate = 1;
-    let label = "";
+    if (shippingEnabled) {
+      if (subtotal >= freeThreshold) shipping = 0;
+      else shipping = shippingFee;
+    }
 
-    if (ctx.firstPurchase && s.first_purchase_discount) {
-      const r = num(s.first_purchase_discount, 1);
-      if (r < bestRate) {
-        bestRate = r;
-        label = "首購優惠";
+    // === 首購 ===
+    let discount = 0;
+    let discountNote = "";
+
+    const token = localStorage.getItem(TOKEN_KEY);
+    let memberId = "";
+
+    if (token) {
+      try {
+        const r = await fetch(
+          GAS_PRODUCTS_URL + "?path=member_me&token=" + token
+        );
+        const j = await r.json();
+        memberId = j.memberId || "";
+      } catch {}
+    }
+
+    if (memberId && truthy(SETTINGS.first_purchase_enabled)) {
+      const first = await isFirstPurchase(memberId);
+      if (first) {
+        discount = Math.round(subtotal * num(SETTINGS.first_purchase_rate || 0) / 100);
+        discountNote = "首購折扣";
       }
     }
 
-    if (ctx.birthday && s.birthday_discount) {
-      const r = num(s.birthday_discount, 1);
-      if (r < bestRate) {
-        bestRate = r;
-        label = "生日優惠";
-      }
-    }
+    const total = subtotal - discount + shipping;
 
-    const discount = Math.round(subtotal * (1 - bestRate));
-    return { discount, label };
-  }
-function calcTotal(items, s, ctx = {}) {
-
-  const subtotal = calcSubtotal(items);   // 原始小計
-
-  const d = calcDiscount(subtotal, s, ctx);
-
-  // ===== 運費只看「原始小計」=====
-  const fee  = Number(s.shipping_fee || 0);
-  const free = Number(s.free_shipping_threshold || 0);
-
-  let shipping = 0;
-
-  if (fee > 0) {
-    shipping = fee;
-    if (free > 0 && subtotal >= free) {   // ← 注意：用 subtotal
-      shipping = 0;
-    }
+    return { subtotal, shipping, discount, total, discountNote };
   }
 
-  const total = subtotal - d.discount + shipping;
+  window.__TEN_PRICING__ = async function () {
+    const p = await calcPricing();
 
-  return {
-    subtotal,
-    discount: d.discount,
-    discountLabel: d.label,
-    shipping,
-    total,
+    document.querySelectorAll("[data-subtotal]").forEach(
+      (e) => (e.textContent = money(p.subtotal))
+    );
+    document.querySelectorAll("[data-shipping]").forEach(
+      (e) => (e.textContent = p.shipping ? money(p.shipping) : "免運")
+    );
+    document.querySelectorAll("[data-discount]").forEach(
+      (e) => (e.textContent = money(p.discount))
+    );
+    document.querySelectorAll("[data-total]").forEach(
+      (e) => (e.textContent = money(p.total))
+    );
+
+    return p;
   };
-}
 
-
-  // 🌍 expose to window
-  window.TEN_PRICING = {
-    getSettings,
-    calcTotal,
-    money,
-    truthy,
-    num,
-  };
+  document.addEventListener("DOMContentLoaded", () => {
+    window.__TEN_PRICING__();
+  });
 })();
