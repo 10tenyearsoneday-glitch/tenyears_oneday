@@ -37,6 +37,7 @@ const calcTotal =
       (s, it) => s + num(it.price) * num(it.qty || 1),
       0
     );
+window.TEN_PRICING = { calcTotal };
 
     let discount = 0;
 
