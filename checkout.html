@@ -45,6 +45,17 @@
 <script src="./include-shop.js"></script>
 <script src="./include-member.js"></script>
 
+<script>
+window.calcTotal = async function(cart, settings, ctx){
+  const p = await window.__TEN_PRICING__();
+  return {
+    subtotal: p.subtotal,
+    discount: p.discount,
+    shipping: p.shipping,
+    total: p.total
+  };
+};
+</script>
 
   <script>
 (function waitMember(){
