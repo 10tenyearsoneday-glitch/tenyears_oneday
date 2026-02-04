@@ -151,6 +151,11 @@ window.calcTotal = function(cart, settings, ctx){
 
   <div class="ck-card">
     <h3>訂單摘要</h3>
+    <input id="couponInput" placeholder="輸入優惠碼"
+ class="input">
+
+<button id="applyCoupon" class="secondary">套用</button>
+
     <div class="ck-summary">
     <section class="pt-4 border-t text-sm space-y-2">
       <div class="flex justify-between">
@@ -271,6 +276,12 @@ sumTotal.textContent=money(total);
 
 discountSummary.textContent=buildDiscountLabels(pricing).join(" ＋ ");
 }
+document.getElementById("applyCoupon").onclick=()=>{
+ const c=document.getElementById("couponInput").value.trim();
+ if(!c) return;
+ localStorage.setItem("ten_applied_coupon_v1",c);
+ render();
+};
 
 /* ================= submit ================= */
 btnSubmitOrder.onclick = async () => {
