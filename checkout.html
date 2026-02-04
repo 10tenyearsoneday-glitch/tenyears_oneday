@@ -190,15 +190,7 @@ const store = document.getElementById("store");
    const storeAddr = document.getElementById("storeAddr");
 const toast = document.getElementById("toast");
    const btnSubmitOrder = document.getElementById("btnSubmitOrder");
-function waitPricing(){
-  if(!window.TEN_PRICING){
-    return setTimeout(waitPricing,50);
-  }
 
-  window.calcTotal = TEN_PRICING.calcTotal;
-  window.money = TEN_PRICING.money;
-}
-waitPricing();
 
 const { buildDiscountLabels } = window.TEN_DISCOUNT_LABEL;
 
