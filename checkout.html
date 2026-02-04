@@ -44,20 +44,17 @@
 <script src="./discount-label.js"></script>
 <script src="./include-shop.js"></script>
 <script src="./include-member.js"></script>
-
 <script>
 window.money = n => `NT$ ${Math.round(n||0)}`;
 
-window.calcTotal = async function(cart, settings, ctx){
-  const p = await window.__TEN_PRICING__();
-  return {
-    subtotal: p.subtotal,
-    discount: p.discount,
-    shipping: p.shipping,
-    total: p.total
-  };
+window.calcTotal = function(cart, settings, ctx){
+  if(window.TEN_PRICING && TEN_PRICING.calcTotal){
+    return TEN_PRICING.calcTotal(cart, settings, ctx);
+  }
+  throw new Error("TEN_PRICING not ready");
 };
 </script>
+
 
 
   <script>
@@ -258,7 +255,7 @@ firstPurchase:isFirstPurchase(),
 birthday:isBirthday(),
 coupon: coupon?{...coupon,code:couponCode}:null
 };
-const pricing = await calcTotal(cart, settings, ctx);
+const pricing = calcTotal(cart, settings, ctx);
 
 
 // ⛔ 強制取消會員免運（只看滿額）
