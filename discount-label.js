@@ -1,18 +1,19 @@
-// discount-label.js — GLOBAL
+// discount-label.js FINAL SAFE
 
-(function () {
-  if (!window.TEN_PRICING) {
-    console.error("[TEN] pricing not loaded before discount-label");
+window.TEN_DISCOUNT_LABEL = {
+  buildDiscountLabels(pricing){
+    if(!pricing) return;
+    document.querySelectorAll("[data-discount-note]").forEach(e=>{
+      e.textContent = pricing.discountNote || "";
+    });
+  }
+};
+
+(async()=>{
+  if(!window.__TEN_PRICING__){
+    console.warn("[TEN] pricing not loaded before discount-label");
     return;
   }
-
-  function buildDiscountLabels(info) {
-    const out = [];
-    if (info.discountLabel) out.push(info.discountLabel);
-    return out;
-  }
-
-  window.TEN_DISCOUNT_LABEL = {
-    buildDiscountLabels,
-  };
+  const p = await window.__TEN_PRICING__();
+  window.TEN_DISCOUNT_LABEL.buildDiscountLabels(p);
 })();
