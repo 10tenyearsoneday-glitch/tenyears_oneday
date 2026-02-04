@@ -41,12 +41,20 @@ window.TEN_PRICING = { calcTotal };
 
     let discount = 0;
 
-    // ===== 首購 =====
-    if (ctx.firstPurchase && settings.first_purchase_rate) {
-      discount += Math.round(
-        subtotal * num(settings.first_purchase_rate) / 100
-      );
-    }
+   // ===== 首購 =====
+if (ctx.firstPurchase && settings.first_purchase_discount) {
+  discount += Math.round(
+    subtotal * (1 - num(settings.first_purchase_discount))
+  );
+}
+
+// ===== 生日 =====
+if (ctx.birthday && settings.birthday_discount) {
+  discount += Math.round(
+    subtotal * (1 - num(settings.birthday_discount))
+  );
+}
+
 
     // ===== 運費 =====
     const fee  = num(settings.shipping_fee);
