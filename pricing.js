@@ -79,10 +79,12 @@ function calcShipping(subtotal, s) {
     return { discount, label };
   }
 function calcTotal(items, s, ctx = {}) {
-  const subtotal = calcSubtotal(items);
+
+  const subtotal = calcSubtotal(items);   // 原始小計
+
   const d = calcDiscount(subtotal, s, ctx);
 
-  // ===== 運費（只看滿額）=====
+  // ===== 運費只看「原始小計」=====
   const fee  = Number(s.shipping_fee || 0);
   const free = Number(s.free_shipping_threshold || 0);
 
@@ -90,7 +92,7 @@ function calcTotal(items, s, ctx = {}) {
 
   if (fee > 0) {
     shipping = fee;
-    if (free > 0 && subtotal >= free) {
+    if (free > 0 && subtotal >= free) {   // ← 注意：用 subtotal
       shipping = 0;
     }
   }
