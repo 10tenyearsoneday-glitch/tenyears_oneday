@@ -246,11 +246,20 @@ SETTINGS=o.data||o;
 return SETTINGS;
 }
 
-async function validateCoupon(code,subtotal){
-const r=await fetch(`${window.GAS_PRODUCTS_URL}?path=coupon_validate&code=${code}&subtotal=${subtotal}`);
-const o=await r.json();
-return o.ok?o.data:null;
+async function validateCoupon(code, subtotal){
+  const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=coupon_validate&code=${encodeURIComponent(code)}&subtotal=${subtotal}`);
+  const o = await r.json();
+
+  console.log("COUPON API >>>", o);
+
+  if(!o.ok){
+    toast.textContent = o.message || "優惠碼無效或未達使用門檻";
+    return null;
+  }
+
+  return o.data;
 }
+
 
 /* ================= render ================= */
 const sumSubtotal = document.getElementById("sumSubtotal");
