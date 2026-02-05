@@ -582,34 +582,6 @@ syncShip();
 
 })();
 
-(function(){
-  const btn = document.getElementById("btnSubmitOrder");
-  const pop = document.getElementById("ckConfirm");
-  const yes = document.getElementById("ckYes");
-  const no = document.getElementById("ckNo");
-  const txt = document.getElementById("ckConfirmText");
-
-  if(!btn||!pop) return;
-
-  let confirmed = false;
-
-  btn.addEventListener("click",(e)=>{
-    if(confirmed) return;     // 已確認就真的送
-    e.preventDefault();
-    txt.textContent = "請確認資料無誤後再付款";
-    pop.classList.remove("hidden");
-  });
-
-  yes.addEventListener("click",()=>{
-    confirmed = true;
-    pop.classList.add("hidden");
-    btn.click(); // 第二次才會進送單流程
-  });
-
-  no.addEventListener("click",()=>{
-    pop.classList.add("hidden");
-  });
-})();
 
 </script>
 <script>
