@@ -227,7 +227,21 @@ if(!m||!d) return false;
 const n=new Date();
 return n.getMonth()+1==m && n.getDate()==d;
 };
-const GAS_URL = window.GAS_PRODUCTS_URL;
+function waitGAS(cb){
+  if(window.GAS_PRODUCTS_URL){
+    cb(window.GAS_PRODUCTS_URL);
+  }else{
+    setTimeout(()=>waitGAS(cb),50);
+  }
+}
+
+let GAS_URL = null;
+
+waitGAS(url=>{
+  GAS_URL = url;
+  render();   // ⭐ 等 GAS 有了才 render
+});
+
 let SETTINGS=null;
 async function getSettings(){
 if(SETTINGS) return SETTINGS;
