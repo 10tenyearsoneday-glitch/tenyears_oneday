@@ -452,52 +452,78 @@ function submitOrder(orderData){
   const box = document.getElementById("ckItems");
   if(!btn || !box) return;
 
-  // 從購物車抓商品（沿用你現有 cart）
+  const CART_KEY = "ten_cart";
+
   function readCart(){
-    try{ return JSON.parse(localStorage.getItem("ten_cart")||"[]"); }
+    try{ return JSON.parse(localStorage.getItem(CART_KEY)||"[]"); }
     catch{ return []; }
   }
 
-  function render(){
+  function saveCart(cart){
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  }
+
+  function changeQty(i, delta){
     const cart = readCart();
+    if(!cart[i]) return;
+
+    cart[i].qty = Math.max(1, Number(cart[i].qty||1) + delta);
+    saveCart(cart);
+    renderItems();
+
+    // 🔥 重新算總金額（用你原本 checkout render）
+    window.render && window.render();
+  }
+
+  function renderItems(){
+    const cart = readCart();
+
     if(!cart.length){
       box.innerHTML = "<div style='opacity:.6'>（無商品）</div>";
       return;
     }
-    box.innerHTML = cart.map(it=>`
-      <div style="display:flex;justify-content:space-between;font-size:.9rem;margin:4px 0">
-        <span>・${it.title} × ${it.qty}</span>
-        <span>NT$ ${it.price * it.qty}</span>
+
+    box.innerHTML = cart.map((it,i)=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.9rem;margin:6px 0">
+
+        <span style="flex:1">・${it.title}</span>
+
+        <div style="display:flex;align-items:center;gap:6px">
+
+          <button data-i="${i}" data-d="-1"
+            style="width:26px;height:26px;border:1px solid #ccc;border-radius:6px">−</button>
+
+          <strong>${it.qty}</strong>
+
+          <button data-i="${i}" data-d="1"
+            style="width:26px;height:26px;border:1px solid #ccc;border-radius:6px">＋</button>
+
+        </div>
+
+        <span style="width:70px;text-align:right">
+          NT$ ${it.price * it.qty}
+        </span>
+
       </div>
     `).join("");
+
+    // bind + -
+    box.querySelectorAll("button").forEach(b=>{
+      b.onclick = ()=>{
+        changeQty(Number(b.dataset.i), Number(b.dataset.d));
+      };
+    });
   }
 
   btn.addEventListener("click",()=>{
     const open = box.style.display==="none";
     box.style.display = open?"block":"none";
     btn.textContent = open?"▼ 收合商品明細":"▶ 查看商品明細";
-    if(open) render();
+    if(open) renderItems();
   });
+
 })();
-</script>
 
-<script>
-(function(){
-  const btn = document.getElementById("btnSubmitOrder");
-  const mask = document.getElementById("ckLoading");
-  if(!btn || !mask) return;
-
-  let locked=false;
-
-  btn.addEventListener("click",(e)=>{
-    if(locked){
-      e.preventDefault();
-      return;
-    }
-    locked=true;
-    mask.classList.remove("hidden");
-  });
-})();
 </script>
 <script>
 (function(){
