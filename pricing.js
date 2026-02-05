@@ -56,44 +56,54 @@ function calcShipping(subtotal, s) {
 function calcDiscount(subtotal, s, ctx = {}) {
 
   let bestRate = 1;
-  let labels = [];
+  let rateLabel = "";
   let amountOff = 0;
+  let labels = [];
 
-  // 首購
+  // ===== 首購 =====
   if (ctx.firstPurchase && s.first_purchase_discount) {
     const r = num(s.first_purchase_discount, 1);
-    if (r < bestRate) bestRate = r;
-    labels.push("首購優惠");
+    if (r < bestRate) {
+      bestRate = r;
+      rateLabel = "首購優惠";
+    }
   }
 
-  // 生日
+  // ===== 生日 =====
   if (ctx.birthday && s.birthday_discount) {
     const r = num(s.birthday_discount, 1);
-    if (r < bestRate) bestRate = r;
-    labels.push("生日優惠");
+    if (r < bestRate) {
+      bestRate = r;
+      rateLabel = "生日優惠";
+    }
   }
 
-  // 優惠碼
+  // ===== coupon =====
   if (ctx.coupon) {
 
-    // 固定金額
+    // 金額型 coupon → 永遠疊加
     if (ctx.coupon.type === "amount") {
       amountOff += Number(ctx.coupon.amount || 0);
       labels.push(ctx.coupon.title || "優惠碼");
     }
 
-    // 折數
+    // 折數型 coupon → 只參與 bestRate 比較
     if (ctx.coupon.type !== "amount") {
       const r = num(ctx.coupon.rate, 1);
-      if (r < bestRate) bestRate = r;
-      labels.push(ctx.coupon.title || "優惠碼");
+      if (r < bestRate) {
+        bestRate = r;
+        rateLabel = ctx.coupon.title || "優惠碼";
+      }
     }
   }
 
-  // 先算比例折
+  // ===== 比例折扣（只算一次）=====
   let discount = Math.round(subtotal * (1 - bestRate));
 
-  // 再扣固定金額
+  // 記錄真正生效的折數來源
+  if (bestRate < 1 && rateLabel) labels.unshift(rateLabel);
+
+  // ===== 再扣固定金額 =====
   discount += amountOff;
 
   // 不可超過小計
@@ -104,6 +114,7 @@ function calcDiscount(subtotal, s, ctx = {}) {
     label: labels.join("＋")
   };
 }
+
 function calcTotal(items, s, ctx = {}) {
 
   const subtotal = calcSubtotal(items);   // 原始小計
