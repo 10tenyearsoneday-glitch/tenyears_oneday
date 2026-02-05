@@ -55,29 +55,42 @@ function calcShipping(subtotal, s) {
 }
 
 
-  function calcDiscount(subtotal, s, ctx = {}) {
-    let bestRate = 1;
-    let label = "";
+function calcDiscount(subtotal, s, ctx = {}) {
+  let bestRate = 1;
+  let label = "";
 
-    if (ctx.firstPurchase && s.first_purchase_discount) {
-      const r = num(s.first_purchase_discount, 1);
-      if (r < bestRate) {
-        bestRate = r;
-        label = "首購優惠";
-      }
+  // ===== 首購 =====
+  if (ctx.firstPurchase && s.first_purchase_discount) {
+    const r = num(s.first_purchase_discount, 1);
+    if (r < bestRate) {
+      bestRate = r;
+      label = "首購優惠";
     }
-
-    if (ctx.birthday && s.birthday_discount) {
-      const r = num(s.birthday_discount, 1);
-      if (r < bestRate) {
-        bestRate = r;
-        label = "生日優惠";
-      }
-    }
-
-    const discount = Math.round(subtotal * (1 - bestRate));
-    return { discount, label };
   }
+
+  // ===== 生日 =====
+  if (ctx.birthday && s.birthday_discount) {
+    const r = num(s.birthday_discount, 1);
+    if (r < bestRate) {
+      bestRate = r;
+      label = "生日優惠";
+    }
+  }
+
+  // ===== 優惠碼（最高優先）🔥 =====
+  if (ctx.coupon && ctx.coupon.rate) {
+    const r = num(ctx.coupon.rate, 1);
+    if (r < bestRate) {
+      bestRate = r;
+      label = ctx.coupon.title || "優惠碼";
+    }
+  }
+
+  const discount = Math.round(subtotal * (1 - bestRate));
+
+  return { discount, label };
+}
+
 function calcTotal(items, s, ctx = {}) {
 
   const subtotal = calcSubtotal(items);   // 原始小計
