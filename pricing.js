@@ -53,86 +53,55 @@ function calcShipping(subtotal, s) {
 
   return fee;
 }
-
-
 function calcDiscount(subtotal, s, ctx = {}) {
+
   let bestRate = 1;
-  let label = "";
+  let labels = [];
+  let amountOff = 0;
 
   // ===== 首購 =====
   if (ctx.firstPurchase && s.first_purchase_discount) {
     const r = num(s.first_purchase_discount, 1);
-    if (r < bestRate) {
-      bestRate = r;
-      label = "首購優惠";
-    }
+    if (r < bestRate) bestRate = r;
+    labels.push("首購優惠");
   }
 
   // ===== 生日 =====
   if (ctx.birthday && s.birthday_discount) {
     const r = num(s.birthday_discount, 1);
-    if (r < bestRate) {
-      bestRate = r;
-      label = "生日優惠";
+    if (r < bestRate) bestRate = r;
+    labels.push("生日優惠");
+  }
+
+  // ===== 優惠碼 =====
+  if(ctx.coupon){
+
+    if(ctx.coupon.type==="amount"){
+      amountOff += Number(ctx.coupon.amount||0);
+      labels.push(ctx.coupon.title||"優惠碼");
+    }
+
+    if(ctx.coupon.type!=="amount"){
+      const r = num(ctx.coupon.rate,1);
+      if(r < bestRate) bestRate = r;
+      labels.push(ctx.coupon.title||"優惠碼");
     }
   }
 
-  // ===== 優惠碼（最高優先）🔥 =====
-if(ctx.coupon){
+  // ===== 比例折扣 =====
+  let discount = Math.round(subtotal * (1 - bestRate));
 
-  if(ctx.coupon.type==="amount"){
-    return {
-      discount: Math.min(ctx.coupon.amount, subtotal),
-      label: ctx.coupon.title || "優惠碼"
-    };
-  }
+  // ===== 固定金額再扣 =====
+  discount += amountOff;
 
-  const r = num(ctx.coupon.rate,1);
-  if(r<bestRate){
-    bestRate=r;
-    label=ctx.coupon.title||"優惠碼";
-  }
-}
-const discount = Math.round(subtotal * (1 - bestRate));
-
-if(!label && bestRate < 1){
-  label = "優惠碼";
-}
-
-return { discount, label };
-
-}
-
-function calcTotal(items, s, ctx = {}) {
-
-  const subtotal = calcSubtotal(items);   // 原始小計
-
-  const d = calcDiscount(subtotal, s, ctx);
-
-  // ===== 運費只看「原始小計」=====
-  const fee  = Number(s.shipping_fee || 0);
-  const free = Number(s.free_shipping_threshold || 0);
-
-  let shipping = 0;
-
-  if (fee > 0) {
-    shipping = fee;
-    if (free > 0 && subtotal >= free) {   // ← 注意：用 subtotal
-      shipping = 0;
-    }
-  }
-
-  const total = subtotal - d.discount + shipping;
+  // 不允許超過小計
+  discount = Math.min(discount, subtotal);
 
   return {
-    subtotal,
-    discount: d.discount,
-    discountLabel: d.label,
-    shipping,
-    total,
+    discount,
+    label: labels.join("＋")
   };
 }
-
 
   // 🌍 expose to window
   window.TEN_PRICING = {
