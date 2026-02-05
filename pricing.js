@@ -78,17 +78,29 @@ function calcDiscount(subtotal, s, ctx = {}) {
   }
 
   // ===== 優惠碼（最高優先）🔥 =====
-  if (ctx.coupon && ctx.coupon.rate) {
-    const r = num(ctx.coupon.rate, 1);
-    if (r < bestRate) {
-      bestRate = r;
-      label = ctx.coupon.title || "優惠碼";
-    }
+if(ctx.coupon){
+
+  if(ctx.coupon.type==="amount"){
+    return {
+      discount: Math.min(ctx.coupon.amount, subtotal),
+      label: ctx.coupon.title || "優惠碼"
+    };
   }
 
-  const discount = Math.round(subtotal * (1 - bestRate));
+  const r = num(ctx.coupon.rate,1);
+  if(r<bestRate){
+    bestRate=r;
+    label=ctx.coupon.title||"優惠碼";
+  }
+}
+const discount = Math.round(subtotal * (1 - bestRate));
 
-  return { discount, label };
+if(!label && bestRate < 1){
+  label = "優惠碼";
+}
+
+return { discount, label };
+
 }
 
 function calcTotal(items, s, ctx = {}) {
