@@ -227,7 +227,7 @@ if(!m||!d) return false;
 const n=new Date();
 return n.getMonth()+1==m && n.getDate()==d;
 };
-
+const GAS_URL = window.GAS_PRODUCTS_URL;
 let SETTINGS=null;
 async function getSettings(){
 if(SETTINGS) return SETTINGS;
