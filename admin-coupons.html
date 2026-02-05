@@ -391,19 +391,25 @@ function gasPost(path, method, body, id=""){
     });
   }
 
-  async function loadCoupons(){
-    toast(toastCoupons, "載入優惠碼中…");
-    try{
-      const res = await fetch(`${GAS_URL}?path=coupons`, { cache: "no-store" });
-      const data = await res.json().catch(()=> ([]));
-      COUPONS = Array.isArray(data) ? data : [];
-      renderCoupons();
-      toast(toastCoupons, `載入完成：${COUPONS.length} 組`);
-    }catch(e){
-      console.error(e);
-      toast(toastCoupons, "載入失敗（請看 Console / 檢查 GAS）", false);
-    }
-  }
+function loadCoupons(){
+  toast(toastCoupons,"載入優惠碼中…");
+
+  const cb = "__cbCoupons" + Date.now();
+
+  window[cb] = function(res){
+    delete window[cb];
+    document.body.removeChild(s);
+
+    COUPONS = Array.isArray(res) ? res : [];
+    renderCoupons();
+    toast(toastCoupons,"載入完成："+COUPONS.length+" 組");
+  };
+
+  const s = document.createElement("script");
+  s.src = `${GAS_URL}?path=coupons&callback=${cb}`;
+  document.body.appendChild(s);
+}
+
 
   function openModal(mode, item){
     modal.classList.add("open");
