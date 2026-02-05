@@ -463,28 +463,40 @@ function submitOrder(orderData){
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
   }
 
+  function removeItem(i){
+    const cart = readCart();
+    cart.splice(i,1);
+    saveCart(cart);
+    renderItems();
+    window.render && window.render(); // 重算金額
+  }
+
   function changeQty(i, delta){
     const cart = readCart();
     if(!cart[i]) return;
 
-    cart[i].qty = Math.max(1, Number(cart[i].qty||1) + delta);
+    cart[i].qty = Number(cart[i].qty||1) + delta;
+
+    // ⭐ qty <= 0 自動移除
+    if(cart[i].qty <= 0){
+      cart.splice(i,1);
+    }
+
     saveCart(cart);
     renderItems();
-
-    // 🔥 重新算總金額（用你原本 checkout render）
-    window.render && window.render();
+    window.render && window.render(); // 重算金額
   }
 
   function renderItems(){
     const cart = readCart();
 
     if(!cart.length){
-      box.innerHTML = "<div style='opacity:.6'>（無商品）</div>";
+      box.innerHTML = "<div style='opacity:.6'>（購物車已清空）</div>";
       return;
     }
 
     box.innerHTML = cart.map((it,i)=>`
-      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.9rem;margin:6px 0">
+      <div style="display:flex;align-items:center;gap:8px;font-size:.9rem;margin:6px 0">
 
         <span style="flex:1">・${it.title}</span>
 
@@ -504,13 +516,27 @@ function submitOrder(orderData){
           NT$ ${it.price * it.qty}
         </span>
 
+        <!-- 🗑 刪除 -->
+        <button data-del="${i}"
+          title="刪除"
+          style="border:none;background:none;font-size:16px;opacity:.6">
+          🗑
+        </button>
+
       </div>
     `).join("");
 
     // bind + -
-    box.querySelectorAll("button").forEach(b=>{
+    box.querySelectorAll("button[data-d]").forEach(b=>{
       b.onclick = ()=>{
         changeQty(Number(b.dataset.i), Number(b.dataset.d));
+      };
+    });
+
+    // bind delete
+    box.querySelectorAll("button[data-del]").forEach(b=>{
+      b.onclick = ()=>{
+        removeItem(Number(b.dataset.del));
       };
     });
   }
@@ -523,7 +549,6 @@ function submitOrder(orderData){
   });
 
 })();
-
 </script>
 <script>
 (function(){
