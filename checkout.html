@@ -318,6 +318,15 @@ if(settings.free_shipping_threshold && pricing.shipping > 0){
 }
 
 }
+   // ⭐ 初始載入時計算一次金額
+(async ()=>{
+  try{
+    await render();
+  }catch(e){
+    console.error("initial render failed", e);
+  }
+})();
+
 document.getElementById("applyCoupon").onclick = async () => {
   const c = document.getElementById("couponInput").value.trim();
   if (!c) return;
