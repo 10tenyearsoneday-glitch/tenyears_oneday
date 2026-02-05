@@ -309,12 +309,18 @@ if(settings.free_shipping_threshold && pricing.shipping > 0){
 }
 
 }
-document.getElementById("applyCoupon").onclick=()=>{
- const c=document.getElementById("couponInput").value.trim();
- if(!c) return;
- localStorage.setItem("ten_applied_coupon_v1",c);
+document.getElementById("applyCoupon").onclick = async () => {
+  const c = document.getElementById("couponInput").value.trim();
+  if (!c) return;
 
+  localStorage.setItem("ten_applied_coupon_v1", c);
+
+  // 立刻重算
+  await render();
+
+  toast.textContent = "已套用優惠碼";
 };
+
 
 /* ================= submit ================= */
 btnSubmitOrder.onclick = async () => {
