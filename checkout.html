@@ -227,20 +227,7 @@ if(!m||!d) return false;
 const n=new Date();
 return n.getMonth()+1==m && n.getDate()==d;
 };
-function waitGAS(cb){
-  if(window.GAS_PRODUCTS_URL){
-    cb(window.GAS_PRODUCTS_URL);
-  }else{
-    setTimeout(()=>waitGAS(cb),50);
-  }
-}
 
-let GAS_URL = null;
-
-waitGAS(url=>{
-  GAS_URL = url;
-  render();   // ⭐ 等 GAS 有了才 render
-});
 
 let SETTINGS=null;
 async function getSettings(){
@@ -535,7 +522,8 @@ function openEcpayStore(){
 <input name="LogisticsType" value="CVS">
 <input name="LogisticsSubType" value="${sub}">
 <input name="IsCollection" value="N">
-<input name="ServerReplyURL" value="你的GAS_URL">
+<input name="ServerReplyURL"
+ value="https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec?path=store_reply">
 `;
 
   document.body.appendChild(f);
