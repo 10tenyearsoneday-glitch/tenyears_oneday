@@ -491,12 +491,12 @@ function loadCoupons(){
       }
 
       if(editingCode === null){
-        await gasPost("coupons", "POST", payload);
+        await gasPost("admin_coupon_upsert", "", payload);
         closeModal();
         await loadCoupons();
         toast(toastCoupons, "新增成功 ✅");
       }else{
-        await gasPost("coupons", "PUT", payload, editingCode);
+        await gasPost("admin_coupon_upsert", "", payload);
         closeModal();
         await loadCoupons();
         toast(toastCoupons, "儲存成功 ✅");
