@@ -68,16 +68,6 @@ function calcDiscount(subtotal, s, ctx = {}) {
       rateLabel = "首購優惠";
     }
   }
-
-  // ===== 生日 =====
-  if (ctx.birthday && s.birthday_discount) {
-    const r = num(s.birthday_discount, 1);
-    if (r < bestRate) {
-      bestRate = r;
-      rateLabel = "生日優惠";
-    }
-  }
-
   // ===== coupon =====
   if (ctx.coupon) {
 
