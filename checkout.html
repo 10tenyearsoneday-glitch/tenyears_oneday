@@ -293,6 +293,21 @@ sumShipping.textContent=pricing.shipping===0?"免運":money(pricing.shipping);
 sumTotal.textContent=money(total);
 
 discountSummary.textContent=buildDiscountLabels(pricing).join(" ＋ ");
+  // ===== 免運提示 =====
+const tip = document.getElementById("ckShipTip");
+
+if(settings.free_shipping_threshold && pricing.shipping > 0){
+  const remain = settings.free_shipping_threshold - pricing.subtotal;
+
+  if(remain > 0){
+    tip.textContent = `再 ${money(remain)} 即可免運`;
+  }else{
+    tip.textContent = "";
+  }
+}else{
+  tip.textContent = pricing.shipping === 0 ? "🎉 已達免運門檻" : "";
+}
+
 }
 document.getElementById("applyCoupon").onclick=()=>{
  const c=document.getElementById("couponInput").value.trim();
