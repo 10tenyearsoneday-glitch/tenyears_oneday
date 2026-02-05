@@ -322,13 +322,13 @@ document.getElementById("applyCoupon").onclick = async () => {
   const c = document.getElementById("couponInput").value.trim();
   if (!c) return;
 
-  localStorage.setItem("ten_applied_coupon_v1", c);
+  localStorage.setItem(COUPON_KEY, c);
 
-  // 立刻重算
   await render();
 
-  toast.textContent = "已套用優惠碼";
+  toast.textContent = "優惠碼已嘗試套用（請看金額變化）";
 };
+
 
 
 /* ================= submit ================= */
