@@ -240,14 +240,14 @@ return n.getMonth()+1==m && n.getDate()==d;
 let SETTINGS=null;
 async function getSettings(){
 if(SETTINGS) return SETTINGS;
-const r=await fetch(`${GAS_URL}?path=settings`);
+const r=await fetch(`${window.GAS_PRODUCTS_URL}?path=settings`);
 const o=await r.json();
 SETTINGS=o.data||o;
 return SETTINGS;
 }
 
 async function validateCoupon(code,subtotal){
-const r=await fetch(`${GAS_URL}?path=coupon_validate&code=${code}&subtotal=${subtotal}`);
+const r=await fetch(`${window.GAS_PRODUCTS_URL}?path=coupon_validate&code=${code}&subtotal=${subtotal}`);
 const o=await r.json();
 return o.ok?o.data:null;
 }
@@ -373,7 +373,7 @@ if(pay==="cod"){
 function postOrder(payload){
 const f=document.createElement("form");
 f.method="POST";
-f.action=`${GAS_URL}?path=orders`;
+f.action=`${window.GAS_PRODUCTS_URL}?path=orders`;
 const i=document.createElement("input");
 i.type="hidden";
 i.name="data";
