@@ -298,10 +298,12 @@ const couponCode =
 const coupon=couponCode?await validateCoupon(couponCode,subtotal):null;
 
 const ctx={
-firstPurchase:isFirstPurchase(),
-birthday:isBirthday(),
-coupon: coupon?{...coupon,code:couponCode}:null
+  firstPurchase:isFirstPurchase(),
+  birthday:false,   // ⭐ 前端生日一定關掉
+  coupon: coupon ? {...coupon, code: couponCode} : null
 };
+
+
 const pricing = calcTotal(cart, settings, ctx);
 console.log("SETTINGS >>>", settings);
 console.log("CTX >>>", ctx);
@@ -385,10 +387,11 @@ const couponCode =
 const coupon=couponCode?await validateCoupon(couponCode,subtotal):null;
 
 const ctx={
-firstPurchase:isFirstPurchase(),
-birthday:isBirthday(),
-coupon: coupon?{...coupon,code:couponCode}:null
+  firstPurchase:isFirstPurchase(),
+  birthday:false,   // ⭐ 這裡也一定要 false
+  coupon: coupon ? {...coupon,code:couponCode} : null
 };
+
 
 const pricing=calcTotal(cart,settings,ctx);
 
