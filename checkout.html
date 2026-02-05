@@ -159,10 +159,23 @@ window.calcTotal = function(cart, settings, ctx){
 
   <div class="ck-card">
     <h3>訂單摘要</h3>
-    <input id="couponInput" placeholder="輸入優惠碼"
- class="input">
 
-<button id="applyCoupon" class="secondary">套用</button>
+<div style="display:flex;gap:8px;margin-top:6px">
+  <input id="couponInput"
+    placeholder="輸入優惠碼"
+    class="input"
+    style="flex:1;text-transform:uppercase">
+
+  <button id="applyCoupon"
+    class="secondary"
+    style="white-space:nowrap">
+    套用
+  </button>
+</div>
+
+<div id="couponToast"
+ style="font-size:.85rem;margin-top:4px;opacity:.8"></div>
+
 
     <div class="ck-summary">
     <section class="pt-4 border-t text-sm space-y-2">
@@ -328,18 +341,23 @@ if(settings.free_shipping_threshold && pricing.shipping > 0){
 })();
 
 document.getElementById("applyCoupon").onclick = async () => {
-  const c = document.getElementById("couponInput").value.trim();
-  if (!c) return;
+
+  const input = document.getElementById("couponInput");
+  const toast = document.getElementById("couponToast");
+
+  const c = input.value.trim().toUpperCase();
+
+  if(!c){
+    toast.textContent = "請輸入優惠碼";
+    return;
+  }
 
   localStorage.setItem(COUPON_KEY, c);
 
   await render();
 
-  toast.textContent = "優惠碼已嘗試套用（請看金額變化）";
+  toast.textContent = "已嘗試套用優惠碼";
 };
-
-
-
 /* ================= submit ================= */
 btnSubmitOrder.onclick = async () => {
 const ship=document.querySelector('input[name="ship"]:checked').value;
