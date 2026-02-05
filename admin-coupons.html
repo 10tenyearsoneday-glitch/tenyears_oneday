@@ -278,23 +278,30 @@ logout.onclick=()=>{
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  async function gasPost(path, method, body, id=""){
-    const url =
+function gasPost(path, method, body, id=""){
+  return new Promise(resolve=>{
+    const f = document.createElement("form");
+    f.method = "POST";
+    f.action =
       `${GAS_URL}?path=${encodeURIComponent(path)}` +
       `&key=${encodeURIComponent(ADMIN_KEY)}` +
       (method ? `&method=${encodeURIComponent(method)}` : "") +
       (id ? `&id=${encodeURIComponent(id)}` : "");
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" }, // ✅ 避免 preflight
-      body: JSON.stringify(body || {})
-    });
+    const i = document.createElement("input");
+    i.type = "hidden";
+    i.name = "data";
+    i.value = JSON.stringify(body || {});
 
-    const out = await res.json().catch(()=> ({}));
-    if (!res.ok || out?.error) throw new Error(out?.error || "GAS_WRITE_FAILED");
-    return out;
-  }
+    f.appendChild(i);
+    document.body.appendChild(f);
+    f.submit();
+
+    // GAS 會整頁跳走，我們只要寫入即可
+    resolve({ok:true});
+  });
+}
+
 
   async function loadSettings(){
     toast(toastSettings, "載入設定中…");
