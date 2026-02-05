@@ -56,23 +56,21 @@
  }
 })();
 </script>
-<button id="logout">登出</button>
-
+   <button class="ck-btn primary"id="logout">登出</button>
 <script>
 logout.onclick=()=>{
  localStorage.clear();
  location.href="admin-login.html";
 };
 </script>
-
-<h1 class="text-xl font-black mb-4">訂單後台</h1>
   <div class="admin-wrap">
   <div class="admin-top">
-      <div class="admin-title">後台管理（優惠碼 / 運費設定）</div>
+      <div class="admin-title">後台管理（訂單）</div>
       <div class="hint">這頁會直接寫入 Google Sheet（需要 ADMIN_KEY）。</div>
    
     <div class="admin-actions">
       <a class="btn2 secondary" href="admin.html">← 回商品後台</a>
+      <a class="btn2 secondary" href="admin-coupons.html">優惠碼 / 運費設定</a>
       <button class="btn2 secondary" id="btnReload" type="button">重新載入</button>
        </div>
      </div>
