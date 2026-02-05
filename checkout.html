@@ -292,7 +292,9 @@ const pay=document.querySelector('input[name="pay"]:checked').value;
 const settings=await getSettings();
 const subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
 
-const couponCode=localStorage.getItem(COUPON_KEY);
+const couponCode =
+  document.getElementById("couponInput")?.value?.trim().toUpperCase() || "";
+
 const coupon=couponCode?await validateCoupon(couponCode,subtotal):null;
 
 const ctx={
@@ -351,9 +353,6 @@ document.getElementById("applyCoupon").onclick = async () => {
     toast.textContent = "請輸入優惠碼";
     return;
   }
-
-  localStorage.setItem(COUPON_KEY, c);
-
   await render();
 
   toast.textContent = "已嘗試套用優惠碼";
@@ -380,7 +379,9 @@ const cart=readCart();
 const settings=await getSettings();
 const subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
 
-const couponCode=localStorage.getItem(COUPON_KEY);
+const couponCode =
+  document.getElementById("couponInput")?.value?.trim().toUpperCase() || "";
+
 const coupon=couponCode?await validateCoupon(couponCode,subtotal):null;
 
 const ctx={
