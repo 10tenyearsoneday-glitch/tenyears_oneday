@@ -436,20 +436,33 @@ if(pay==="cod"){
 
   // ⭐ 不用 fetch、不用等 JSON
   // ⭐ 直接 form POST 到 GAS
+const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=orders`, {
+  method: "POST",
+  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  body: "data=" + encodeURIComponent(JSON.stringify(payload))
+});
+
+const res = await r.json();
+
+if(res.gateway==="ECPAY"){
 
   const f = document.createElement("form");
   f.method = "POST";
-  f.action = `${window.GAS_PRODUCTS_URL}?path=orders`;
+  f.action = res.action;
 
-  const i = document.createElement("input");
-  i.type = "hidden";
-  i.name = "data";
-  i.value = JSON.stringify(payload);
+  Object.entries(res.params).forEach(([k,v])=>{
+    const i=document.createElement("input");
+    i.type="hidden";
+    i.name=k;
+    i.value=v;
+    f.appendChild(i);
+  });
 
-  f.appendChild(i);
   document.body.appendChild(f);
   f.submit();
+  return;
 }
+
 }; 
 /* ================= helpers ================= */
 
