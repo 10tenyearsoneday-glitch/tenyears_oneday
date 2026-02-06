@@ -381,7 +381,6 @@ function postOrder(payload){
 btnSubmitOrder.onclick = async () => {
   try{
     const ship = document.querySelector('input[name="ship"]:checked')?.value || "home";
-    const pay  = document.querySelector('input[name="pay"]:checked')?.value || "credit";
 
     if(!name.value || !phone.value){
       toast.textContent="請填姓名與電話";
