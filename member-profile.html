@@ -143,26 +143,42 @@ document.addEventListener("click", async function(e){
   const box = btn.nextElementSibling;
   const open = box.style.display === "none";
 
+  // 切文字 + 開關
   btn.textContent = open ? "▼ 收合商品明細" : "▶ 查看商品明細";
   box.style.display = open ? "block" : "none";
 
+  // 關閉時不用做事
   if(!open) return;
 
-  const API = window.GAS_PRODUCTS_URL;
+  // 已經載過就直接顯示（快取）
+  if(box.dataset.loaded === "1") return;
+
+  const API = window.GAS_PRODUCTS_URL ||
+    "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
+
   const id = btn.dataset.id;
+
+  // 小 loading
+  box.innerHTML = "載入中…";
 
   const r = await fetch(API + "?path=order_get&id=" + id);
   const o = await r.json();
-  if(!o.ok) return;
+  if(!o.ok){
+    box.innerHTML = "讀取失敗";
+    return;
+  }
 
   const items = JSON.parse(o.data.items_json||"[]");
 
   let html = "";
   items.forEach(it=>{
-    html += "<div>・"+it.title+" × "+it.qty+"</div>";
+    html += `<div>・${it.title} × ${it.qty}</div>`;
   });
 
   box.innerHTML = html;
+
+  // ✅ 標記已載入（下次秒開）
+  box.dataset.loaded = "1";
 
 });
 </script>
