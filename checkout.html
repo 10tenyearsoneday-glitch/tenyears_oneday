@@ -427,24 +427,23 @@ if(pay==="cod"){
 }else{
 
   document.getElementById("ckLoading").classList.remove("hidden");
-
   localStorage.setItem("ten_has_purchase_v1","1");
 
-  const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=orders`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(payload)
-  });
+  // ⭐ 用 form 整頁送到 GAS（不是 fetch）
+  const f = document.createElement("form");
+  f.method = "POST";
+  f.action = `${window.GAS_PRODUCTS_URL}?path=orders`;
 
-  const html = await r.text();
+  const i = document.createElement("input");
+  i.type = "hidden";
+  i.name = "data";
+  i.value = JSON.stringify(payload);
 
-  // GAS 回來的是整個 HTML（自動 post 綠界）
-  document.open();
-  document.write(html);
-  document.close();
+  f.appendChild(i);
+  document.body.appendChild(f);
+  f.submit();
 
 }
-
   };
 /* ================= helpers ================= */
 
