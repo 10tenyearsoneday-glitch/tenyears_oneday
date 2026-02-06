@@ -424,43 +424,27 @@ if(pay==="cod"){
     document.getElementById("ckLoading")?.classList.add("hidden");
     location.href=`thanks.html?order_id=${payload.order_id}`;
   },800);
-
 }else{
-  async function submitOrder(orderData){
+
+  document.getElementById("ckLoading").classList.remove("hidden");
 
   localStorage.setItem("ten_has_purchase_v1","1");
 
   const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=orders`,{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(orderData)
+    body: JSON.stringify(payload)
   });
 
-  const o = await r.json();
+  const html = await r.text();
 
-  if(!o.ok){
-    alert("建立訂單失敗");
-    return;
-  }
-
-  // ⭐ 建立真正導向綠界的 form（整頁）
-  const f = document.createElement("form");
-  f.method = "POST";
-  f.action = o.action;
-
-  Object.keys(o.params).forEach(k=>{
-    const i=document.createElement("input");
-    i.type="hidden";
-    i.name=k;
-    i.value=o.params[k];
-    f.appendChild(i);
-  });
-
-  document.body.appendChild(f);
-  f.submit();
-}
+  // GAS 回來的是整個 HTML（自動 post 綠界）
+  document.open();
+  document.write(html);
+  document.close();
 
 }
+
   };
 /* ================= helpers ================= */
 
