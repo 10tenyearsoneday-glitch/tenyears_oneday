@@ -70,7 +70,12 @@ orderBox.innerHTML=`
 }
 </script>
   <script>
-localStorage.removeItem("ten_cart");
+const from = new URLSearchParams(location.search).get("from");
+
+if(from !== "member"){
+  localStorage.removeItem("ten_cart");
+}
+
 </script>
 
 </body>
