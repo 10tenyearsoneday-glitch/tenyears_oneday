@@ -425,26 +425,42 @@ if(pay==="cod"){
     location.href=`thanks.html?order_id=${payload.order_id}`;
   },800);
 }else{
-
   document.getElementById("ckLoading").classList.remove("hidden");
   localStorage.setItem("ten_has_purchase_v1","1");
 
-  // ⭐ 用 form 整頁送到 GAS（不是 fetch）
-  const f = document.createElement("form");
-  f.method = "POST";
-  f.action = `${window.GAS_PRODUCTS_URL}?path=orders`;
+  // ✅ 用 fetch 送到 GAS 取得「綠界 action+params」（GAS 內含 HashKey 才能算 CheckMacValue）
+  const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    body: new URLSearchParams({ data: JSON.stringify(payload) }).toString()
+  });
 
-  const i = document.createElement("input");
-  i.type = "hidden";
-  i.name = "data";
-  i.value = JSON.stringify(payload);
+  const res = await r.json();
 
-  f.appendChild(i);
-  document.body.appendChild(f);
-  f.submit();
+  if(!res.ok || res.gateway!=="ECPAY"){
+    document.getElementById("ckLoading")?.classList.add("hidden");
+    toast.textContent = res.message || "付款建立失敗";
+    return;
+  }
 
+  // ✅ 在「最上層頁面」建立 form，直接 POST 到綠界（不會被 iframe 擋）
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = res.action;
+
+  const params = res.params || {};
+  Object.keys(params).forEach(k=>{
+    const inp = document.createElement("input");
+    inp.type = "hidden";
+    inp.name = k;
+    inp.value = String(params[k]);
+    form.appendChild(inp);
+  });
+
+  document.body.appendChild(form);
+  form.submit();
 }
-  };
+
 /* ================= helpers ================= */
 
 function postOrder(payload){
