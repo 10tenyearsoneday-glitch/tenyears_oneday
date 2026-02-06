@@ -425,41 +425,74 @@ if(pay==="cod"){
     location.href=`thanks.html?order_id=${payload.order_id}`;
   },800);
 }else{
+
+  if(window.__PAYING__) return;        // ⭐ 防止連點
+  window.__PAYING__ = true;
+
+  btnSubmitOrder.disabled = true;
   document.getElementById("ckLoading").classList.remove("hidden");
   localStorage.setItem("ten_has_purchase_v1","1");
 
-  // ✅ 用 fetch 送到 GAS 取得「綠界 action+params」（GAS 內含 HashKey 才能算 CheckMacValue）
-  const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=orders`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-    body: new URLSearchParams({ data: JSON.stringify(payload) }).toString()
-  });
+  let res;
 
-  const res = await r.json();
+  try{
+
+    const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+      },
+      body: new URLSearchParams({
+        data: JSON.stringify(payload)
+      }).toString()
+    });
+
+    if(!r.ok){
+      throw new Error("GAS HTTP "+r.status);
+    }
+
+    res = await r.json();
+
+  }catch(err){
+
+    console.error("ORDER ERROR", err);
+
+    window.__PAYING__ = false;
+    btnSubmitOrder.disabled = false;
+    document.getElementById("ckLoading").classList.add("hidden");
+
+    toast.textContent = "連線失敗，請稍後再試";
+    return;
+  }
 
   if(!res.ok || res.gateway!=="ECPAY"){
-    document.getElementById("ckLoading")?.classList.add("hidden");
+
+    window.__PAYING__ = false;
+    btnSubmitOrder.disabled = false;
+    document.getElementById("ckLoading").classList.add("hidden");
+
     toast.textContent = res.message || "付款建立失敗";
     return;
   }
 
-  // ✅ 在「最上層頁面」建立 form，直接 POST 到綠界（不會被 iframe 擋）
+  // ⭐ 正式送去綠界（top-level）
+
   const form = document.createElement("form");
   form.method = "POST";
   form.action = res.action;
 
-  const params = res.params || {};
-  Object.keys(params).forEach(k=>{
-    const inp = document.createElement("input");
-    inp.type = "hidden";
-    inp.name = k;
-    inp.value = String(params[k]);
-    form.appendChild(inp);
+  Object.entries(res.params || {}).forEach(([k,v])=>{
+    const i = document.createElement("input");
+    i.type="hidden";
+    i.name=k;
+    i.value=String(v);
+    form.appendChild(i);
   });
 
   document.body.appendChild(form);
   form.submit();
 }
+
 
 /* ================= helpers ================= */
 
