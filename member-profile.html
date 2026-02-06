@@ -167,35 +167,6 @@ document.addEventListener("click", async function(e){
 });
 </script>
 
-<script>
-document.addEventListener("click", async e=>{
-
-  const btn = e.target.closest(".toggleItems");
-  if(!btn) return;
-
-  const box = btn.nextElementSibling;
-  const open = box.style.display === "none";
-
-  // 切文字
-  btn.textContent = open ? "▼ 收合商品明細" : "▶ 查看商品明細";
-  box.style.display = open ? "block" : "none";
-
-  if(!open) return;
-
-  const id = btn.dataset.id;
-
-  // 撈訂單資料
-  const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=order_get&id=${id}`);
-  const o = await r.json();
-  if(!o.ok) return;
-
-  const items = JSON.parse(o.data.items_json||"[]");
-
-  box.innerHTML = items.map(it=>`
-    <div>・${it.title} × ${it.qty}</div>
-  `).join("");
-});
-</script>
 
 </body>
 </html>
