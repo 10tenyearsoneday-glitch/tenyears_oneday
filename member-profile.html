@@ -113,7 +113,12 @@
       <div style="border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:12px;margin:10px 0;background:#fff">
 
         <div><b>訂單編號：</b>${d.order_id}</div>
-        <div><b>狀態：</b>${d.pay_status||""}</div>
+       <div><b>狀態：</b>${
+  d.pay_status === "PAID" ? "已付款" :
+  d.pay_status === "UNPAID" ? "待付款" :
+  d.pay_status || ""
+}</div>
+
         <div><b>金額：</b>NT$ ${d.total}</div>
 
         <button class="toggleItems secondary"
@@ -133,7 +138,6 @@
 
 })();
 </script>
-
 <script>
 document.addEventListener("click", async function(e){
 
@@ -143,14 +147,12 @@ document.addEventListener("click", async function(e){
   const box = btn.nextElementSibling;
   const open = box.style.display === "none";
 
-  // 切文字 + 開關
   btn.textContent = open ? "▼ 收合商品明細" : "▶ 查看商品明細";
   box.style.display = open ? "block" : "none";
 
-  // 關閉時不用做事
   if(!open) return;
 
-  // 已經載過就直接顯示（快取）
+  // 已載入直接開
   if(box.dataset.loaded === "1") return;
 
   const API = window.GAS_PRODUCTS_URL ||
@@ -158,30 +160,46 @@ document.addEventListener("click", async function(e){
 
   const id = btn.dataset.id;
 
-  // 小 loading
-  box.innerHTML = "載入中…";
+  // ⭐ 小 loading
+  box.innerHTML = "載入商品明細中…";
 
   const r = await fetch(API + "?path=order_get&id=" + id);
   const o = await r.json();
+
   if(!o.ok){
     box.innerHTML = "讀取失敗";
     return;
   }
 
-  const items = JSON.parse(o.data.items_json||"[]");
+  const d = o.data;
+  const items = JSON.parse(d.items_json||"[]");
 
-  let html = "";
+  const payText =
+    d.payment_method === "cod" ? "貨到付款" : "信用卡";
+
+  const shipText =
+    d.shipping_method === "home" ? "宅配" : "超商取貨";
+
+  let html = `
+    <div style="margin-bottom:6px">
+      <b>付款方式：</b>${payText}
+    </div>
+    <div style="margin-bottom:6px">
+      <b>配送方式：</b>${shipText}
+    </div>
+    <hr style="margin:6px 0;opacity:.3">
+  `;
+
   items.forEach(it=>{
     html += `<div>・${it.title} × ${it.qty}</div>`;
   });
 
   box.innerHTML = html;
 
-  // ✅ 標記已載入（下次秒開）
   box.dataset.loaded = "1";
-
 });
 </script>
+
 
 
 </body>
