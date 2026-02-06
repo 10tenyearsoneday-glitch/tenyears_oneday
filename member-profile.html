@@ -80,5 +80,43 @@
   </div>
  <script src="./include-shop.js"></script>
  <script src="./include-member.js"></script>
+  <script>
+(async function(){
+  const box = document.getElementById("orderList");
+  if(!box) return;
+
+  const token = localStorage.getItem("ten_token") || "";
+  if(!token){
+    box.innerHTML = "請先登入後查看訂單";
+    return;
+  }
+
+  const url = `${window.GAS_PRODUCTS_URL || "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec"}?path=my_orders&token=${encodeURIComponent(token)}`;
+
+  const r = await fetch(url);
+  const o = await r.json();
+
+  if(!o.ok || !Array.isArray(o.orders) || !o.orders.length){
+    box.innerHTML = "尚無訂單";
+    return;
+  }
+
+  // 新到舊
+  const orders = o.orders.slice().sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+
+  box.innerHTML = orders.map(d=>`
+    <div style="border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:12px;margin:10px 0;background:#fff">
+      <div><b>訂單編號：</b>${d.order_id}</div>
+      <div><b>狀態：</b>${d.pay_status || ""}</div>
+      <div><b>金額：</b>NT$ ${d.total}</div>
+      <div style="margin-top:8px">
+        <a class="secondary" style="display:inline-block;padding:8px 10px;border-radius:12px"
+           href="thanks.html?order_id=${encodeURIComponent(d.order_id)}">查看明細</a>
+      </div>
+    </div>
+  `).join("");
+})();
+</script>
+
 </body>
 </html>
