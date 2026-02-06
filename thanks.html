@@ -23,6 +23,10 @@ window.GAS_MEMBERS_URL =
 
 <h1 class="text-xl font-black tracking-widest">訂單成立</h1>
 
+<p>我們已收到您的訂單</p>
+
+<a href="member-profile.html">前往會員中心查看訂單</a>
+
 <div class="text-sm opacity-70">
 謝謝你選擇 十年一日
 </div>
@@ -37,38 +41,6 @@ class="block mt-6 w-full h-11 rounded-2xl bg-[#2f3a2c] text-white font-black fle
 </div>
 
 </main>
-
-<script>
-const orderBox = document.getElementById("orderBox");
-
-const q = new URLSearchParams(location.search);
-const id = q.get("order_id");
-
-if(!id){
-  orderBox.innerHTML="找不到訂單編號";
-}else{
-  fetch(`${window.GAS_PRODUCTS_URL}?path=order_get&id=${id}`)
-  .then(r=>r.json())
-  .then(o=>{
-    if(!o.ok){
-      orderBox.innerHTML="訂單讀取失敗";
-      return;
-    }
-
-    const d=o.data;
-
-    orderBox.innerHTML=`
-<div><b>訂單編號：</b>${d.order_id}</div>
-<div><b>姓名：</b>${d.name}</div>
-<div><b>電話：</b>${d.phone}</div>
-<div><b>配送：</b>${d.shipping_method==="store"?"超商取貨":"宅配"}</div>
-<div><b>地址 / 門市：</b>${d.address_or_store}</div>
-<div><b>付款：</b>${d.payment_method==="cod"?"貨到付款":"信用卡"}</div>
-<div><b>金額：</b>NT$ ${d.total}</div>
-`;
-  });
-}
-</script>
 
   <script>
 const from = new URLSearchParams(location.search).get("from");
