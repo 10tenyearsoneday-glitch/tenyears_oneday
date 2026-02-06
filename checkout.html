@@ -359,132 +359,136 @@ document.getElementById("applyCoupon").onclick = async () => {
 
   toast.textContent = "已嘗試套用優惠碼";
 };
-/* ================= submit ================= */
-btnSubmitOrder.onclick = async () => {
-const ship=document.querySelector('input[name="ship"]:checked').value;
-const pay=document.querySelector('input[name="pay"]:checked').value;
+<script>
+/* ================= submit (FINAL, NO SYNTAX ERROR) ================= */
 
-if(!name.value||!phone.value){
-toast.textContent="請填姓名與電話";
-  document.getElementById("ckLoading")?.classList.add("hidden");
-return;
-}
-
-if((ship==="711" || ship==="family") && !store.value){
-  toast.textContent="請選擇門市";
-  document.getElementById("ckLoading")?.classList.add("hidden");
-  return;
-}
-
-
-const cart=readCart();
-const settings=await getSettings();
-const subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
-
-const couponCode =
-  document.getElementById("couponInput")?.value?.trim().toUpperCase() || "";
-
-const coupon=couponCode?await validateCoupon(couponCode,subtotal):null;
-
-const ctx={
-  firstPurchase:isFirstPurchase(),
-  birthday:false,   // ⭐ 這裡也一定要 false
-  coupon: coupon ? {...coupon,code:couponCode} : null
-};
-
-
-const pricing=calcTotal(cart,settings,ctx);
-
-let total=pricing.total;
-
-const payload={
-order_id:"OD"+Date.now(),
-token:localStorage.getItem("ten_token")||"",
-name:name.value,
-phone:phone.value,
-email:email.value,
-address_or_store:
-  ship==="home" ? address.value : `${store.value} ${storeAddr.value||""}`,
-shipping_method:ship,
-payment_method:pay,
-items:cart,
-subtotal:pricing.subtotal,
-discount:pricing.discount,
-shipping_fee:pricing.shipping,
-total:total,
-coupon_code:couponCode||"",
-discount_note:buildDiscountLabels(pricing).join("＋")
-};
-
-if(pay==="cod"){
-  localStorage.setItem("ten_has_purchase_v1","1");
-  postOrder(payload);
-
-  setTimeout(()=>{
-    document.getElementById("ckLoading")?.classList.add("hidden");
-    location.href=`thanks.html?order_id=${payload.order_id}`;
-  },800);
-}else{
-
-  if(window.__PAYING__) return;
-  window.__PAYING__ = true;
-
-  btnSubmitOrder.disabled = true;
-  document.getElementById("ckLoading").classList.remove("hidden");
-
-  localStorage.setItem("ten_has_purchase_v1","1");
-
-  // ⭐ 不用 fetch、不用等 JSON
-  // ⭐ 直接 form POST 到 GAS
-const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=orders`, {
-  method: "POST",
-  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  body: "data=" + encodeURIComponent(JSON.stringify(payload))
-});
-
-const res = await r.json();
-
-if(res.gateway==="ECPAY"){
-
-  const f = document.createElement("form");
-  f.method = "POST";
-  f.action = res.action;
-
-  Object.entries(res.params).forEach(([k,v])=>{
-    const i=document.createElement("input");
-    i.type="hidden";
-    i.name=k;
-    i.value=v;
-    f.appendChild(i);
-  });
-
-  document.body.appendChild(f);
-  f.submit();
-  return;
-}
-
-}; 
-/* ================= helpers ================= */
+window.render = render; // 讓其他區塊可呼叫重算
 
 function postOrder(payload){
-const f=document.createElement("form");
-f.method="POST";
-f.action=`${window.GAS_PRODUCTS_URL}?path=orders`;
-const i=document.createElement("input");
-i.type="hidden";
-i.name="data";
-i.value=JSON.stringify(payload);
-f.appendChild(i);
-document.body.appendChild(f);
-f.submit();
+  const f=document.createElement("form");
+  f.method="POST";
+  f.action=`${window.GAS_PRODUCTS_URL}?path=orders`;
+  const i=document.createElement("input");
+  i.type="hidden";
+  i.name="data";
+  i.value=JSON.stringify(payload);
+  f.appendChild(i);
+  document.body.appendChild(f);
+  f.submit();
 }
 
-function submitOrder(orderData){
-  localStorage.setItem("ten_has_purchase_v1","1");
-  postOrder(orderData);
-}
+btnSubmitOrder.onclick = async () => {
+  try{
+    const ship = document.querySelector('input[name="ship"]:checked')?.value || "home";
+    const pay  = document.querySelector('input[name="pay"]:checked')?.value || "credit";
 
+    if(!name.value || !phone.value){
+      toast.textContent="請填姓名與電話";
+      document.getElementById("ckLoading")?.classList.add("hidden");
+      return;
+    }
+
+    if((ship==="711" || ship==="family") && !store.value){
+      toast.textContent="請選擇門市";
+      document.getElementById("ckLoading")?.classList.add("hidden");
+      return;
+    }
+
+    const cart = readCart();
+    const settings = await getSettings();
+    const subtotal = cart.reduce((s,i)=>s+i.price*i.qty,0);
+
+    const couponCode =
+      document.getElementById("couponInput")?.value?.trim().toUpperCase() || "";
+
+    const coupon = couponCode ? await validateCoupon(couponCode,subtotal) : null;
+
+    const ctx = {
+      firstPurchase: isFirstPurchase(),
+      birthday: false,
+      coupon: coupon ? {...coupon, code: couponCode} : null
+    };
+
+    const pricing = calcTotal(cart, settings, ctx);
+
+    const payload = {
+      order_id:"OD"+Date.now(),
+      token:localStorage.getItem("ten_token")||"",
+      name:name.value,
+      phone:phone.value,
+      email:email.value,
+      address_or_store: ship==="home" ? address.value : `${store.value} ${storeAddr.value||""}`,
+      shipping_method:ship,
+      payment_method:pay,
+      items:cart,
+      subtotal:pricing.subtotal,
+      discount:pricing.discount,
+      shipping_fee:pricing.shipping,
+      total:pricing.total,
+      coupon_code:couponCode||"",
+      discount_note: buildDiscountLabels(pricing).join("＋")
+    };
+
+    // COD：只寫單 → 前往 thanks
+    if(pay==="cod"){
+      localStorage.setItem("ten_has_purchase_v1","1");
+      postOrder(payload);
+      setTimeout(()=>{
+        location.href=`thanks.html?order_id=${payload.order_id}`;
+      },800);
+      return;
+    }
+
+    // Credit：先打 GAS 拿到 ECPay JSON → 再 top-level POST 到綠界
+    if(window.__PAYING__) return;
+    window.__PAYING__ = true;
+
+    btnSubmitOrder.disabled = true;
+    document.getElementById("ckLoading")?.classList.remove("hidden");
+
+    localStorage.setItem("ten_has_purchase_v1","1");
+
+    const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "data=" + encodeURIComponent(JSON.stringify(payload))
+    });
+
+    const res = await r.json();
+
+    if(res && res.gateway === "ECPAY" && res.action && res.params){
+      const f = document.createElement("form");
+      f.method = "POST";
+      f.action = res.action;
+
+      Object.entries(res.params).forEach(([k,v])=>{
+        const i=document.createElement("input");
+        i.type="hidden";
+        i.name=k;
+        i.value=String(v);
+        f.appendChild(i);
+      });
+
+      document.body.appendChild(f);
+      f.submit();
+      return;
+    }
+
+    toast.textContent = (res && res.message) ? res.message : "付款初始化失敗";
+    window.__PAYING__ = false;
+    btnSubmitOrder.disabled = false;
+    document.getElementById("ckLoading")?.classList.add("hidden");
+
+  }catch(err){
+    console.error(err);
+    toast.textContent="系統錯誤，請稍後再試";
+    window.__PAYING__ = false;
+    btnSubmitOrder.disabled = false;
+    document.getElementById("ckLoading")?.classList.add("hidden");
+  }
+};
 </script>
+
 <script>
 (function(){
   const btn = document.getElementById("ckToggleItems");
