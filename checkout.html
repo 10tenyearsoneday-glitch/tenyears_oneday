@@ -658,26 +658,20 @@ function openC2CStore(){
     return;
   }
 
-  const f = document.createElement("form");
-  f.method = "POST";
-  f.action = "https://logistics.ecpay.com.tw/Express/map";
+  const params = new URLSearchParams({
+    MerchantID: "3486030",
+    LogisticsType: "CVS",
+    LogisticsSubType: sub,
+    IsCollection: "N",
+    ServerReplyURL:
+      "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec?path=cvs"
+  });
 
- f.innerHTML = `
-<input name="MerchantID" value="3486030">
-<input name="LogisticsType" value="CVS">
-<input name="LogisticsSubType" value="${sub}">
-<input name="IsCollection" value="N">
-
-<!-- ⭐關鍵：直接送 path -->
-<input name="path" value="cvs">
-
-<input name="ServerReplyURL"
- value="https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec?path=cvs">
-`;
-
-  document.body.appendChild(f);
-  f.submit();
+  // ⭐直接整頁跳走（不是 form）
+  location.href =
+    "https://logistics.ecpay.com.tw/Express/map?" + params.toString();
 }
+
 
 // 綁按鈕
 pick711.onclick = e=>{
@@ -719,6 +713,7 @@ window.addEventListener("load",()=>{
 
 });
 </script>
+
 
 
 </body>
