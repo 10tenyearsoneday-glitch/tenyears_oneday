@@ -665,11 +665,12 @@ function openC2CStore(){
     LogisticsType: "CVS",
     LogisticsSubType: sub,
     IsCollection: "N",
+
+    // ⭐直接回 checkout（重點）
     ServerReplyURL:
-      "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec?path=cvs"
+      "https://10tenyearsoneday-glitch.github.io/tenyears_oneday/checkout.html"
   });
 
-  // ⭐直接整頁跳走（不是 form）
   location.href =
     "https://logistics.ecpay.com.tw/Express/map?" + params.toString();
 }
