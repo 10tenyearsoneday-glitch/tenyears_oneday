@@ -190,13 +190,44 @@ document.addEventListener("click", async function(e){
     <hr style="margin:6px 0;opacity:.3">
   `;
 
-  items.forEach(it=>{
-    html += `<div>・${it.title} × ${it.qty}</div>`;
-  });
+items.forEach(it=>{
+  html += `<div>・${it.title} × ${it.qty}　NT$ ${it.price * it.qty}</div>`;
+});
 
-  box.innerHTML = html;
+// 分隔線
+html += `<div style="margin:6px 0;border-top:1px dashed #ccc"></div>`;
 
-  box.dataset.loaded = "1";
+// 小計
+html += `<div>小計：NT$ ${d.subtotal}</div>`;
+
+// 折扣
+if(Number(d.discount) > 0){
+  html += `<div>折扣：- NT$ ${d.discount}</div>`;
+}
+
+// 運費
+if(Number(d.shipping_fee) === 0){
+  html += `<div>運費：免運</div>`;
+}else{
+  html += `<div>運費：NT$ ${d.shipping_fee}</div>`;
+}
+
+// 優惠說明
+if(d.discount_note){
+  html += `<div style="opacity:.7">優惠：${d.discount_note}</div>`;
+}
+
+// 合計
+html += `
+<div style="margin-top:4px;font-weight:700">
+  合計：NT$ ${d.total}
+</div>
+`;
+
+box.innerHTML = html;
+
+box.dataset.loaded = "1";
+
 });
 </script>
 
