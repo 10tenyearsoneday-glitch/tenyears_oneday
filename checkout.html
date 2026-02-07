@@ -7,7 +7,6 @@
 
   <link rel="stylesheet" href="assets/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://emap.pcsc.com.tw/EMapSDK/js/emap.js"></script>
   <style>
 /* ===== Checkout UI polish ===== */
 .ck-wrap{max-width:860px;margin:0 auto;padding:14px}
@@ -47,6 +46,16 @@ window.GAS_MEMBERS_URL =
 </script>
 
 <body class="min-h-screen bg-gradient-to-br from-[#F8F9F7] to-[#D4E7D1]">
+  <script>
+(function(d, s, id){
+  var js, ref = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "https://emap.pcsc.com.tw/EMapSDK/js/emap.js";
+  ref.parentNode.insertBefore(js, ref);
+}(document, 'script', 'emap-sdk'));
+</script>
+
   <!-- header 由 include-shop.js 注入 -->
 <script src="./pricing.js"></script>
 <script src="./discount-label.js"></script>
@@ -653,21 +662,21 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   // === 7-11（C2C SDK）
   function pick711Store(){
-    if(!window.EMap){
-      alert("7-11 地圖尚未載入");
-      return;
-    }
-
-    EMap.init({
-      serviceType: "C2C",
-      callback: function(data){
-        if(!data) return;
-
-        store.value = data.storeName || "";
-        storeAddr.value = data.storeAddress || "";
-      }
-    });
+  if(!window.EMap){
+    alert("7-11 地圖還沒載入，請再試一次");
+    return;
   }
+  EMap.init({
+    serviceType: "C2C",
+    showStoreList:true,
+    showMap:true,
+    callback: function(data){
+      if (!data) return;
+      store.value = data.storeName||"";
+      storeAddr.value = data.storeAddress||"";
+    }
+  });
+}
 
   // === 全家（C2C 只能跳頁）
   function pickFamilyStore(){
