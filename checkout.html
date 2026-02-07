@@ -693,19 +693,31 @@ pickFamily.onclick = e=>{
 };
 </script>
 <script>
-(function(){
+window.addEventListener("load",()=>{
 
   const q = new URLSearchParams(location.search);
+  const name = q.get("CVSStoreName");
+  const addr = q.get("CVSAddress");
 
-  if(q.get("CVSStoreName")){
-    document.getElementById("store").value =
-      q.get("CVSStoreName");
+  if(!name) return;
 
-    document.getElementById("storeAddr").value =
-      q.get("CVSAddress") || "";
-  }
+  // 強制切到超商模式
+  document.querySelector('input[value="711"]')?.click();
+  document.querySelector('input[value="family"]')?.click();
 
-})();
+  setTimeout(()=>{
+
+    const store = document.getElementById("store");
+    const storeAddr = document.getElementById("storeAddr");
+
+    if(store) store.value = decodeURIComponent(name);
+    if(storeAddr) storeAddr.value = decodeURIComponent(addr||"");
+
+    console.log("✅ 門市已帶入",name);
+
+  },300);
+
+});
 </script>
 
 
