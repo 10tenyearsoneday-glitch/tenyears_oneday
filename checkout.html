@@ -381,6 +381,7 @@ function postOrder(payload){
 btnSubmitOrder.onclick = async () => {
   try{
     const ship = document.querySelector('input[name="ship"]:checked')?.value || "home";
+    const pay  = document.querySelector('input[name="pay"]:checked')?.value || "credit"; // ✅ 這行就是關鍵
 
     if(!name.value || !phone.value){
       toast.textContent="請填姓名與電話";
@@ -413,33 +414,42 @@ btnSubmitOrder.onclick = async () => {
 
     const payload = {
       order_id:"OD"+Date.now(),
-      token:localStorage.getItem("ten_token")||"",
-      name:name.value,
-      phone:phone.value,
-      email:email.value,
+      token: localStorage.getItem("ten_token") || "",
+      name: name.value,
+      phone: phone.value,
+      email: email.value,
+      shipping_method: ship,
+      payment_method: pay, // ✅ 用上面宣告的 pay
       address_or_store: ship==="home" ? address.value : `${store.value} ${storeAddr.value||""}`,
-      shipping_method:ship,
-      payment_method:pay,
-      items:cart,
-      subtotal:pricing.subtotal,
-      discount:pricing.discount,
-      shipping_fee:pricing.shipping,
-      total:pricing.total,
-      coupon_code:couponCode||"",
+      items: cart,
+      subtotal: pricing.subtotal,
+      discount: pricing.discount,
+      shipping_fee: pricing.shipping,
+      total: pricing.total,
+      coupon_code: couponCode || "",
       discount_note: buildDiscountLabels(pricing).join("＋")
     };
 
-    // COD：只寫單 → 前往 thanks
-    if(pay==="cod"){
+    // COD：寫單 → 導到 thanks
+    if(pay === "cod"){
       localStorage.setItem("ten_has_purchase_v1","1");
-      postOrder(payload);
-      setTimeout(()=>{
-        location.href=`thanks.html?order_id=${payload.order_id}`;
-      },800);
+
+      const f=document.createElement("form");
+      f.method="POST";
+      f.action=`${window.GAS_PRODUCTS_URL}?path=orders`;
+      const i=document.createElement("input");
+      i.type="hidden";
+      i.name="data";
+      i.value=JSON.stringify(payload);
+      f.appendChild(i);
+      document.body.appendChild(f);
+      f.submit();
+
+      setTimeout(()=>location.href=`thanks.html?order_id=${payload.order_id}`, 800);
       return;
     }
 
-    // Credit：先打 GAS 拿到 ECPay JSON → 再 top-level POST 到綠界
+    // Credit：先打 GAS 拿綠界參數 → 再 POST 綠界
     if(window.__PAYING__) return;
     window.__PAYING__ = true;
 
