@@ -129,8 +129,14 @@ ${
 }
 </div>
 
+<div><b>金額：</b>NT$ ${d.total}</div>
 
-        <div><b>金額：</b>NT$ ${d.total}</div>
+${d.pay_status==="UNPAID" && d.payment_method==="credit" ? `
+<button class="repayBtn secondary" data-id="${d.order_id}">
+🔁 前往付款
+</button>
+`:""}
+
 
         <button class="toggleItems secondary"
           data-id="${d.order_id}"
@@ -152,8 +158,12 @@ ${
 <script>
 document.addEventListener("click", async function(e){
 
-  const btn = e.target.closest(".toggleItems");
-  if(!btn) return;
+/* ======================
+   展開商品明細
+======================*/
+
+const btn = e.target.closest(".toggleItems");
+if(btn){
 
   const box = btn.nextElementSibling;
   const open = box.style.display === "none";
@@ -163,86 +173,89 @@ document.addEventListener("click", async function(e){
 
   if(!open) return;
 
-  // 已載入直接開
-  if(box.dataset.loaded === "1") return;
+  if(box.dataset.loaded==="1") return;
 
-  const API = window.GAS_PRODUCTS_URL ||
-    "https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec";
-
+  const API = window.GAS_PRODUCTS_URL;
   const id = btn.dataset.id;
 
-  // ⭐ 小 loading
   box.innerHTML = "載入商品明細中…";
 
-  const r = await fetch(API + "?path=order_get&id=" + id);
+  const r = await fetch(API+"?path=order_get&id="+id);
   const o = await r.json();
-
   if(!o.ok){
-    box.innerHTML = "讀取失敗";
+    box.innerHTML="讀取失敗";
     return;
   }
 
   const d = o.data;
   const items = JSON.parse(d.items_json||"[]");
 
-  const payText =
-    d.payment_method === "cod" ? "貨到付款" : "信用卡";
-
-  const shipText =
-    d.shipping_method === "home" ? "宅配" : "超商取貨";
+  const payText = d.payment_method==="cod"?"貨到付款":"信用卡";
+  const shipText = d.shipping_method==="home"?"宅配":"超商取貨";
 
   let html = `
-    <div style="margin-bottom:6px">
-      <b>付款方式：</b>${payText}
-    </div>
-    <div style="margin-bottom:6px">
-      <b>配送方式：</b>${shipText}
-    </div>
-    <hr style="margin:6px 0;opacity:.3">
-  `;
-
-items.forEach(it=>{
-  html += `<div>・${it.title} × ${it.qty}　NT$ ${it.price * it.qty}</div>`;
-});
-
-// 分隔線
-html += `<div style="margin:6px 0;border-top:1px dashed #ccc"></div>`;
-
-// 小計
-html += `<div>小計：NT$ ${d.subtotal}</div>`;
-
-// 折扣
-if(Number(d.discount) > 0){
-  html += `<div>折扣：- NT$ ${d.discount}</div>`;
-}
-
-// 運費
-if(Number(d.shipping_fee) === 0){
-  html += `<div>運費：免運</div>`;
-}else{
-  html += `<div>運費：NT$ ${d.shipping_fee}</div>`;
-}
-
-// 優惠說明
-if(d.discount_note){
-  html += `<div style="opacity:.7">優惠：${d.discount_note}</div>`;
-}
-
-// 合計
-html += `
-<div style="margin-top:4px;font-weight:700">
-  合計：NT$ ${d.total}
-</div>
+<div><b>付款方式：</b>${payText}</div>
+<div><b>配送方式：</b>${shipText}</div>
+<hr style="margin:6px 0;opacity:.3">
 `;
 
-box.innerHTML = html;
+  items.forEach(it=>{
+    html += `<div>・${it.title} × ${it.qty}　NT$ ${it.price * it.qty}</div>`;
+  });
 
-box.dataset.loaded = "1";
+  html += `<div style="margin:6px 0;border-top:1px dashed #ccc"></div>`;
+  html += `<div>小計：NT$ ${d.subtotal}</div>`;
+
+  if(Number(d.discount)>0){
+    html += `<div>折扣：- NT$ ${d.discount}</div>`;
+  }
+
+  html += Number(d.shipping_fee)===0
+    ? `<div>運費：免運</div>`
+    : `<div>運費：NT$ ${d.shipping_fee}</div>`;
+
+  if(d.discount_note){
+    html += `<div style="opacity:.7">優惠：${d.discount_note}</div>`;
+  }
+
+  html += `<div style="margin-top:4px;font-weight:700">合計：NT$ ${d.total}</div>`;
+
+  box.innerHTML = html;
+  box.dataset.loaded="1";
+  return;
+}
+
+/* ======================
+   補刷信用卡
+======================*/
+
+const repay = e.target.closest(".repayBtn");
+if(repay){
+
+  const id = repay.dataset.id;
+
+  const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=repay&id=${id}`);
+  const o = await r.json();
+
+  if(!o.ok) return alert("無法重新付款");
+
+  const f=document.createElement("form");
+  f.method="POST";
+  f.action=o.action;
+
+  Object.entries(o.params).forEach(([k,v])=>{
+    const i=document.createElement("input");
+    i.type="hidden";
+    i.name=k;
+    i.value=v;
+    f.appendChild(i);
+  });
+
+  document.body.appendChild(f);
+  f.submit();
+}
 
 });
 </script>
-
-
-
 </body>
 </html>
