@@ -50,6 +50,14 @@ if(from !== "member"){
 }
 
 </script>
+<script>
+if(new URLSearchParams(location.search).get("from") === "ecpay"){
+  // 綠界回來，自動刷新會員頁
+  setTimeout(()=>{
+    location.href = "member-profile.html";
+  }, 1200);
+}
+</script>
 
 </body>
 </html>
