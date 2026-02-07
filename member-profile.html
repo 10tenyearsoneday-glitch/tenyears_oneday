@@ -113,11 +113,22 @@
       <div style="border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:12px;margin:10px 0;background:#fff">
 
         <div><b>訂單編號：</b>${d.order_id}</div>
-       <div><b>狀態：</b>${
-  d.pay_status === "PAID" ? "已付款" :
-  d.pay_status === "UNPAID" ? "待付款" :
-  d.pay_status || ""
-}</div>
+       <div>
+<b>狀態：</b>
+${
+  d.pay_status === "PAID"
+    ? "已付款"
+    : d.pay_status === "UNPAID"
+    ? "待付款"
+    : d.pay_status || ""
+}
+${
+  d.pay_status === "PAID" && d.paid_at
+    ? `<div style="font-size:.8rem;opacity:.6">付款時間：${new Date(d.paid_at).toLocaleString()}</div>`
+    : ""
+}
+</div>
+
 
         <div><b>金額：</b>NT$ ${d.total}</div>
 
