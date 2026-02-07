@@ -7,6 +7,7 @@
 
   <link rel="stylesheet" href="assets/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://emap.pcsc.com.tw/EMapSDK/js/emap.js"></script>
   <style>
 /* ===== Checkout UI polish ===== */
 .ck-wrap{max-width:860px;margin:0 auto;padding:14px}
@@ -634,59 +635,61 @@ syncShip();
 
 </script>
 <script>
-/* ===============================
-   ECPay CVS Map FINAL
-=============================== */
-
-function openEcpayStore(){
-
-  const ship =
-    document.querySelector('input[name="ship"]:checked')?.value;
-
-  let sub = "";
-
-  if(ship==="711") sub="UNIMART";
-  if(ship==="family") sub="FAMI";
-
-  if(!sub){
-    alert("請先選擇配送方式");
-    return;
-  }
-
-  const f = document.createElement("form");
-  f.method = "POST";
-  f.action = "https://logistics.ecpay.com.tw/Express/map";
-
-  f.innerHTML = `
-<input name="MerchantID" value="3486030">
-<input name="LogisticsType" value="CVS">
-<input name="LogisticsSubType" value="${sub}">
-<input name="IsCollection" value="N">
-<input name="ServerReplyURL"
- value="https://script.google.com/macros/s/AKfycby06D9BwO2SF3CauIxlBfb2cCyEvuaMLnoOPPhwoyQh57T_wP8Al9L2fQuw2617cLF8/exec?path=store_reply">
-`;
-
-  document.body.appendChild(f);
-  f.submit();
-}
-
-// 綁按鈕
-pick711.onclick = e=>{
-  e.preventDefault();
-  document.querySelector('input[value="711"]').checked=true;
-  openEcpayStore();
-};
-
-pickFamily.onclick = e=>{
-  e.preventDefault();
-  document.querySelector('input[value="family"]').checked=true;
-  openEcpayStore();
-};
-</script>
-<script>
 document.addEventListener("DOMContentLoaded",()=>{
   window.__TEN_PRICING__ && window.__TEN_PRICING__();
 });
 </script>
+  <script>
+/* =========================
+   C2C 超商選店（最終版）
+========================= */
+
+(function(){
+
+  const store = document.getElementById("store");
+  const storeAddr = document.getElementById("storeAddr");
+  const pick711 = document.getElementById("pick711");
+  const pickFamily = document.getElementById("pickFamily");
+
+  // === 7-11（C2C SDK）
+  function pick711Store(){
+    if(!window.EMap){
+      alert("7-11 地圖尚未載入");
+      return;
+    }
+
+    EMap.init({
+      serviceType: "C2C",
+      callback: function(data){
+        if(!data) return;
+
+        store.value = data.storeName || "";
+        storeAddr.value = data.storeAddress || "";
+      }
+    });
+  }
+
+  // === 全家（C2C 只能跳頁）
+  function pickFamilyStore(){
+  window.open(
+    "https://famimap.famiport.com.tw/",
+      "_blank",
+      "width=1000,height=700"
+    );
+  }
+
+  pick711 && (pick711.onclick = e=>{
+    e.preventDefault();
+    pick711Store();
+  });
+
+  pickFamily && (pickFamily.onclick = e=>{
+    e.preventDefault();
+    pickFamilyStore();
+  });
+
+})();
+</script>
+
 </body>
 </html>
