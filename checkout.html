@@ -648,7 +648,6 @@ const pickFamily = document.getElementById("pickFamily");
 function openC2CStore(type){
 
   let sub = "";
-
   if(type === "711") sub = "UNIMARTC2C";
   if(type === "family") sub = "FAMIC2C";
 
@@ -666,6 +665,12 @@ function openC2CStore(type){
     <input name="LogisticsType" value="CVS">
     <input name="LogisticsSubType" value="${sub}">
     <input name="IsCollection" value="N">
+
+    <!-- 🔥 必填 -->
+    <input name="ServerReplyURL"
+      value="${window.GAS_PRODUCTS_URL}?path=cvs">
+
+    <!-- 🔥 讓前端直接回來 -->
     <input name="ClientReplyURL"
       value="https://10tenyearsoneday-glitch.github.io/tenyears_oneday/checkout.html">
   `;
@@ -674,7 +679,6 @@ function openC2CStore(type){
   f.submit();
 }
 
-// 🔥 這兩個才是關鍵
 pick711.addEventListener("click", function(e){
   e.preventDefault();
   document.querySelector('input[value="711"]').checked = true;
@@ -687,6 +691,7 @@ pickFamily.addEventListener("click", function(e){
   openC2CStore("family");
 });
 </script>
+
 
 
 <script>
