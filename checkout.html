@@ -641,54 +641,51 @@ document.addEventListener("DOMContentLoaded",()=>{
   window.__TEN_PRICING__ && window.__TEN_PRICING__();
 });
 </script>
-  <script>
+<script>
 const pick711 = document.getElementById("pick711");
 const pickFamily = document.getElementById("pickFamily");
 
 function openC2CStore(){
-
-  const ship =
-    document.querySelector('input[name="ship"]:checked')?.value;
+  const ship = document.querySelector('input[name="ship"]:checked')?.value;
 
   let sub = "";
-
   if(ship==="711") sub="UNIMARTC2C";
   if(ship==="family") sub="FAMIC2C";
 
   if(!sub){
-    alert("請先選擇配送方式");
+    alert("請先選擇配送方式（7-11 或 全家）");
     return;
   }
 
-  const params = new URLSearchParams({
-    MerchantID: "3486030",
-    LogisticsType: "CVS",
-    LogisticsSubType: sub,
-    IsCollection: "N",
+  const f = document.createElement("form");
+  f.method = "POST";
+  f.action = "https://logistics.ecpay.com.tw/Express/map";
 
-    // ⭐直接回 checkout（重點）
-    ServerReplyURL:
-      "https://10tenyearsoneday-glitch.github.io/tenyears_oneday/checkout.html"
-  });
+  f.innerHTML = `
+    <input name="MerchantID" value="3486030">
+    <input name="LogisticsType" value="CVS">
+    <input name="LogisticsSubType" value="${sub}">
+    <input name="IsCollection" value="N">
+    <input name="ServerReplyURL"
+      value="${window.GAS_PRODUCTS_URL}?path=cvs">
+  `;
 
-  location.href =
-    "https://logistics.ecpay.com.tw/Express/map?" + params.toString();
+  document.body.appendChild(f);
+  f.submit();
 }
 
-
-// 綁按鈕
 pick711.onclick = e=>{
   e.preventDefault();
-  document.querySelector('input[value="711"]').checked=true;
+  document.querySelector('input[value="711"]').checked = true;
   openC2CStore();
 };
-
 pickFamily.onclick = e=>{
   e.preventDefault();
-  document.querySelector('input[value="family"]').checked=true;
+  document.querySelector('input[value="family"]').checked = true;
   openC2CStore();
 };
 </script>
+
 <script>
 window.addEventListener("load",()=>{
 
