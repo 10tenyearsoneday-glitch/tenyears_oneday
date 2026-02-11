@@ -645,15 +645,15 @@ document.addEventListener("DOMContentLoaded",()=>{
 const pick711 = document.getElementById("pick711");
 const pickFamily = document.getElementById("pickFamily");
 
-function openC2CStore(){
-  const ship = document.querySelector('input[name="ship"]:checked')?.value;
+function openC2CStore(type){
 
   let sub = "";
-  if(ship==="711") sub="UNIMARTC2C";
-  if(ship==="family") sub="FAMIC2C";
+
+  if(type === "711") sub = "UNIMARTC2C";
+  if(type === "family") sub = "FAMIC2C";
 
   if(!sub){
-    alert("請先選擇配送方式（7-11 或 全家）");
+    alert("請選擇超商");
     return;
   }
 
@@ -666,8 +666,6 @@ function openC2CStore(){
     <input name="LogisticsType" value="CVS">
     <input name="LogisticsSubType" value="${sub}">
     <input name="IsCollection" value="N">
-
-    <!-- 🔥 改這裡 -->
     <input name="ClientReplyURL"
       value="https://10tenyearsoneday-glitch.github.io/tenyears_oneday/checkout.html">
   `;
@@ -676,7 +674,20 @@ function openC2CStore(){
   f.submit();
 }
 
+// 🔥 這兩個才是關鍵
+pick711.addEventListener("click", function(e){
+  e.preventDefault();
+  document.querySelector('input[value="711"]').checked = true;
+  openC2CStore("711");
+});
+
+pickFamily.addEventListener("click", function(e){
+  e.preventDefault();
+  document.querySelector('input[value="family"]').checked = true;
+  openC2CStore("family");
+});
 </script>
+
 
 <script>
 window.addEventListener("load",()=>{
