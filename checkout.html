@@ -695,11 +695,12 @@ window.addEventListener("load",()=>{
 
   if(!name) return;
 
-  // 強制切到超商模式
-  document.querySelector('input[value="711"]')?.click();
-  document.querySelector('input[value="family"]')?.click();
+  const shipRadio711 = document.querySelector('input[value="711"]');
+  const shipRadioFamily = document.querySelector('input[value="family"]');
 
-  setTimeout(()=>{
+  if(shipRadio711?.checked || shipRadioFamily?.checked){
+
+    storeWrap.hidden = false;
 
     const store = document.getElementById("store");
     const storeAddr = document.getElementById("storeAddr");
@@ -709,9 +710,11 @@ window.addEventListener("load",()=>{
 
     console.log("✅ 門市已帶入",name);
 
-  },300);
+    window.render && window.render();
+  }
 
 });
+
 </script>
 
 
