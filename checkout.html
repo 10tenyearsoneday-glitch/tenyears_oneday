@@ -666,24 +666,16 @@ function openC2CStore(){
     <input name="LogisticsType" value="CVS">
     <input name="LogisticsSubType" value="${sub}">
     <input name="IsCollection" value="N">
-<input name="ServerReplyURL"
-value="https://10tenyearsoneday-glitch.github.io/tenyears_oneday/checkout.html">
+
+    <!-- 🔥 改這裡 -->
+    <input name="ClientReplyURL"
+      value="https://10tenyearsoneday-glitch.github.io/tenyears_oneday/checkout.html">
   `;
 
   document.body.appendChild(f);
   f.submit();
 }
 
-pick711.onclick = e=>{
-  e.preventDefault();
-  document.querySelector('input[value="711"]').checked = true;
-  openC2CStore();
-};
-pickFamily.onclick = e=>{
-  e.preventDefault();
-  document.querySelector('input[value="family"]').checked = true;
-  openC2CStore();
-};
 </script>
 
 <script>
