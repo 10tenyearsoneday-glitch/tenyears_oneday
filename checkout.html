@@ -728,6 +728,120 @@ window.addEventListener("load", () => {
 
 </script>
 
+<script>
+/** ===== checkout state persistence ===== */
+(function(){
+  const KEY = "TEN_CHECKOUT_DRAFT_V1";
+
+  function $(id){ return document.getElementById(id); }
+
+  function getMemberToken(){
+    // 你全站用的 token key 可能叫 TEN_TOKEN / member_token / ten_token
+    // 這邊做「多 key 容錯」
+    return (
+      localStorage.getItem("TEN_TOKEN") ||
+      localStorage.getItem("ten_token") ||
+      localStorage.getItem("member_token") ||
+      sessionStorage.getItem("TEN_TOKEN") ||
+      ""
+    );
+  }
+
+  function setMemberToken(token){
+    if(!token) return;
+    localStorage.setItem("TEN_TOKEN", token);
+    localStorage.setItem("ten_token", token);
+    localStorage.setItem("member_token", token);
+    sessionStorage.setItem("TEN_TOKEN", token);
+  }
+
+  function getCart(){
+    // 你購物車若本來就存在 localStorage，這裡就直接讀你的 key
+    // 不確定你的 key 名稱，我先做常見容錯
+    const raw =
+      localStorage.getItem("TEN_CART") ||
+      localStorage.getItem("cart") ||
+      localStorage.getItem("ten_cart") ||
+      "[]";
+    try { return JSON.parse(raw); } catch { return []; }
+  }
+
+  function saveDraft(){
+    const draft = {
+      t: Date.now(),
+      token: getMemberToken(),
+      cart: getCart(),
+      form: {
+        name: $("name")?.value || "",
+        phone: $("phone")?.value || "",
+        email: $("email")?.value || "",
+        address: $("addr")?.value || "",
+        ship: document.querySelector('input[name="ship"]:checked')?.value || "",
+        pay: document.querySelector('input[name="pay"]:checked')?.value || "",
+        store: $("store")?.value || "",
+        storeAddr: $("storeAddr")?.value || "",
+        coupon: $("coupon")?.value || ""
+      }
+    };
+    localStorage.setItem(KEY, JSON.stringify(draft));
+  }
+
+  function restoreDraft(){
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return;
+    let d; try { d = JSON.parse(raw); } catch { return; }
+
+    // 避免太久以前的草稿（例如 3 小時前）
+    if(Date.now() - (d.t||0) > 3*60*60*1000) return;
+
+    if(d.token) setMemberToken(d.token);
+
+    // 還原表單
+    if(d.form){
+      $("name") && ( $("name").value = d.form.name || "" );
+      $("phone") && ( $("phone").value = d.form.phone || "" );
+      $("email") && ( $("email").value = d.form.email || "" );
+      $("addr") && ( $("addr").value = d.form.address || "" );
+      $("coupon") && ( $("coupon").value = d.form.coupon || "" );
+
+      if(d.form.ship){
+        const r = document.querySelector(`input[name="ship"][value="${d.form.ship}"]`);
+        if(r){ r.checked = true; try{ r.dispatchEvent(new Event("change")); }catch{} }
+      }
+      if(d.form.pay){
+        const r = document.querySelector(`input[name="pay"][value="${d.form.pay}"]`);
+        if(r){ r.checked = true; try{ r.dispatchEvent(new Event("change")); }catch{} }
+      }
+
+      // 門市
+      if(d.form.store){
+        const sw = document.getElementById("storeWrap");
+        if(sw) sw.hidden = false;
+        $("store") && ( $("store").value = d.form.store );
+        $("storeAddr") && ( $("storeAddr").value = d.form.storeAddr || "" );
+      }
+    }
+  }
+
+  // ✅ 在頁面即將離開前存一次（包含跳去 GAS）
+  window.addEventListener("beforeunload", saveDraft);
+
+  // ✅ 每個輸入變更都存（避免使用者輸入後立刻跳走）
+  document.addEventListener("input", (e)=>{
+    if(e.target && e.target.closest && e.target.closest("form")) saveDraft();
+  });
+
+  // ✅ 回到 checkout 時自動還原
+  window.addEventListener("load", ()=>{
+    restoreDraft();
+    // 還原後再存一次，確保 draft 是最新
+    setTimeout(saveDraft, 200);
+  });
+
+  // ✅ 讓你原本 openC2CStore 呼叫前可以手動先存
+  window.__saveCheckoutDraft = saveDraft;
+})();
+</script>
 
 
 </body>
