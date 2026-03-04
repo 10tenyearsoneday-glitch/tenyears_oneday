@@ -60,14 +60,8 @@ function calcDiscount(subtotal, s, ctx = {}) {
   let amountOff = 0;
   let labels = [];
 
-  // ===== 首購 =====
-  if (ctx.firstPurchase && s.first_purchase_discount) {
-    const r = num(s.first_purchase_discount, 1);
-    if (r < bestRate) {
-      bestRate = r;
-      rateLabel = "首購優惠";
-    }
-  }
+  // ✅ 首購優惠已移除：不再看 ctx.firstPurchase / s.first_purchase_discount
+
   // ===== coupon =====
   if (ctx.coupon) {
 
@@ -104,6 +98,7 @@ function calcDiscount(subtotal, s, ctx = {}) {
     label: labels.join("＋")
   };
 }
+
 
 function calcTotal(items, s, ctx = {}) {
 
