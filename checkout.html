@@ -695,32 +695,35 @@ pickFamily.addEventListener("click", function(e){
 
 
 <script>
-window.addEventListener("load",()=>{
-
+window.addEventListener("load", () => {
   const q = new URLSearchParams(location.search);
-  const name = q.get("CVSStoreName");
-  const addr = q.get("CVSAddress");
 
-  if(!name) return;
+  const ship = q.get("ship");                 // ✅ 我們從 GAS 帶回來的
+  const storeName = q.get("CVSStoreName");
+  const storeAddrQ = q.get("CVSAddress");
 
-  const shipRadio711 = document.querySelector('input[value="711"]');
-  const shipRadioFamily = document.querySelector('input[value="family"]');
+  if (ship === "711" || ship === "family") {
+    const r = document.querySelector(`input[name="ship"][value="${ship}"]`);
+    if (r) r.checked = true;
 
-  if(shipRadio711?.checked || shipRadioFamily?.checked){
-
-    storeWrap.hidden = false;
-
-    const store = document.getElementById("store");
-    const storeAddr = document.getElementById("storeAddr");
-
-    if(store) store.value = decodeURIComponent(name);
-    if(storeAddr) storeAddr.value = decodeURIComponent(addr||"");
-
-    console.log("✅ 門市已帶入",name);
-
-    window.render && window.render();
+    // ✅ 觸發你原本的顯示/隱藏邏輯（syncShip 在另一段 IIFE 裡）
+    try { document.querySelector(`input[name="ship"][value="${ship}"]`)?.dispatchEvent(new Event("change")); } catch {}
   }
 
+  if (!storeName) return;
+
+  // ✅ 直接顯示門市區
+  storeWrap.hidden = false;
+
+  const store = document.getElementById("store");
+  const storeAddr = document.getElementById("storeAddr");
+
+  if (store) store.value = storeName;       // URLSearchParams 已經解碼過，不要再 decodeURIComponent
+  if (storeAddr) storeAddr.value = storeAddrQ || "";
+
+  console.log("✅ 門市已帶入", storeName);
+
+  window.render && window.render();
 });
 
 </script>
