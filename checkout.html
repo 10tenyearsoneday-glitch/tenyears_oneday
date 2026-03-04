@@ -241,8 +241,7 @@ const buildDiscountLabels =
 const CART_KEY = "ten_cart";
 const COUPON_KEY = "ten_applied_coupon_v1";
 const readCart=()=>JSON.parse(localStorage.getItem(CART_KEY)||"[]");
-
-const isFirstPurchase=()=>!localStorage.getItem("ten_has_purchase_v1");
+const isFirstPurchase = () => false; // ✅ 永遠不是首購
 
 const isBirthday=()=>{
 const m=localStorage.getItem("ten_birth_m");
