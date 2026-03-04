@@ -646,7 +646,7 @@ const pick711 = document.getElementById("pick711");
 const pickFamily = document.getElementById("pickFamily");
 
 function openC2CStore(type){
-
+window.__saveCheckoutDraft && window.__saveCheckoutDraft();
   let sub = "";
   if(type === "711") sub = "UNIMARTC2C";
   if(type === "family") sub = "FAMIC2C";
