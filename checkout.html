@@ -300,10 +300,11 @@ const couponCode =
 const coupon=couponCode?await validateCoupon(couponCode,subtotal):null;
 
 const ctx={
-  firstPurchase:isFirstPurchase(),
-  birthday:false,   // ⭐ 前端生日一定關掉
+  firstPurchase:false,   // ✅ 固定關
+  birthday:false,
   coupon: coupon ? {...coupon, code: couponCode} : null
 };
+
 
 
 const pricing = calcTotal(cart, settings, ctx);
@@ -407,10 +408,11 @@ btnSubmitOrder.onclick = async () => {
     const coupon = couponCode ? await validateCoupon(couponCode,subtotal) : null;
 
     const ctx = {
-      firstPurchase: isFirstPurchase(),
-      birthday: false,
-      coupon: coupon ? {...coupon, code: couponCode} : null
-    };
+  firstPurchase: false,  // ✅ 固定關
+  birthday: false,
+  coupon: coupon ? {...coupon, code: couponCode} : null
+};
+
 
     const pricing = calcTotal(cart, settings, ctx);
 
@@ -434,7 +436,6 @@ btnSubmitOrder.onclick = async () => {
 
     // COD：寫單 → 導到 thanks
     if(pay === "cod"){
-      localStorage.setItem("ten_has_purchase_v1","1");
 
       const f=document.createElement("form");
       f.method="POST";
@@ -458,7 +459,6 @@ btnSubmitOrder.onclick = async () => {
     btnSubmitOrder.disabled = true;
     document.getElementById("ckLoading")?.classList.remove("hidden");
 
-    localStorage.setItem("ten_has_purchase_v1","1");
 
     const r = await fetch(`${window.GAS_PRODUCTS_URL}?path=orders`, {
       method: "POST",
