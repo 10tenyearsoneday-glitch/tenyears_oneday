@@ -45,6 +45,16 @@
   </div>
 </footer>
 <button id="backToTop" aria-label="回到頂端">↑</button>
+
+<script>
+  const btn = document.getElementById("backToTop");
+  window.addEventListener("scroll", () => {
+    btn.style.display = window.scrollY > 300 ? "block" : "none";
+  });
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+</script>
 <!-- ✅ 商品 Modal（只有商品，不含購物車抽屜） -->
 <div class="ui-backdrop" id="pdBackdrop" aria-hidden="true">
   <div class="ui-panel product-panel" role="dialog" aria-modal="true" aria-label="商品資訊">
@@ -52,8 +62,6 @@
     <div class="pd-wrap" id="pdWrap"></div>
   </div>
 </div>
-
-<button id="backToTop">↑</button>
 
 <script>
 (() => {
