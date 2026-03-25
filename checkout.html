@@ -657,7 +657,8 @@ window.__saveCheckoutDraft && window.__saveCheckoutDraft();
 
   const f = document.createElement("form");
   f.method = "POST";
-  f.action = "https://logistics.ecpay.com.tw/Express/map";
+f.action = "https://logistics.ecpay.com.tw/Express/map";
+f.target = "_top";
 
   f.innerHTML = `
     <input name="MerchantID" value="3486030">
