@@ -648,17 +648,16 @@ function openC2CStore(type){
   window.__saveCheckoutDraft && window.__saveCheckoutDraft();
 
   let sub = "";
-  if(type === "711") sub = "UNIMARTC2C";
-  if(type === "family") sub = "FAMIC2C";
+  if (type === "711") sub = "UNIMARTC2C";
+  if (type === "family") sub = "FAMIC2C";
 
-  if(!sub){
+  if (!sub) {
     alert("請選擇超商");
     return;
   }
 
-  // ✅ 開新視窗，主 checkout 頁不離開
   const winName = "ecpayStoreMap";
-  const mapWin = window.open("", winName, "width=520,height=720");
+  const popup = window.open("", winName, "width=520,height=720");
 
   const f = document.createElement("form");
   f.method = "POST";
@@ -679,9 +678,8 @@ function openC2CStore(type){
   f.submit();
   f.remove();
 
-  if (mapWin) mapWin.focus();
+  if (popup) popup.focus();
 }
-
 pick711.addEventListener("click", function(e){
   e.preventDefault();
   const r = document.querySelector('input[value="711"]');
