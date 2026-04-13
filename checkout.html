@@ -843,7 +843,46 @@ window.addEventListener("load", () => {
   window.__saveCheckoutDraft = saveDraft;
 })();
 </script>
+<script>
+window.addEventListener("message", function (event) {
+  // 只接受來自 Apps Script 的訊息
+  if (event.origin !== "https://script.google.com") return;
 
+  const data = event.data || {};
+  if (data.type !== "EC_PAY_CVS_SELECTED") return;
+
+  const ship = data.ship || "";
+  const storeName = data.storeName || "";
+  const storeAddr = data.storeAddr || "";
+  const storeId = data.storeId || "";
+
+  if (ship === "711" || ship === "family") {
+    const r = document.querySelector(`input[name="ship"][value="${ship}"]`);
+    if (r) {
+      r.checked = true;
+      try { r.dispatchEvent(new Event("change")); } catch {}
+    }
+  }
+
+  if (storeWrap) storeWrap.hidden = false;
+  if (document.getElementById("store")) {
+    document.getElementById("store").value = storeName;
+  }
+  if (document.getElementById("storeAddr")) {
+    document.getElementById("storeAddr").value = storeAddr;
+  }
+
+  // 額外存一份 storeId，之後下單可用
+  localStorage.setItem("ten_cvs_store_id", storeId);
+
+  // 也順手存草稿，避免重整掉資料
+  if (window.__saveCheckoutDraft) window.__saveCheckoutDraft();
+
+  console.log("✅ 門市已由 postMessage 帶回", { ship, storeName, storeAddr, storeId });
+
+  if (window.render) window.render();
+});
+</script>
 
 </body>
 </html>
