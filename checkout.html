@@ -417,23 +417,23 @@ btnSubmitOrder.onclick = async () => {
     const pricing = calcTotal(cart, settings, ctx);
 
     const payload = {
-      order_id:"OD"+Date.now(),
-      token: localStorage.getItem("ten_token") || "",
-      name: name.value,
-      phone: phone.value,
-      email: email.value,
-      shipping_method: ship,
-      payment_method: pay, // ✅ 用上面宣告的 pay
-      address_or_store: ship==="home" ? address.value : `${store.value} ${storeAddr.value||""}`,
-      items: cart,
-      subtotal: pricing.subtotal,
-      discount: pricing.discount,
-      shipping_fee: pricing.shipping,
-      total: pricing.total,
-      coupon_code: couponCode || "",
-      discount_note: buildDiscountLabels(pricing).join("＋")
-    };
-
+  order_id:"OD"+Date.now(),
+  token: localStorage.getItem("ten_token") || "",
+  name: name.value,
+  phone: phone.value,
+  email: email.value,
+  shipping_method: ship,
+  payment_method: pay,
+  address_or_store: ship==="home" ? address.value : `${store.value} ${storeAddr.value||""}`,
+  store_id: localStorage.getItem("ten_cvs_store_id") || "",
+  items: cart,
+  subtotal: pricing.subtotal,
+  discount: pricing.discount,
+  shipping_fee: pricing.shipping,
+  total: pricing.total,
+  coupon_code: couponCode || "",
+  discount_note: buildDiscountLabels(pricing).join("＋")
+};
     // COD：寫單 → 導到 thanks
     if(pay === "cod"){
 
