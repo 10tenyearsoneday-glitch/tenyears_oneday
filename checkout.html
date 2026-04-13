@@ -645,7 +645,8 @@ const pick711 = document.getElementById("pick711");
 const pickFamily = document.getElementById("pickFamily");
 
 function openC2CStore(type){
-window.__saveCheckoutDraft && window.__saveCheckoutDraft();
+  window.__saveCheckoutDraft && window.__saveCheckoutDraft();
+
   let sub = "";
   if(type === "711") sub = "UNIMARTC2C";
   if(type === "family") sub = "FAMIC2C";
@@ -655,44 +656,48 @@ window.__saveCheckoutDraft && window.__saveCheckoutDraft();
     return;
   }
 
+  // ✅ 開新視窗，主 checkout 頁不離開
+  const winName = "ecpayStoreMap";
+  const mapWin = window.open("", winName, "width=520,height=720");
+
   const f = document.createElement("form");
   f.method = "POST";
-f.action = "https://logistics.ecpay.com.tw/Express/map";
-f.target = "_top";
+  f.action = "https://logistics.ecpay.com.tw/Express/map";
+  f.target = winName;
 
   f.innerHTML = `
     <input name="MerchantID" value="3486030">
     <input name="LogisticsType" value="CVS">
     <input name="LogisticsSubType" value="${sub}">
     <input name="IsCollection" value="N">
-
-    <!-- 🔥 必填 -->
-    <input name="ServerReplyURL"
-      value="${window.GAS_PRODUCTS_URL}?path=cvs">
-
-    <!-- 🔥 讓前端直接回來 -->
-    <input name="ClientReplyURL"
-      value="https://10tenyearsoneday-glitch.github.io/tenyears_oneday/checkout.html">
+    <input name="ServerReplyURL" value="${window.GAS_PRODUCTS_URL}?path=cvs">
+    <input name="ExtraData" value="${type}">
+    <input name="Device" value="0">
   `;
 
   document.body.appendChild(f);
   f.submit();
+  f.remove();
+
+  if (mapWin) mapWin.focus();
 }
 
 pick711.addEventListener("click", function(e){
   e.preventDefault();
-  document.querySelector('input[value="711"]').checked = true;
+  const r = document.querySelector('input[value="711"]');
+  r.checked = true;
+  r.dispatchEvent(new Event("change"));
   openC2CStore("711");
 });
 
 pickFamily.addEventListener("click", function(e){
   e.preventDefault();
-  document.querySelector('input[value="family"]').checked = true;
+  const r = document.querySelector('input[value="family"]');
+  r.checked = true;
+  r.dispatchEvent(new Event("change"));
   openC2CStore("family");
 });
 </script>
-
-
 
 <script>
 window.addEventListener("load", () => {
