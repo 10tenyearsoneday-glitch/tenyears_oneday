@@ -846,7 +846,15 @@ window.addEventListener("load", () => {
 </script>
 <script>
 window.addEventListener("message", function (event) {
-  if (event.origin !== "https://script.google.com") return;
+  console.log("CVS message origin =", event.origin, "data =", event.data);
+
+  // ✅ 接受 Apps Script 可能的來源
+  const okOrigin =
+    event.origin === "https://script.google.com" ||
+    event.origin === "https://script.googleusercontent.com" ||
+    /https:\/\/.*\.googleusercontent\.com$/.test(event.origin);
+
+  if (!okOrigin) return;
 
   const data = event.data || {};
   if (data.type !== "EC_PAY_CVS_SELECTED") return;
@@ -865,12 +873,12 @@ window.addEventListener("message", function (event) {
   }
 
   if (storeWrap) storeWrap.hidden = false;
-  if (document.getElementById("store")) {
-    document.getElementById("store").value = storeName;
-  }
-  if (document.getElementById("storeAddr")) {
-    document.getElementById("storeAddr").value = storeAddr;
-  }
+
+  const storeEl = document.getElementById("store");
+  const storeAddrEl = document.getElementById("storeAddr");
+
+  if (storeEl) storeEl.value = storeName;
+  if (storeAddrEl) storeAddrEl.value = storeAddr;
 
   localStorage.setItem("ten_cvs_store_id", storeId);
 
