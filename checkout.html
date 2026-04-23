@@ -657,8 +657,9 @@ function openC2CStore(type){
   }
 
   const winName = "ecpayStoreMap";
-  const popup = window.open("", winName, "width=520,height=720");
-
+ const popup = window.open("", winName, "width=520,height=720");
+window.__storePopup = popup;
+  
   const f = document.createElement("form");
   f.method = "POST";
   f.action = "https://logistics.ecpay.com.tw/Express/map";
@@ -845,7 +846,6 @@ window.addEventListener("load", () => {
 </script>
 <script>
 window.addEventListener("message", function (event) {
-  // 只接受來自 Apps Script 的訊息
   if (event.origin !== "https://script.google.com") return;
 
   const data = event.data || {};
@@ -872,11 +872,17 @@ window.addEventListener("message", function (event) {
     document.getElementById("storeAddr").value = storeAddr;
   }
 
-  // 額外存一份 storeId，之後下單可用
   localStorage.setItem("ten_cvs_store_id", storeId);
 
-  // 也順手存草稿，避免重整掉資料
   if (window.__saveCheckoutDraft) window.__saveCheckoutDraft();
+
+  try {
+    if (window.__storePopup && !window.__storePopup.closed) {
+      window.__storePopup.close();
+    }
+  } catch (e) {
+    console.warn("popup close failed", e);
+  }
 
   console.log("✅ 門市已由 postMessage 帶回", { ship, storeName, storeAddr, storeId });
 
